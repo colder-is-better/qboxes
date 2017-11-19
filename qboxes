@@ -5,87 +5,164 @@ GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 NC='\033[0m'
 
+BFACE=$(tput bold)
+NFACE=$(tput sgr0)
+
 show_usage() {
 	case "$1" in
 		activate)
-			printf "COMMAND NAME\n";
-			printf "  activate - bring inactive VMs up\n\n";
-			printf "SYNOPSIS\n";
-			printf "  activate <inactive_VM_1> ... <inactive_VM_k>\n\n";
-			printf "DESCRIPTION\n";
-			printf "  Power one or more inactive VMs up\n"
+			printf "COMMAND NAME\n"
+			printf "  activate - bring inactive VMs up\n\n"
+			printf "SYNOPSIS\n"
+			printf "  activate <inactive_VM_1> ... <inactive_VM_k>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Power one or more inactive VMs up\n\n"
+			printf "EXAMPLE\n"
+			printf "  ~/bin> ${BFACE}qboxes activate leap423 sles11sp4${NFACE}\n"
+			printf "  INFO: Powering inactive VM leap423 up\n"
+			printf "  INFO: Powering inactive VM sles11sp4 up\n"
+			printf "  SUMMARY: 2 VM(s) successfully activated.\n\n"
 			exit 1
 			;;
 		annihilate)
-			printf "COMMAND NAME\n";
-			printf "  annihilate - remove any trace of inactive VMs\n\n";
-			printf "SYNOPSIS\n";
-			printf "  annihilate <inactive_VM_1> ... <inactive_VM_k>\n\n";
-			printf "DESCRIPTION\n";
-			printf "  Undefine one or more inactive VMs, delete all associated storage volumes\n"
+			printf "COMMAND NAME\n"
+			printf "  annihilate - remove any trace of inactive VMs\n\n"
+			printf "SYNOPSIS\n"
+			printf "  annihilate <inactive_VM_1> ... <inactive_VM_k>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Undefine one or more inactive VMs, delete all associated storage volumes\n\n"
+			printf "EXAMPLE\n"
+			printf "  ~/bin> ${BFACE}qboxes annihilate guest_{1..5}${NFACE}\n" 
+			printf "  INFO: Annihilating inactive VM guest_1\n"
+			printf "  INFO: Annihilating inactive VM guest_2\n"
+			printf "  INFO: Annihilating inactive VM guest_3\n"
+			printf "  WARNING: guest_4 is not an inactive VM\n"
+			printf "  WARNING: guest_5 is not an inactive VM\n"
+			printf "  SUMMARY: 3 VM(s) successfully annihilated.\n\n"
 			exit 1
 			;;
 		attach)
-			printf "COMMAND NAME\n";
-			printf "  attach - attach storage volumes to VMs\n\n";
-			printf "SYNOPSIS\n";
-			printf "  attach --name=<volume_name> --size=<volume_size> --pool=<name> --vmdev=<VM_device> <VM_1> ... <VM_k>\n\n";
-			printf "DESCRIPTION\n";
-			printf "  Create sparse QCOW2 files in specified pool, attach them as virtual hard drives to VMs\n"
+			printf "COMMAND NAME\n"
+			printf "  attach - attach storage volumes to VMs\n\n"
+			printf "SYNOPSIS\n"
+			printf "  attach --name=<volume_name> --size=<volume_size> --pool=<name> --vmdev=<VM_device> <VM_1> ... <VM_k>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Create sparse QCOW2 files in specified pool, attach them as virtual hard drives to VMs\n\n"
+			printf "EXAMPLE\n"
+			printf "  ~/bin> ${BFACE}qboxes attach --name=data --size=4096G --pool=services --vmdev=vdb osd_node_{1,2,3}${NFACE}\n"
+			printf "  INFO: Creating QCOW2 image osd_node_1_vdb_data_4096G.qcow2 for osd_node_1\n"
+			printf "  INFO: Attaching osd_node_1_vdb_data_4096G.qcow2 to osd_node_1\n\n"
+			printf "  INFO: Creating QCOW2 image osd_node_2_vdb_data_4096G.qcow2 for osd_node_2\n"
+			printf "  INFO: Attaching osd_node_2_vdb_data_4096G.qcow2 to osd_node_2\n\n"
+			printf "  INFO: Creating QCOW2 image osd_node_3_vdb_data_4096G.qcow2 for osd_node_3\n"
+			printf "  INFO: Attaching osd_node_3_vdb_data_4096G.qcow2 to osd_node_3\n\n"
+			printf "  SUMMARY: 3 storage volume(s) successfully attached.\n\n"
 			exit 1
 			;;
 		check-service)
-			printf "COMMAND NAME\n";
-			printf "  check-service - check if connections to specified TCP port of a VM are possible\n\n";
+			printf "COMMAND NAME\n"
+			printf "  check-service - check if connections to specified TCP port of a VM are possible\n\n"
 			printf "SYNOPSIS\n";
 			printf "  check-service --port=<tcp_port> <active_VM>\n\n";
 			printf "DESCRIPTION\n";
-			printf "  Check if given VM is reachable via specificied TCP port\n"
+			printf "  Check if given VM is reachable via specificied TCP port\n\n"
+			printf "EXAMPLE\n"
+			printf "  ~/bin> ${BFACE}qboxes check-service --port=22 smt-server${NFACE}\n"
+			printf "  INFO: smt-server is accepting packets on port 22/TCP\n\n"
 			exit 1
 			;;
 		clone)
-			printf "COMMAND NAME\n";
-			printf "  clone - clone a template VM into one or more new VMs\n\n";
-			printf "SYNOPSIS\n";
-			printf "  clone --template=<VM_0> --pool=<pool_name> <VM_1> ... <VM_k>\n\n";
-			printf "DESCRIPTION\n";
-			printf "  Clone an existing template VM into one or more new VMs, indicate an existing storage pool for the cloned volumes\n"
+			printf "COMMAND NAME\n"
+			printf "  clone - clone a template VM into one or more new VMs\n\n"
+			printf "SYNOPSIS\n"
+			printf "  clone --template=<VM_0> --pool=<pool_name> <VM_1> ... <VM_k>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Clone an existing template VM into one or more new VMs, indicate an existing storage pool for the cloned volumes\n\n"
+			printf "EXAMPLE\n"
+			printf "  ~/bin> ${BFACE}qboxes clone --template=sles12sp3 --pool=services www_server_1 www_server_2 balancer${NFACE}\n"
+			printf "  INFO: Cloning sles12sp3.qcow2 into www_server_1.qcow2\n"
+			printf "  INFO: Moving www_server_1.qcow2 between pools (qcow2-images ==> services)\n"
+			printf "  INFO: Cloning sles12sp3 into www_server_1 and attaching www_server_1.qcow2 to it\n"
+			printf "  INFO: Setting hostname for www_server_1\n\n"
+			printf "  INFO: Cloning sles12sp3.qcow2 into www_server_2.qcow2\n"
+			printf "  INFO: Moving www_server_2.qcow2 between pools (qcow2-images ==> services)\n"
+			printf "  INFO: Cloning sles12sp3 into www_server_2 and attaching www_server_2.qcow2 to it\n"
+			printf "  INFO: Setting hostname for www_server_2\n\n"
+			printf "  INFO: Cloning sles12sp3.qcow2 into balancer.qcow2\n"
+			printf "  INFO: Moving balancer.qcow2 between pools (qcow2-images ==> services)\n"
+			printf "  INFO: Cloning sles12sp3 into balancer and attaching balancer.qcow2 to it\n"
+			printf "  INFO: Setting hostname for balancer\n\n"
+			printf "  SUMMARY: 3 VM(s) successfully cloned from template VM sles12sp3.\n\n"
 			exit 1
 			;;
 		deactivate)
-			printf "COMMAND NAME\n";
-			printf "  deactivate - shutdown active VMs\n\n";
-			printf "SYNOPSIS\n";
-			printf "  deactivate <active_VM_1> ... <active_VM_k>\n\n";
-			printf "DESCRIPTION\n";
-			printf "  Try to gracefully shutdown one or more active VMs\n"
+			printf "COMMAND NAME\n"
+			printf "  deactivate - shutdown active VMs\n\n"
+			printf "SYNOPSIS\n"
+			printf "  deactivate <active_VM_1> ... <active_VM_k>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Try to gracefully shutdown one or more active VMs\n\n"
+			printf "EXAMPLE\n"
+			printf "  ~/bin> ${BFACE}qboxes deactivate leap423${NFACE}\n"
+			printf "  INFO: Shutting active VM leap423 down\n"
+			printf "  SUMMARY: 1 VM(s) successfully deactivated.\n\n"
 			exit 1
 			;;
 		define)
-			printf "COMMAND NAME\n";
-			printf "  define - define one or more new VMs\n\n";
-			printf "SYNOPSIS\n";
-			printf "  define --ram=<size> --cores=<count> --disk-size=<capacity> --network=<name> --guest-os=<os_variant> --pool=<name> <VM_1> ... <VM_k>\n\n";
-			printf "DESCRIPTION\n";
-			printf "  Define one or more VMs according to specifications, do not install a guest OS on any of them\n"
+			printf "COMMAND NAME\n"
+			printf "  define - define one or more new VMs\n\n"
+			printf "SYNOPSIS\n"
+			printf "  define --ram=<size> --cores=<count> --disk-size=<capacity> --network=<name> --guest-os=<os_variant> --pool=<name> <VM_1> ... <VM_k>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Define one or more VMs according to specifications, do not install a guest OS on any of them\n\n"
+			printf "EXAMPLE\n"
+			printf "  ~/bin> ${BFACE}qboxes define --ram=2048 --cores=2 --disk-size=1024G --network=grimsey --guest-os=opensuse42.3 --pool=services osd_node_{1..5}${NFACE}\n"
+			printf "  WARNING: There is already a VM osd_node_1, so I am skipping this one\n"
+			printf "  WARNING: There is already a VM osd_node_2, so I am skipping this one\n"
+			printf "  WARNING: There is already a VM osd_node_3, so I am skipping this one\n"
+			printf "  INFO: Creating volume osd_node_4.qcow2 for VM osd_node_4\n"
+			printf "  INFO: Coming up with a detailed XML description of osd_node_4\n"
+			printf "  INFO: Retracting sound card & tablet input devices from XML description\n"
+			printf "  INFO: Defining VM osd_node_4\n\n"
+			printf "  INFO: Creating volume osd_node_5.qcow2 for VM osd_node_5\n"
+			printf "  INFO: Coming up with a detailed XML description of osd_node_5\n"
+			printf "  INFO: Retracting sound card & tablet input devices from XML description\n"
+			printf "  INFO: Defining VM osd_node_5\n\n"
+			printf "  SUMMARY: 2 VM(s) successfully defined.\n\n"
 			exit 1
 			;;
 		getmac)
-			printf "COMMAND NAME\n";
-			printf "  getmac - reveal MAC addresses\n\n";
-			printf "SYNOPSIS\n";
-			printf "  getmac <VM_1> ... <VM_k>\n\n";
-			printf "DESCRIPTION\n";
-			printf "  Reveal the first Ethernet adapter's MAC address of one or more VMs\n"
+			printf "COMMAND NAME\n"
+			printf "  getmac - reveal MAC addresses\n\n"
+			printf "SYNOPSIS\n"
+			printf "  getmac <VM_1> ... <VM_k>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Reveal the first Ethernet adapter's MAC address of one or more VMs\n\n"
+			printf "EXAMPLE\n"
+			printf "  ~/bin> ${BFACE}qboxes getmac sles12sp{1,2,3}${NFACE}\n"
+			printf "  INFO: sles12sp1 looks like 52:54:00:b0:c6:59\n"
+			printf "  INFO: sles12sp2 looks like 52:54:00:40:e9:eb\n"
+			printf "  INFO: sles12sp3 looks like 52:54:00:3b:e3:e1\n\n"
 			exit 1
 			;;
 		ping)
-			printf "COMMAND NAME\n";
-			printf "  ping - send ICMP packets to active VMs\n\n";
-			printf "SYNOPSIS\n";
-			printf "  ping --count=<number_of_packets> <active_VM_1> ... <active_VM_k>\n\n";
-			printf "DESCRIPTION\n";
-        		printf "  Send a specified number of ICMP packets to one or more active VMs\n"
+			printf "COMMAND NAME\n"
+			printf "  ping - send ICMP packets to active VMs\n\n"
+			printf "SYNOPSIS\n"
+			printf "  ping --count=<number_of_packets> <active_VM_1> ... <active_VM_k>\n\n"
+			printf "DESCRIPTION\n"
+        		printf "  Send a specified number of ICMP packets to one or more active VMs\n\n"
+			printf "EXAMPLE\n"
+			printf "  ~/bin> ${BFACE}qboxes ping --count=3 sles12sp2 sles12sp3${NFACE}\n"
+			printf "  WARNING: sles12sp2 is not an active VM\n"
+			printf "  INFO: Now pinging sles12sp3\n"
+			printf "  PING sles12sp3.grimsey.is (10.20.30.213) 56(84) bytes of data.\n"
+			printf "  64 bytes from sles12sp3.grimsey.is (10.20.30.213): icmp_seq=1 ttl=64 time=0.169 ms\n"
+			printf "  64 bytes from sles12sp3.grimsey.is (10.20.30.213): icmp_seq=2 ttl=64 time=0.151 ms\n"
+			printf "  64 bytes from sles12sp3.grimsey.is (10.20.30.213): icmp_seq=3 ttl=64 time=0.217 ms\n\n"
+			printf "  --- sles12sp3.grimsey.is ping statistics ---\n"
+			printf "  3 packets transmitted, 3 received, 0 percent packet loss, time 1998ms\n"
+			printf "  rtt min/avg/max/mdev = 0.151/0.179/0.217/0.027 ms\n\n"
         		exit 1
 			;;
 		reboot)
@@ -94,7 +171,11 @@ show_usage() {
         		printf "SYNOPSIS\n";
         		printf "  reboot <active_VM_1> ... <active_VM_k>\n\n";
         		printf "DESCRIPTION\n";
-        		printf "  Try to gracefully restart one or more active VMs\n"
+        		printf "  Try to gracefully restart one or more active VMs\n\n"
+			printf "EXAMPLE\n"
+			printf "  ~/bin> ${BFACE}qboxes reboot sles12sp3${NFACE}\n"
+			printf "  INFO: Rebooting active VM sles12sp3\n"
+			printf "  SUMMARY: 1 VM(s) successfully rebooted.\n\n"
         		exit 1
 			;;
 		*)
@@ -111,7 +192,7 @@ show_usage() {
 			printf "  ping\t\t: send ICMP packets to active VMs\n"
 			printf "  reboot\t: restart active VMs\n\n"
 			printf "  help\t\t: display this summary of commands\n\n"
-			printf "Type ${GREEN}qboxes <command_name>${NC} to get the syntax of a specific command.\n\n"
+			printf "Type ${GREEN}qboxes command_name${NC} to see the syntax of a specific command.\n\n"
 			;;
 	esac
 }
@@ -286,7 +367,7 @@ attach_func() {
 	printf "${GREEN}SUMMARY:${NC} $VOLUMES_ATTACHED storage volume(s) successfully attached.\n"
 }
 
-check-service_func() {
+checkservice_func() {
 	NUM_ARGS=2
 	if [ $# -ne $NUM_ARGS ]; then
 		printf "${RED}ERROR:${NC} Incorrect number of arguments (I need exactly $NUM_ARGS)\n"
@@ -318,9 +399,9 @@ check-service_func() {
 
 	ERROR_CODE="$?"
 	if [ $ERROR_CODE == 0 ]; then
-		printf "${GREEN}INFO:${NC} VM $VM is ${GREEN}accepting${NC} packets on port $TCP_PORT/TCP\n"
+		printf "${GREEN}INFO:${NC} $VM is ${GREEN}accepting${NC} packets on port $TCP_PORT/TCP\n"
 	else
-		printf "${GREEN}INFO:${NC} VM $VM is ${RED}not accepting${NC} packets on port $TCP_PORT/TCP\n"
+		printf "${GREEN}INFO:${NC} $VM is ${RED}not accepting${NC} packets on port $TCP_PORT/TCP\n"
 	fi
 	exit $ERROR_CODE
 }
@@ -752,7 +833,7 @@ case "$1" in
 		;;
 	check-service)
 		shift
-		check-service_func "$@"
+		checkservice_func "$@"
 		;;
 	clone)
 		shift
