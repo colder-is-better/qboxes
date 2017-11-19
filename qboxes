@@ -114,7 +114,8 @@ show_usage() {
 			printf "SYNOPSIS\n"
 			printf "  define --ram=<size> --cores=<count> --disk-size=<capacity> --network=<name> --guest-os=<os_variant> --pool=<name> <VM_1> ... <VM_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Define one or more VMs according to specifications, do not install a guest OS on any of them\n\n"
+			printf "  Define one or more VMs according to specifications, do not install a guest OS on any of them\n"
+			printf "  (Tip: Type ${BFACE}osinfo-query os${NFACE} for a list of all the supported OS variants)\n\n"
 			printf "EXAMPLE\n"
 			printf "  ~/bin> ${BFACE}qboxes define --ram=2048 --cores=2 --disk-size=1024G --network=grimsey --guest-os=opensuse42.3 --pool=services osd_node_{1..5}${NFACE}\n"
 			printf "  WARNING: There is already a VM osd_node_1, so I am skipping this one\n"
@@ -192,7 +193,7 @@ show_usage() {
 			printf "  ping\t\t: send ICMP packets to active VMs\n"
 			printf "  reboot\t: restart active VMs\n\n"
 			printf "  help\t\t: display this summary of commands\n\n"
-			printf "Type ${GREEN}qboxes command_name${NC} to see the syntax of a specific command.\n\n"
+			printf "Type ${GREEN}qboxes command_name${NC} for the syntax and a usage example of a specific command.\n\n"
 			;;
 	esac
 }
