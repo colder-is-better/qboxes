@@ -29,7 +29,7 @@ Currently the following commands are implemented:
 
   help		: display this summary of commands
 
-Type qboxes <command_name> to get the syntax of a specific command.
+Type qboxes command_name for the syntax and a usage example of a specific command.
 ```
 
 The script requires a working installation of libvirt and the presence of tools like `virsh`, `virt-clone`, `virt-install` and `virt-customize`. The user running `qboxes` should be in the `libvirt` group and have (preferably passwordless) sudo privileges. Last but not least, the `LIBVIRT_DEFAULT_URI` environment variable should be properly set for the local system (`export LIBVIRT_DEFAULT_URI=qemu:///system` should be enough).
