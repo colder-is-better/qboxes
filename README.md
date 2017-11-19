@@ -1,5 +1,5 @@
 # Happy qboxes
-This is a very simple BASH script for managing QEMU/KVM VMs. Currently, `qboxes` can perform the following functions:
+This is a very simple BASH script for managing QEMU/KVM VMs. Currently, `qboxes` can:
 
 * define one or more new VMs (with no OSes)
 * clone a template VM into one or more new VMs
@@ -10,7 +10,7 @@ This is a very simple BASH script for managing QEMU/KVM VMs. Currently, `qboxes`
 * send ICMP packets to active VMs
 * attach storage volumes to VMs
 
-To get an overview of the tool just type `qboxes`:
+To get an overview of the tool just type `qboxes`.
 
 ```
 This is qboxes, a simple command line tool for managing local QEMU/KVM VMs.
@@ -32,6 +32,6 @@ Currently the following commands are implemented:
 Type qboxes <command_name> to get the syntax of a specific command.
 ```
 
-The script requires a working installation of libvirt and the presence of tools like `virsh`, `virt-clone`, `virt-install` and `virt-customize`. The user running `qboxes` should be in the `libvirt` group and have --preferably passwordless-- sudo privileges. Last but not least, the `LIBVIRT_DEFAULT_URI` environment variable should be properly set (e.g., `export LIBVIRT_DEFAULT_URI=qemu:///system`).
+The script requires a working installation of libvirt and the presence of tools like `virsh`, `virt-clone`, `virt-install` and `virt-customize`. The user running `qboxes` should be in the `libvirt` group and have (preferably passwordless) sudo privileges. Last but not least, the `LIBVIRT_DEFAULT_URI` environment variable should be properly set for the local system (`export LIBVIRT_DEFAULT_URI=qemu:///system` should be enough).
 
-There are still many functions that we would like to implement in `qboxes`. We should also point out that at the time of this writing the script has some serious drawbacks (e.g. it does not properly sanitize all kinds of user input).
+There are still many commands (functions) that we would like to implement in `qboxes`. We should also point out that at the time of this writing the script has some major shortcomings (e.g., it does not properly sanitize all kinds of user input). See `TODO.md` for our (near) future plans.
