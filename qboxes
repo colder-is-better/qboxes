@@ -252,7 +252,7 @@ annihilate_func() {
 		if [ "$VM_EXISTS" == "" ]; then
 			printf "${YELLOW}WARNING:${NC} $candidate is not an inactive VM\n"
 		else
-			printf "${GREEN}INFO:${NC} Annihilating inactive VM $candidate\n"
+			printf "${GREEN}INFO:${NC} Annihilating $candidate (this may take a while)\n"
 
 			virsh --quiet undefine "$candidate" --remove-all-storage --wipe-storage
 
