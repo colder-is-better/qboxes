@@ -30,12 +30,12 @@ show_usage() {
 			printf "SYNOPSIS\n"
 			printf "  annihilate <inactive_VM_1> ... <inactive_VM_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Undefine one or more inactive VMs, delete all associated storage volumes\n\n"
+			printf "  Undefine one or more inactive VMs, delete all snapshots and associated storage volumes\n\n"
 			printf "EXAMPLE\n"
 			printf "  ~/bin> ${BFACE}qboxes annihilate guest_{1..5}${NFACE}\n" 
-			printf "  INFO: Annihilating inactive VM guest_1\n"
-			printf "  INFO: Annihilating inactive VM guest_2\n"
-			printf "  INFO: Annihilating inactive VM guest_3\n"
+			printf "  INFO: Annihilating guest_1 (this may take a while)\n"
+			printf "  INFO: Annihilating guest_2 (this may take a while)\n"
+			printf "  INFO: Annihilating guest_3 (this may take a while)\n"
 			printf "  WARNING: guest_4 is not an inactive VM\n"
 			printf "  WARNING: guest_5 is not an inactive VM\n"
 			printf "  SUMMARY: 3 VM(s) successfully annihilated.\n\n"
@@ -83,15 +83,15 @@ show_usage() {
 			printf "  INFO: Cloning sles12sp3.qcow2 into www_server_1.qcow2\n"
 			printf "  INFO: Moving www_server_1.qcow2 between pools (qcow2-images ==> services)\n"
 			printf "  INFO: Cloning sles12sp3 into www_server_1 and attaching www_server_1.qcow2 to it\n"
-			printf "  INFO: Setting hostname for www_server_1\n\n"
+			printf "  INFO: Setting hostname for www_server_1 (this may take a while)\n\n"
 			printf "  INFO: Cloning sles12sp3.qcow2 into www_server_2.qcow2\n"
 			printf "  INFO: Moving www_server_2.qcow2 between pools (qcow2-images ==> services)\n"
 			printf "  INFO: Cloning sles12sp3 into www_server_2 and attaching www_server_2.qcow2 to it\n"
-			printf "  INFO: Setting hostname for www_server_2\n\n"
+			printf "  INFO: Setting hostname for www_server_2 (this may take a while)\n\n"
 			printf "  INFO: Cloning sles12sp3.qcow2 into balancer.qcow2\n"
 			printf "  INFO: Moving balancer.qcow2 between pools (qcow2-images ==> services)\n"
 			printf "  INFO: Cloning sles12sp3 into balancer and attaching balancer.qcow2 to it\n"
-			printf "  INFO: Setting hostname for balancer\n\n"
+			printf "  INFO: Setting hostname for balancer (this may take a while)\n\n"
 			printf "  SUMMARY: 3 VM(s) successfully cloned from template VM sles12sp3.\n\n"
 			exit 1
 			;;
@@ -211,7 +211,7 @@ activate_func() {
 		show_usage activate
 	fi
 
-	VMS_ACTIVATED=0
+	VMs_ACTIVATED=0
 	for candidate; do
 		VM_EXISTS=$(echo "$ALL_INACTIVE_VMS" | grep -w "$candidate")
 		if [ "$VM_EXISTS" == "" ]; then
@@ -225,12 +225,12 @@ activate_func() {
 			if [ $VIRSH_ERROR_CODE -ne 0 ]; then
 				printf "${RED}ERROR:${NC} Operation failed, virsh returned error code $VIRSH_ERROR_CODE\n"
 			else
-				VMS_ACTIVATED=$((VMS_ACTIVATED + 1))
+				VMs_ACTIVATED=$((VMs_ACTIVATED + 1))
 			fi
 			sleep 1
 		fi
 	done
-	printf "${GREEN}SUMMARY:${NC} $VMS_ACTIVATED VM(s) successfully activated.\n"
+	printf "${GREEN}SUMMARY:${NC} $VMs_ACTIVATED VM(s) successfully activated.\n"
 }
 
 annihilate_func() {
@@ -246,14 +246,27 @@ annihilate_func() {
 		show_usage annihilate
 	fi
 
-	VMS_ANNIHILATED=0
+	VMs_ANNIHILATED=0
 	for candidate; do
 		VM_EXISTS=$(echo "$ALL_INACTIVE_VMS" | grep -w "$candidate")
 		if [ "$VM_EXISTS" == "" ]; then
 			printf "${YELLOW}WARNING:${NC} $candidate is not an inactive VM\n"
 		else
-			printf "${GREEN}INFO:${NC} Annihilating $candidate (this may take a while)\n"
+			printf "${GREEN}INFO:${NC} Annihilating ${candidate} (this may take a while)\n"
 
+			ALL_SNAPSHOTS=$(virsh snapshot-list --name "$candidate")
+			if [ "$ALL_SNAPSHOTS" != "" ]; then
+				for each_snapshot in "$ALL_SNAPSHOTS"; do
+				
+					virsh --quiet snapshot-delete --domain "$candidate" --snapshotname "$each_snapshot"
+
+					VIRSH_ERROR_CODE="$?"
+					if [ $VIRSH_ERROR_CODE -ne 0 ]; then
+						printf "${RED}ERROR:${NC} Failed to delete snapshot ${each_snapshot} of ${candidate}, virsh returned error code $VIRSH_ERROR_CODE, terminating now.\n"
+						exit 2
+					fi
+				done
+			fi
 			virsh --quiet undefine "$candidate" --remove-all-storage --wipe-storage
 
 			VIRSH_ERROR_CODE="$?"
@@ -261,10 +274,10 @@ annihilate_func() {
 				printf "${RED}ERROR:${NC} Operation failed, virsh returned error code $VIRSH_ERROR_CODE, terminating now.\n"
 				exit 2
 			fi
-			VMS_ANNIHILATED=$((VMS_ANNIHILATED + 1))
+			VMs_ANNIHILATED=$((VMs_ANNIHILATED + 1))
 		fi
 	done
-	printf "${GREEN}SUMMARY:${NC} $VMS_ANNIHILATED VM(s) successfully annihilated.\n"
+	printf "${GREEN}SUMMARY:${NC} $VMs_ANNIHILATED VM(s) successfully annihilated.\n"
 }
 
 attach_func() {
@@ -520,9 +533,9 @@ clone_func() {
 				exit 2
 			fi
 
-			printf "${GREEN}INFO:${NC} Setting hostname for $candidate\n\n"
+			printf "${GREEN}INFO:${NC} Setting hostname for ${candidate} (this may take a while)\n\n"
 
-			sudo virt-customize --quiet -d $candidate --hostname $candidate
+			sudo virt-customize --quiet -d "$candidate" --hostname "$candidate"
 
 			ERROR_CODE="$?"
 			if [ $ERROR_CODE -ne 0 ]; then
@@ -549,7 +562,7 @@ deactivate_func() {
 		show_usage deactivate
 	fi
 
-	VMS_DEACTIVATED=0
+	VMs_DEACTIVATED=0
 	for candidate; do
 		VM_EXISTS=$(echo "$ALL_ACTIVE_VMS" | grep -w "$candidate")
 		if [ "$VM_EXISTS" == "" ]; then
@@ -563,12 +576,12 @@ deactivate_func() {
 			if [ $VIRSH_ERROR_CODE -ne 0 ]; then
 				printf "${RED}ERROR:${NC} Operation failed, virsh returned error code $VIRSH_ERROR_CODE\n"
 			else
-				VMS_DEACTIVATED=$((VMS_DEACTIVATED + 1))
+				VMs_DEACTIVATED=$((VMs_DEACTIVATED + 1))
 			fi
 			sleep 1
 		fi
 	done
-	printf "${GREEN}SUMMARY:${NC} $VMS_DEACTIVATED VM(s) successfully deactivated.\n"
+	printf "${GREEN}SUMMARY:${NC} $VMs_DEACTIVATED VM(s) successfully deactivated.\n"
 }
 
 define_func() {
@@ -659,7 +672,7 @@ define_func() {
 		show_usage define
 	fi
 
-	VMS_DEFINED=0
+	VMs_DEFINED=0
 	ALL_VMS=$(virsh list --name --all)
 	POOL_PATH=$(virsh pool-dumpxml "$POOL_NAME" | grep "<path>" | awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
 
@@ -714,10 +727,10 @@ define_func() {
 
 			rm -f ~/"$XML_PATH"
 
-			VMS_DEFINED=$((VMS_DEFINED + 1))
+			VMs_DEFINED=$((VMs_DEFINED + 1))
 		fi
 	done
-	printf "${GREEN}SUMMARY:${NC} $VMS_DEFINED VM(s) successfully defined.\n"
+	printf "${GREEN}SUMMARY:${NC} $VMs_DEFINED VM(s) successfully defined.\n"
 }
 
 getmac_func() {
@@ -797,7 +810,7 @@ reboot_func() {
 		show_usage reboot
 	fi
 
-	VMS_DEFINED=0
+	VMs_DEFINED=0
 	for candidate; do
 		VM_EXISTS=$(echo "$ALL_ACTIVE_VMS" | grep -w "$candidate")
 		if [ "$VM_EXISTS" == "" ]; then
@@ -811,12 +824,12 @@ reboot_func() {
 			if [ $VIRSH_ERROR_CODE -ne 0 ]; then
 				printf "${RED}ERROR:${NC} Operation failed, virsh returned error code $VIRSH_ERROR_CODE\n"
 			else
-				VMS_DEFINED=$((VMS_DEFINED + 1))
+				VMs_DEFINED=$((VMs_DEFINED + 1))
 			fi
 			sleep 1
 		fi
 	done
-	printf "${GREEN}SUMMARY:${NC} $VMS_DEFINED VM(s) successfully rebooted.\n"
+	printf "${GREEN}SUMMARY:${NC} $VMs_DEFINED VM(s) successfully rebooted.\n"
 }
 
 case "$1" in
