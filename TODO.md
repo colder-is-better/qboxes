@@ -4,7 +4,7 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 * sanitize user input (VM names)
 
 `annihilate`
-* delete DHCP leases of annihilated domains (see `virbr*.macs` files, in `/var/lib/libvirt/dnsmasq`)
+* delete DHCP leases of annihilated domains (see `virbr*.status` files, in `/var/lib/libvirt/dnsmasq`)
 * sanitize user input (VM name)
 
 `attach`
