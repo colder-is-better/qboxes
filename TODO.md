@@ -16,6 +16,7 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 
 `clone`
 * investigate failures while trying to clone "empty" VMs
+* use virt-customize before moving volume to new pool
 * clone VMs with more than one storage volumes
 * sanitize user input (template/VM/pool names)
 
