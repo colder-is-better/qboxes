@@ -18,10 +18,7 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Power one or more inactive VMs up\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes activate leap423 sles11sp4${NFACE}\n"
-			printf "  INFO: Powering inactive VM leap423 up\n"
-			printf "  INFO: Powering inactive VM sles11sp4 up\n"
-			printf "  SUMMARY: 2 VM(s) successfully activated.\n\n"
+			printf "  ~/bin> ${BFACE}qboxes activate leap423 sles11sp4${NFACE}\n\n"
 			exit 1
 			;;
 		annihilate)
@@ -32,13 +29,7 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Undefine one or more inactive VMs, delete all snapshots and associated storage volumes\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes annihilate guest_{1..5}${NFACE}\n" 
-			printf "  INFO: Annihilating guest_1 (this may take a while)\n"
-			printf "  INFO: Annihilating guest_2 (this may take a while)\n"
-			printf "  INFO: Annihilating guest_3 (this may take a while)\n"
-			printf "  WARNING: guest_4 is not an inactive VM\n"
-			printf "  WARNING: guest_5 is not an inactive VM\n"
-			printf "  SUMMARY: 3 VM(s) successfully annihilated.\n\n"
+			printf "  ~/bin> ${BFACE}qboxes annihilate guest_{1..5}${NFACE}\n\n" 
 			exit 1
 			;;
 		attach)
@@ -49,14 +40,7 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Create sparse QCOW2 files in specified pool, attach them as virtual hard drives to VMs\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes attach --name=data --size=4096G --pool=services --vmdev=vdb osd_node_{1,2,3}${NFACE}\n"
-			printf "  INFO: Creating QCOW2 image osd_node_1_vdb_data_4096G.qcow2 for osd_node_1\n"
-			printf "  INFO: Attaching osd_node_1_vdb_data_4096G.qcow2 to osd_node_1\n\n"
-			printf "  INFO: Creating QCOW2 image osd_node_2_vdb_data_4096G.qcow2 for osd_node_2\n"
-			printf "  INFO: Attaching osd_node_2_vdb_data_4096G.qcow2 to osd_node_2\n\n"
-			printf "  INFO: Creating QCOW2 image osd_node_3_vdb_data_4096G.qcow2 for osd_node_3\n"
-			printf "  INFO: Attaching osd_node_3_vdb_data_4096G.qcow2 to osd_node_3\n\n"
-			printf "  SUMMARY: 3 storage volume(s) successfully attached.\n\n"
+			printf "  ~/bin> ${BFACE}qboxes attach --name=data --size=4096G --pool=services --vmdev=vdb osd_node_{1,2,3}${NFACE}\n\n"
 			exit 1
 			;;
 		check-service)
@@ -67,8 +51,7 @@ show_usage() {
 			printf "DESCRIPTION\n";
 			printf "  Check if given VM is reachable via specificied TCP port\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes check-service --port=22 smt-server${NFACE}\n"
-			printf "  INFO: smt-server is accepting packets on port 22/TCP\n\n"
+			printf "  ~/bin> ${BFACE}qboxes check-service --port=22 smt-server${NFACE}\n\n"
 			exit 1
 			;;
 		clone)
@@ -79,20 +62,7 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Clone an existing template VM into one or more new VMs, indicate an existing storage pool for the cloned volumes\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes clone --template=sles12sp3 --pool=services www_server_1 www_server_2 balancer${NFACE}\n"
-			printf "  INFO: Cloning sles12sp3.qcow2 into www_server_1.qcow2\n"
-			printf "  INFO: Moving www_server_1.qcow2 between pools (qcow2-images ==> services)\n"
-			printf "  INFO: Cloning sles12sp3 into www_server_1 and attaching www_server_1.qcow2 to it\n"
-			printf "  INFO: Setting hostname for www_server_1 (this may take a while)\n\n"
-			printf "  INFO: Cloning sles12sp3.qcow2 into www_server_2.qcow2\n"
-			printf "  INFO: Moving www_server_2.qcow2 between pools (qcow2-images ==> services)\n"
-			printf "  INFO: Cloning sles12sp3 into www_server_2 and attaching www_server_2.qcow2 to it\n"
-			printf "  INFO: Setting hostname for www_server_2 (this may take a while)\n\n"
-			printf "  INFO: Cloning sles12sp3.qcow2 into balancer.qcow2\n"
-			printf "  INFO: Moving balancer.qcow2 between pools (qcow2-images ==> services)\n"
-			printf "  INFO: Cloning sles12sp3 into balancer and attaching balancer.qcow2 to it\n"
-			printf "  INFO: Setting hostname for balancer (this may take a while)\n\n"
-			printf "  SUMMARY: 3 VM(s) successfully cloned from template VM sles12sp3.\n\n"
+			printf "  ~/bin> ${BFACE}qboxes clone --template=sles12sp3 --pool=services www_server_1 www_server_2 balancer${NFACE}\n\n"
 			exit 1
 			;;
 		deactivate)
@@ -103,9 +73,7 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Try to gracefully shutdown one or more active VMs\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes deactivate leap423${NFACE}\n"
-			printf "  INFO: Shutting active VM leap423 down\n"
-			printf "  SUMMARY: 1 VM(s) successfully deactivated.\n\n"
+			printf "  ~/bin> ${BFACE}qboxes deactivate leap423${NFACE}\n\n"
 			exit 1
 			;;
 		define)
@@ -117,19 +85,7 @@ show_usage() {
 			printf "  Define one or more VMs according to specifications, do not install a guest OS on any of them\n"
 			printf "  (Tip: Type ${BFACE}osinfo-query os${NFACE} for a list of all the supported OS variants)\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes define --ram=2048 --cores=2 --disk-size=1024G --network=grimsey --guest-os=opensuse42.3 --pool=services osd_node_{1..5}${NFACE}\n"
-			printf "  WARNING: There is already a VM osd_node_1, so I am skipping this one\n"
-			printf "  WARNING: There is already a VM osd_node_2, so I am skipping this one\n"
-			printf "  WARNING: There is already a VM osd_node_3, so I am skipping this one\n"
-			printf "  INFO: Creating volume osd_node_4.qcow2 for VM osd_node_4\n"
-			printf "  INFO: Coming up with a detailed XML description of osd_node_4\n"
-			printf "  INFO: Retracting sound card & tablet input devices from XML description\n"
-			printf "  INFO: Defining VM osd_node_4\n\n"
-			printf "  INFO: Creating volume osd_node_5.qcow2 for VM osd_node_5\n"
-			printf "  INFO: Coming up with a detailed XML description of osd_node_5\n"
-			printf "  INFO: Retracting sound card & tablet input devices from XML description\n"
-			printf "  INFO: Defining VM osd_node_5\n\n"
-			printf "  SUMMARY: 2 VM(s) successfully defined.\n\n"
+			printf "  ~/bin> ${BFACE}qboxes define --ram=2048 --cores=2 --disk-size=1024G --network=grimsey --guest-os=opensuse42.3 --pool=services osd_node_{1..5}${NFACE}\n\n"
 			exit 1
 			;;
 		getmac)
@@ -140,10 +96,7 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Reveal the first Ethernet adapter's MAC address of one or more VMs\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes getmac sles12sp{1,2,3}${NFACE}\n"
-			printf "  INFO: sles12sp1 looks like 52:54:00:b0:c6:59\n"
-			printf "  INFO: sles12sp2 looks like 52:54:00:40:e9:eb\n"
-			printf "  INFO: sles12sp3 looks like 52:54:00:3b:e3:e1\n\n"
+			printf "  ~/bin> ${BFACE}qboxes getmac sles12sp{1,2,3}${NFACE}\n\n"
 			exit 1
 			;;
 		ping)
@@ -154,16 +107,7 @@ show_usage() {
 			printf "DESCRIPTION\n"
         		printf "  Send a specified number of ICMP packets to one or more active VMs\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes ping --count=3 sles12sp2 sles12sp3${NFACE}\n"
-			printf "  WARNING: sles12sp2 is not an active VM\n"
-			printf "  INFO: Now pinging sles12sp3\n"
-			printf "  PING sles12sp3.grimsey.is (10.20.30.213) 56(84) bytes of data.\n"
-			printf "  64 bytes from sles12sp3.grimsey.is (10.20.30.213): icmp_seq=1 ttl=64 time=0.169 ms\n"
-			printf "  64 bytes from sles12sp3.grimsey.is (10.20.30.213): icmp_seq=2 ttl=64 time=0.151 ms\n"
-			printf "  64 bytes from sles12sp3.grimsey.is (10.20.30.213): icmp_seq=3 ttl=64 time=0.217 ms\n\n"
-			printf "  --- sles12sp3.grimsey.is ping statistics ---\n"
-			printf "  3 packets transmitted, 3 received, 0 percent packet loss, time 1998ms\n"
-			printf "  rtt min/avg/max/mdev = 0.151/0.179/0.217/0.027 ms\n\n"
+			printf "  ~/bin> ${BFACE}qboxes ping --count=3 sles12sp2 sles12sp3${NFACE}\n\n"
         		exit 1
 			;;
 		reboot)
@@ -175,8 +119,6 @@ show_usage() {
         		printf "  Try to gracefully restart one or more active VMs\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
 			printf "  ~/bin> ${BFACE}qboxes reboot sles12sp3${NFACE}\n"
-			printf "  INFO: Rebooting active VM sles12sp3\n"
-			printf "  SUMMARY: 1 VM(s) successfully rebooted.\n\n"
         		exit 1
 			;;
 		*)
@@ -201,16 +143,14 @@ show_usage() {
 activate_func() {
 	LOWEST_NUM_ARGS=1
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
+		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
 		show_usage activate
 	fi
-
 	ALL_INACTIVE_VMS=$(virsh list --name --inactive)
 	if [ "$ALL_INACTIVE_VMS" == "" ]; then
-		printf "${RED}ERROR:${NC} I cannot seem to find a single inactive VM (is LIBVIRT_DEFAULT_URI set?)\n"
+		printf "\n${RED}ERROR:${NC} I cannot seem to find a single inactive VM (is LIBVIRT_DEFAULT_URI set?)\n"
 		show_usage activate
 	fi
-
 	VMs_ACTIVATED=0
 	for candidate; do
 		VM_EXISTS=$(echo "$ALL_INACTIVE_VMS" | grep -w "$candidate")
@@ -236,16 +176,14 @@ activate_func() {
 annihilate_func() {
 	LOWEST_NUM_ARGS=1
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
+		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
 		show_usage annihilate
 	fi
-
 	ALL_INACTIVE_VMS=$(virsh list --name --inactive)
 	if [ "$ALL_INACTIVE_VMS" == "" ]; then
-		printf "${RED}ERROR:${NC} I cannot seem to find a single inactive VM (is LIBVIRT_DEFAULT_URI set?)\n"
+		printf "\n${RED}ERROR:${NC} I cannot seem to find a single inactive VM (is LIBVIRT_DEFAULT_URI set?)\n"
 		show_usage annihilate
 	fi
-
 	VMs_ANNIHILATED=0
 	for candidate; do
 		VM_EXISTS=$(echo "$ALL_INACTIVE_VMS" | grep -w "$candidate")
@@ -253,7 +191,6 @@ annihilate_func() {
 			printf "${YELLOW}WARNING:${NC} $candidate is not an inactive VM\n"
 		else
 			printf "${GREEN}INFO:${NC} Annihilating ${candidate} (this may take a while)\n"
-
 			ALL_SNAPSHOTS=$(virsh snapshot-list --name "$candidate")
 			if [ "$ALL_SNAPSHOTS" != "" ]; then
 				for each_snapshot in "$ALL_SNAPSHOTS"; do
@@ -283,7 +220,7 @@ annihilate_func() {
 attach_func() {
 	LOWEST_NUM_ARGS=5
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
+		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
 		show_usage attach
 	fi
 
@@ -330,7 +267,7 @@ attach_func() {
 				VM_DEV=$VALUE
 				;;
 			*)
-				printf "${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n"
+				printf "\n${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n"
 				show_usage attach
 				;;
 		esac
@@ -338,13 +275,13 @@ attach_func() {
 	done
 
 	if [ "$VOLUME_NAME" == "" ] || [ "$VOLUME_SIZE" == "" ] || [ "$POOL_NAME" == "" ] || [ "$VM_DEV" == "" ]; then
-		printf "${RED}ERROR:${NC} One of the required arguments has not been set\n"
+		printf "\n${RED}ERROR:${NC} One of the required arguments has not been set\n"
 		show_usage attach
 	fi
 
 	ALL_VMS=$(virsh list --name --all)
 	if [ "$ALL_VMS" == "" ]; then
-		printf "${RED}ERROR:${NC} I cannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI properly set?)\n"
+		printf "\n${RED}ERROR:${NC} I cannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI properly set?)\n"
 		show_usage attach
 	fi
 
@@ -384,14 +321,14 @@ attach_func() {
 checkservice_func() {
 	NUM_ARGS=2
 	if [ $# -ne $NUM_ARGS ]; then
-		printf "${RED}ERROR:${NC} Incorrect number of arguments (I need exactly $NUM_ARGS)\n"
+		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need exactly $NUM_ARGS)\n\n"
 		show_usage check-service
 	fi
 
 	PARAM=$(echo "$1" | awk -F= '{print $1}')
 	VALUE=$(echo "$1" | awk -F= '{print $2}')
 	if [ "$PARAM" != "--port" ]; then
-		printf "${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n"
+		printf "\n${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n"
 		show_usage check-service
 	else
 		if [ "$VALUE" == "" ]; then
@@ -423,7 +360,7 @@ checkservice_func() {
 clone_func() {
 	LOWEST_NUM_ARGS=3
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
+		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
 		show_usage clone
 	fi
 
@@ -460,7 +397,7 @@ clone_func() {
 				fi
 				;;
 			*)
-				printf "${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n"
+				printf "\n${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n"
 				show_usage clone
 				;;
 		esac
@@ -468,7 +405,7 @@ clone_func() {
 	done
 
 	if [ "$TEMPLATE_VM" == "" ] || [ "$CLONE_POOL_NAME" == "" ]; then
-		printf "${RED}ERROR:${NC} One of the required arguments is not set\n"
+		printf "\n${RED}ERROR:${NC} One of the required arguments is not set\n"
 		show_usage clone
 	fi
 
@@ -552,13 +489,13 @@ clone_func() {
 deactivate_func() {
 	LOWEST_NUM_ARGS=1
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
+		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
 		show_usage deactivate
 	fi
 
 	ALL_ACTIVE_VMS=$(virsh list --name)
 	if [ "$ALL_ACTIVE_VMS" == "" ]; then
-		printf "${RED}ERROR:${NC} I cannot seem to find a single active VM (is LIBVIRT_DEFAULT_URI set?)\n"
+		printf "\n${RED}ERROR:${NC} I cannot seem to find a single active VM (is LIBVIRT_DEFAULT_URI set?)\n"
 		show_usage deactivate
 	fi
 
@@ -587,7 +524,7 @@ deactivate_func() {
 define_func() {
 	LOWEST_NUM_ARGS=7
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
+		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
 		show_usage define
 	fi
 
@@ -660,7 +597,7 @@ define_func() {
 				fi
 				;;
 			*)
-				printf "${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n"
+				printf "\n${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n"
 				show_usage define
 				;;
 		esac
@@ -668,7 +605,7 @@ define_func() {
 	done
 
 	if [ "$MEMORY_SIZE" == "" ] || [ "$CPU_CORES" == "" ] || [ "$VOLUME_CAPACITY" == "" ] || [ "$LIBVIRT_NETWORK" == "" ] || [ "$OS_VARIANT" == "" ] || [ "$POOL_NAME" == "" ]; then
-		printf "${RED}ERROR:${NC} One of the required arguments is not set\n"
+		printf "\n${RED}ERROR:${NC} One of the required arguments is not set\n"
 		show_usage define
 	fi
 
@@ -736,13 +673,13 @@ define_func() {
 getmac_func() {
 	LOWEST_NUM_ARGS=1
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
+		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
 		show_usage getmac
 	fi
 
 	ALL_VMS=$(virsh list --name --all)
 	if [ "$ALL_VMS" == "" ]; then
-		printf "${RED}ERROR:${NC} I cannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI set?)\n"
+		printf "\n${RED}ERROR:${NC} I cannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI set?)\n"
 		show_usage getmac
 	fi
 
@@ -760,7 +697,7 @@ getmac_func() {
 ping_func() {
 	LOWEST_NUM_ARGS=2
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
+		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
 		show_usage ping
 	fi
 
@@ -768,7 +705,7 @@ ping_func() {
 	VALUE=$(echo "$1" | awk -F= '{print $2}')
 
 	if [ "$PARAM" != "--count" ]; then
-		printf "${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n"
+		printf "\n${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n"
 		show_usage ping
 	else
 		if [ "$VALUE" == "" ]; then
@@ -782,7 +719,7 @@ ping_func() {
 
 	ALL_ACTIVE_VMS=$(virsh list --name)
 	if [ "$ALL_ACTIVE_VMS" == "" ]; then
-		printf "${RED}ERROR:${NC} I cannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI properly set?)\n"
+		printf "\n${RED}ERROR:${NC} I cannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI properly set?)\n"
 		show_usage ping
 	fi
 
@@ -800,13 +737,13 @@ ping_func() {
 reboot_func() {
 	LOWEST_NUM_ARGS=1
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
+		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
 		show_usage reboot
 	fi
 
 	ALL_ACTIVE_VMS=$(virsh list --name)
 	if [ "$ALL_ACTIVE_VMS" == "" ]; then
-		printf "${RED}ERROR:${NC} I cannot seem to find a single active VM (is LIBVIRT_DEFAULT_URI set?)\n"
+		printf "\n${RED}ERROR:${NC} I cannot seem to find a single active VM (is LIBVIRT_DEFAULT_URI set?)\n"
 		show_usage reboot
 	fi
 
