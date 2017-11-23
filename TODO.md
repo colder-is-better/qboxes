@@ -1,7 +1,7 @@
 This is an alphabetical list of the currently implemented `qboxes` commands. Following each command is a short description of the functionality/features we plan on adding to it.
 
 `activate`
-* sanitize user input (VM names)
+* sanitize user input (VM names) -- DONE!
 
 `annihilate`
 * delete DHCP leases of annihilated domains (see `virbr*.status` files, in `/var/lib/libvirt/dnsmasq`)
