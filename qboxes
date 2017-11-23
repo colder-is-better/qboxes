@@ -27,7 +27,7 @@ show_usage() {
 			printf "SYNOPSIS\n"
 			printf "  annihilate <inactive_VM_1> ... <inactive_VM_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Undefine one or more inactive VMs, delete all snapshots and associated storage volumes\n\n"
+			printf "  Undefine one or more inactive VMs, delete all snapshots and associated storage volumes (${RED}think TWICE before annihilating!${NC})\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
 			printf "  ~/bin> ${BFACE}qboxes annihilate guest_{1..5}${NFACE}\n\n" 
 			exit 1
@@ -49,7 +49,7 @@ show_usage() {
 			printf "SYNOPSIS\n";
 			printf "  check-service --port=<tcp_port> <active_VM>\n\n";
 			printf "DESCRIPTION\n";
-			printf "  Check if given VM is reachable via specificied TCP port\n\n"
+			printf "  Check if an active VM is reachable via specificied TCP port\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
 			printf "  ~/bin> ${BFACE}qboxes check-service --port=22 smt-server${NFACE}\n\n"
 			exit 1
@@ -58,11 +58,11 @@ show_usage() {
 			printf "COMMAND NAME\n"
 			printf "  clone - clone a template VM into one or more new VMs\n\n"
 			printf "SYNOPSIS\n"
-			printf "  clone --template=<VM_0> --pool=<pool_name> <VM_1> ... <VM_k>\n\n"
+			printf "  clone --template=<VM_0> --target-pool=<pool_name> <VM_1> ... <VM_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Clone an existing template VM into one or more new VMs, indicate an existing storage pool for the cloned volumes\n\n"
+			printf "  Clone an existing inactive template VM into one or more new VMs, indicate a target storage pool for the cloned volumes\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes clone --template=sles12sp3 --pool=services www_server_1 www_server_2 balancer${NFACE}\n\n"
+			printf "  ~/bin> ${BFACE}qboxes clone --template=sles12sp3 --target-pool=services www_server_1 www_server_2 balancer${NFACE}\n\n"
 			exit 1
 			;;
 		deactivate)
@@ -140,59 +140,78 @@ show_usage() {
 	esac
 }
 
-activate_func() {
+is_vm_name_valid() {
+	VM_NAME="$1"
+	FIRST_CHAR_TEST=$(echo "${VM_NAME:0:1}" | tr -d "[:alnum:]")
+	if [ -n "$FIRST_CHAR_TEST" ]; then
+		return 0
+	else
+		VALID_NAME_TEST=$(echo "$VM_NAME" | tr -d "[:alnum:]-_")
+		if [ -n "$VALID_NAME_TEST" ]; then
+			return 0
+		else
+			return 1
+		fi
+	fi
+}
+
+activate_cmd() {
 	LOWEST_NUM_ARGS=1
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
+		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least %d)\n\n" $LOWEST_NUM_ARGS
 		show_usage activate
 	fi
 	ALL_INACTIVE_VMS=$(virsh list --name --inactive)
-	if [ "$ALL_INACTIVE_VMS" == "" ]; then
+	if [ -z "$ALL_INACTIVE_VMS" ]; then
 		printf "\n${RED}ERROR:${NC} I cannot seem to find a single inactive VM (is LIBVIRT_DEFAULT_URI set?)\n"
 		show_usage activate
 	fi
 	VMs_ACTIVATED=0
 	for candidate; do
-		VM_EXISTS=$(echo "$ALL_INACTIVE_VMS" | grep -w "$candidate")
-		if [ "$VM_EXISTS" == "" ]; then
-			printf "${YELLOW}WARNING:${NC} $candidate is not an inactive VM\n"
+		is_vm_name_valid "$candidate"
+		TEST_RESULT="$?"
+		if [ $TEST_RESULT == 0 ]; then
+			printf "${YELLOW}WARNING:${NC} %s is not a valid VM name\n" "$candidate"
 		else
-			printf "${GREEN}INFO:${NC} Powering inactive VM $candidate up\n"
-
-			virsh --quiet start "$candidate"
-
-			VIRSH_ERROR_CODE="$?"
-			if [ $VIRSH_ERROR_CODE -ne 0 ]; then
-				printf "${RED}ERROR:${NC} Operation failed, virsh returned error code $VIRSH_ERROR_CODE\n"
+			VM_EXISTS=$(echo "$ALL_INACTIVE_VMS" | grep -w "$candidate")
+			if [ -z "$VM_EXISTS" ]; then
+				printf "${YELLOW}WARNING:${NC} %s is not an inactive VM\n" "$candidate"
 			else
-				VMs_ACTIVATED=$((VMs_ACTIVATED + 1))
+				printf "${GREEN}INFO:${NC} Powering inactive VM %s up\n" "$candidate"
+				virsh --quiet start "$candidate"
+				VIRSH_ERROR_CODE="$?"
+				if [ $VIRSH_ERROR_CODE -ne 0 ]; then
+					printf "${RED}ERROR:${NC} Operation failed, virsh returned error code %d\n" $VIRSH_ERROR_CODE
+				else
+					VMs_ACTIVATED=$((VMs_ACTIVATED + 1))
+				fi
+				sleep 1
 			fi
-			sleep 1
 		fi
 	done
-	printf "${GREEN}SUMMARY:${NC} $VMs_ACTIVATED VM(s) successfully activated.\n"
+	printf "${GREEN}SUMMARY:${NC} %d VM(s) successfully activated.\n" $VMs_ACTIVATED
 }
 
-annihilate_func() {
+annihilate_cmd() {
 	LOWEST_NUM_ARGS=1
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
 		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
 		show_usage annihilate
 	fi
 	ALL_INACTIVE_VMS=$(virsh list --name --inactive)
-	if [ "$ALL_INACTIVE_VMS" == "" ]; then
+	if [ -z "$ALL_INACTIVE_VMS" ]; then
 		printf "\n${RED}ERROR:${NC} I cannot seem to find a single inactive VM (is LIBVIRT_DEFAULT_URI set?)\n"
 		show_usage annihilate
 	fi
 	VMs_ANNIHILATED=0
 	for candidate; do
 		VM_EXISTS=$(echo "$ALL_INACTIVE_VMS" | grep -w "$candidate")
-		if [ "$VM_EXISTS" == "" ]; then
+		if [ -z "$VM_EXISTS" ]; then
 			printf "${YELLOW}WARNING:${NC} $candidate is not an inactive VM\n"
 		else
 			printf "${GREEN}INFO:${NC} Annihilating ${candidate} (this may take a while)\n"
 			ALL_SNAPSHOTS=$(virsh snapshot-list --name "$candidate")
-			if [ "$ALL_SNAPSHOTS" != "" ]; then
+			if [ -n "$ALL_SNAPSHOTS" ]; then
 				for each_snapshot in "$ALL_SNAPSHOTS"; do
 				
 					virsh --quiet snapshot-delete --domain "$candidate" --snapshotname "$each_snapshot"
@@ -217,7 +236,7 @@ annihilate_func() {
 	printf "${GREEN}SUMMARY:${NC} $VMs_ANNIHILATED VM(s) successfully annihilated.\n"
 }
 
-attach_func() {
+attach_cmd() {
 	LOWEST_NUM_ARGS=5
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
 		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
@@ -234,33 +253,33 @@ attach_func() {
 		VALUE=$(echo "$1" | awk -F= '{print $2}')
 		case $PARAM in
 			--name)
-				if [ "$VALUE" == "" ]; then
+				if [ -z "$VALUE" ]; then
 					printf "${RED}ERROR:${NC} Invalid volume name\n"
 					exit 1
 				fi
 				VOLUME_NAME=$VALUE
 				;;
 			--size)
-				if [ "$VALUE" == "" ]; then
+				if [ -z "$VALUE" ]; then
 					printf "${RED}ERROR:${NC} Invalid volume size\n"
 					exit 1
 				fi
 				VOLUME_SIZE=$VALUE
 				;;
 			--pool)
-				if [ "$VALUE" == "" ]; then
+				if [ -z "$VALUE" ]; then
 					printf "${RED}ERROR:${NC} Invalid pool name\n"
 					exit 1
 				fi
 				POOL_NAME=$VALUE
 				POOL_EXISTS=$(virsh pool-list | grep -w "$POOL_NAME")
-				if [ "$POOL_EXISTS" == "" ]; then
+				if [ -z "$POOL_EXISTS" ]; then
 					printf "${RED}ERROR:${NC} I cannot seem to find pool $POOL_NAME\n"
 					exit 1
 				fi
 				;;
 			--vmdev)
-				if [ "$VALUE" == "" ]; then
+				if [ -z "$VALUE" ]; then
 					printf "${RED}ERROR:${NC} Invalid device file\n"
 					exit 1
 				fi
@@ -274,13 +293,13 @@ attach_func() {
 		shift
 	done
 
-	if [ "$VOLUME_NAME" == "" ] || [ "$VOLUME_SIZE" == "" ] || [ "$POOL_NAME" == "" ] || [ "$VM_DEV" == "" ]; then
+	if [ -z "$VOLUME_NAME" ] || [ -z "$VOLUME_SIZE" ] || [ -z "$POOL_NAME" ] || [ -z "$VM_DEV" ]; then
 		printf "\n${RED}ERROR:${NC} One of the required arguments has not been set\n"
 		show_usage attach
 	fi
 
 	ALL_VMS=$(virsh list --name --all)
-	if [ "$ALL_VMS" == "" ]; then
+	if [ -z "$ALL_VMS" ]; then
 		printf "\n${RED}ERROR:${NC} I cannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI properly set?)\n"
 		show_usage attach
 	fi
@@ -289,7 +308,7 @@ attach_func() {
 	VOLUMES_ATTACHED=0
 	for candidate; do
 		VM_EXISTS=$(echo "$ALL_VMS" | grep -w "$candidate")
-		if [ "$VM_EXISTS" == "" ]; then
+		if [ -z "$VM_EXISTS" ]; then
 			printf "${YELLOW}WARNING:${NC} VM $candidate does not seem to exist\n"
 		else
 			QCOW2_NAME="$candidate"_"$VM_DEV"_"$VOLUME_NAME"_"$VOLUME_SIZE".qcow2
@@ -318,7 +337,7 @@ attach_func() {
 	printf "${GREEN}SUMMARY:${NC} $VOLUMES_ATTACHED storage volume(s) successfully attached.\n"
 }
 
-checkservice_func() {
+checkservice_cmd() {
 	NUM_ARGS=2
 	if [ $# -ne $NUM_ARGS ]; then
 		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need exactly $NUM_ARGS)\n\n"
@@ -331,7 +350,7 @@ checkservice_func() {
 		printf "\n${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n"
 		show_usage check-service
 	else
-		if [ "$VALUE" == "" ]; then
+		if [ -z "$VALUE" ]; then
 			printf "${RED}ERROR:${NC} Invalid TCP port\n"
 			exit 1
 		else
@@ -341,7 +360,7 @@ checkservice_func() {
 
 	VM="$2"
 	IS_ACTIVE=$(virsh list --name | grep -w "$VM")
-	if [ "$IS_ACTIVE" == "" ]; then
+	if [ -z "$IS_ACTIVE" ]; then
 		printf "${RED}ERROR:${NC} $VM is not an active VM\n"
 		exit 2
 	fi
@@ -357,7 +376,7 @@ checkservice_func() {
 	exit $ERROR_CODE
 }
 
-clone_func() {
+clone_cmd() {
 	LOWEST_NUM_ARGS=3
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
 		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
@@ -371,27 +390,27 @@ clone_func() {
 		VALUE=$(echo "$1" | awk -F= '{print $2}')
 		case $PARAM in
 			--template)
-				if [ "$VALUE" == "" ]; then
+				if [ -z "$VALUE" ]; then
 					printf "${RED}ERROR:${NC} Invalid template name\n"
 					exit 1
 				fi
 
 				TEMPLATE_VM=$VALUE
 				TEMPLATE_EXISTS=$(virsh list --name --inactive | grep -w "$TEMPLATE_VM")
-				if [ "$TEMPLATE_EXISTS" == "" ]; then
+				if [ -z "$TEMPLATE_EXISTS" ]; then
 					printf "${RED}ERROR:${NC} Template should be an existing inactive VM\n"
 					exit 1
 				fi
 				;;
-			--pool)
-				if [ "$VALUE" == "" ]; then
+			--target-pool)
+				if [ -z "$VALUE" ]; then
 					printf "${RED}ERROR:${NC} Invalid pool name\n"
 					exit 1
 				fi
 
 				CLONE_POOL_NAME=$VALUE
 				POOL_EXISTS=$(virsh pool-list | grep -w "$CLONE_POOL_NAME")
-				if [ "$POOL_EXISTS" == "" ]; then
+				if [ -z "$POOL_EXISTS" ]; then
 					printf "${RED}ERROR:${NC} I cannot seem to find pool $CLONE_POOL_NAME\n"
 					exit 1
 				fi
@@ -404,7 +423,7 @@ clone_func() {
 		shift
 	done
 
-	if [ "$TEMPLATE_VM" == "" ] || [ "$CLONE_POOL_NAME" == "" ]; then
+	if [ -z "$TEMPLATE_VM" ] || [ -z "$CLONE_POOL_NAME" ]; then
 		printf "\n${RED}ERROR:${NC} One of the required arguments is not set\n"
 		show_usage clone
 	fi
@@ -417,7 +436,7 @@ clone_func() {
 	for pool in $ALL_POOLS; do
 		VOLUMES_IN_POOL=$(virsh vol-list "$pool")
 		TEMPLATE_VOLUME_IN_LIST=$(echo "$VOLUMES_IN_POOL" | grep "$TEMPLATE_VOLUME_PATH")
-		if [ "$TEMPLATE_VOLUME_IN_LIST" != "" ]; then
+		if [ -n "$TEMPLATE_VOLUME_IN_LIST" ]; then
 			TEMPLATE_POOL_NAME=$pool
 			TEMPLATE_POOL_PATH=$(virsh pool-dumpxml "$pool" | grep "<path>" | awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
 			ALL_POOLS=""
@@ -431,7 +450,7 @@ clone_func() {
 
 	for candidate; do
 		VM_EXISTS=$(echo "$ALL_VMS" | grep -w "$candidate")
-		if [ "$VM_EXISTS" != "" ]; then
+		if [ -n "$VM_EXISTS" ]; then
 			printf "${YELLOW}WARNING:${NC} There is already a VM $candidate, so I am skipping this one\n"
 		else
 			CLONE_VOLUME_NAME="$candidate".qcow2
@@ -486,7 +505,7 @@ clone_func() {
 	printf "${GREEN}SUMMARY:${NC} $CLONES_CREATED VM(s) successfully cloned from template VM $TEMPLATE_VM.\n"
 }
 
-deactivate_func() {
+deactivate_cmd() {
 	LOWEST_NUM_ARGS=1
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
 		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
@@ -494,7 +513,7 @@ deactivate_func() {
 	fi
 
 	ALL_ACTIVE_VMS=$(virsh list --name)
-	if [ "$ALL_ACTIVE_VMS" == "" ]; then
+	if [ -z "$ALL_ACTIVE_VMS" ]; then
 		printf "\n${RED}ERROR:${NC} I cannot seem to find a single active VM (is LIBVIRT_DEFAULT_URI set?)\n"
 		show_usage deactivate
 	fi
@@ -502,7 +521,7 @@ deactivate_func() {
 	VMs_DEACTIVATED=0
 	for candidate; do
 		VM_EXISTS=$(echo "$ALL_ACTIVE_VMS" | grep -w "$candidate")
-		if [ "$VM_EXISTS" == "" ]; then
+		if [ -z "$VM_EXISTS" ]; then
 			printf "${YELLOW}WARNING:${NC} $candidate is not an active VM\n"
 		else
 			printf "${GREEN}INFO:${NC} Shutting active VM $candidate down\n"
@@ -521,7 +540,7 @@ deactivate_func() {
 	printf "${GREEN}SUMMARY:${NC} $VMs_DEACTIVATED VM(s) successfully deactivated.\n"
 }
 
-define_func() {
+define_cmd() {
 	LOWEST_NUM_ARGS=7
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
 		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
@@ -540,58 +559,58 @@ define_func() {
 		VALUE=$(echo "$1" | awk -F= '{print $2}')
 		case $PARAM in
 			--ram)
-				if [ "$VALUE" == "" ]; then
+				if [ -z "$VALUE" ]; then
 					printf "${RED}ERROR:${NC} Invalid memory size\n"
 					exit 1
 				fi
 				MEMORY_SIZE=$VALUE
 				;;
 			--cores)
-				if [ "$VALUE" == "" ]; then
+				if [ -z "$VALUE" ]; then
 					printf "${RED}ERROR:${NC} Invalid CPU core count\n"
 					exit 1
 				fi
 				CPU_CORES=$VALUE
 				;;
 			--disk-size)
-				if [ "$VALUE" == "" ]; then
+				if [ -z "$VALUE" ]; then
 					printf "${RED}ERROR:${NC} Invalid volume size\n"
 					exit 1
 				fi
 				VOLUME_CAPACITY=$VALUE
 				;;
 			--network)
-				if [ "$VALUE" == "" ]; then
+				if [ -z "$VALUE" ]; then
 					printf "${RED}ERROR:${NC} Invalid network name\n"
 					exit 1
 				fi
 				LIBVIRT_NETWORK=$VALUE
 				NETWORK_EXISTS=$(virsh net-list | grep -w "$LIBVIRT_NETWORK")
-				if [ "$NETWORK_EXISTS" == "" ]; then
+				if [ -z "$NETWORK_EXISTS" ]; then
 					printf "${RED}ERROR:${NC} I cannot seem to find network $LIBVIRT_NETWORK\n"
 					exit 1
 				fi
 				;;
 			--guest-os)
-				if [ "$VALUE" == "" ]; then
+				if [ -z "$VALUE" ]; then
 					printf "${RED}ERROR:${NC} Invalid OS variant\n"
 					exit 1
 				fi
 				OS_VARIANT=$VALUE
 				VARIANT_EXISTS=$(osinfo-query os -f short-id | grep -w "$OS_VARIANT")
-				if [ "$VARIANT_EXISTS" == "" ]; then
+				if [ -z "$VARIANT_EXISTS" ]; then
 					printf "${RED}ERROR:${NC} I do not recognize OS variant $OS_VARIANT\n"
 					exit 1
 				fi
 				;;
 			--pool)
-				if [ "$VALUE" == "" ]; then
+				if [ -z "$VALUE" ]; then
 					printf "${RED}ERROR:${NC} Invalid pool name\n"
 					exit 1
 				fi
 				POOL_NAME=$VALUE
 				POOL_EXISTS=$(virsh pool-list | grep -w "$POOL_NAME")
-				if [ "$POOL_EXISTS" == "" ]; then
+				if [ -z "$POOL_EXISTS" ]; then
 					printf "${RED}ERROR:${NC} I cannot seem to find pool $POOL_NAME\n"
 					exit 1
 				fi
@@ -604,7 +623,7 @@ define_func() {
 		shift
 	done
 
-	if [ "$MEMORY_SIZE" == "" ] || [ "$CPU_CORES" == "" ] || [ "$VOLUME_CAPACITY" == "" ] || [ "$LIBVIRT_NETWORK" == "" ] || [ "$OS_VARIANT" == "" ] || [ "$POOL_NAME" == "" ]; then
+	if [ -z "$MEMORY_SIZE" ] || [ -z "$CPU_CORES" ] || [ -z "$VOLUME_CAPACITY" ] || [ -z "$LIBVIRT_NETWORK" ] || [ -z "$OS_VARIANT" ] || [ -z "$POOL_NAME" ]; then
 		printf "\n${RED}ERROR:${NC} One of the required arguments is not set\n"
 		show_usage define
 	fi
@@ -615,7 +634,7 @@ define_func() {
 
 	for candidate; do
 		VM_EXISTS=$(echo "$ALL_VMS" | grep -w "$candidate")
-		if [ "$VM_EXISTS" != "" ]; then
+		if [ -n "$VM_EXISTS" ]; then
 			printf "${YELLOW}WARNING:${NC} There is already a VM $candidate, so I am skipping this one\n"
 		else
 			RANDOM_ALPHANUM=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n')
@@ -670,7 +689,7 @@ define_func() {
 	printf "${GREEN}SUMMARY:${NC} $VMs_DEFINED VM(s) successfully defined.\n"
 }
 
-getmac_func() {
+getmac_cmd() {
 	LOWEST_NUM_ARGS=1
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
 		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
@@ -678,14 +697,14 @@ getmac_func() {
 	fi
 
 	ALL_VMS=$(virsh list --name --all)
-	if [ "$ALL_VMS" == "" ]; then
+	if [ -z "$ALL_VMS" ]; then
 		printf "\n${RED}ERROR:${NC} I cannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI set?)\n"
 		show_usage getmac
 	fi
 
 	for candidate; do
 		VM_EXISTS=$(echo "$ALL_VMS" | grep -w "$candidate")
-		if [ "$VM_EXISTS" == "" ]; then
+		if [ -z "$VM_EXISTS" ]; then
 			printf "${YELLOW}WARNING:${NC} I cannot seem to find this '$candidate' VM\n"
 		else
 			MAC_ADDR=$(virsh --quiet dumpxml "$candidate" | grep "mac address" | awk -F "<mac address='" '{ print $2 }' | awk -F "'/>" '{ print $1 }')
@@ -694,7 +713,7 @@ getmac_func() {
 	done
 }
 
-ping_func() {
+ping_cmd() {
 	LOWEST_NUM_ARGS=2
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
 		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
@@ -708,7 +727,7 @@ ping_func() {
 		printf "\n${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n"
 		show_usage ping
 	else
-		if [ "$VALUE" == "" ]; then
+		if [ -z "$VALUE" ]; then
 			printf "${RED}ERROR:${NC} Invalid number of packets\n"
 			exit 1
 		else
@@ -718,14 +737,14 @@ ping_func() {
 	fi
 
 	ALL_ACTIVE_VMS=$(virsh list --name)
-	if [ "$ALL_ACTIVE_VMS" == "" ]; then
+	if [ -z "$ALL_ACTIVE_VMS" ]; then
 		printf "\n${RED}ERROR:${NC} I cannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI properly set?)\n"
 		show_usage ping
 	fi
 
 	for candidate; do
 		VM_EXISTS=$(echo "$ALL_ACTIVE_VMS" | grep -w "$candidate")
-		if [ "$VM_EXISTS" == "" ]; then
+		if [ -z "$VM_EXISTS" ]; then
 			printf "${YELLOW}WARNING:${NC} $candidate is not an active VM\n"
 		else
 			printf "${GREEN}INFO:${NC} Now pinging $candidate\n"
@@ -734,7 +753,7 @@ ping_func() {
 	done
 }
 
-reboot_func() {
+reboot_cmd() {
 	LOWEST_NUM_ARGS=1
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
 		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
@@ -742,7 +761,7 @@ reboot_func() {
 	fi
 
 	ALL_ACTIVE_VMS=$(virsh list --name)
-	if [ "$ALL_ACTIVE_VMS" == "" ]; then
+	if [ -z "$ALL_ACTIVE_VMS" ]; then
 		printf "\n${RED}ERROR:${NC} I cannot seem to find a single active VM (is LIBVIRT_DEFAULT_URI set?)\n"
 		show_usage reboot
 	fi
@@ -750,7 +769,7 @@ reboot_func() {
 	VMs_DEFINED=0
 	for candidate; do
 		VM_EXISTS=$(echo "$ALL_ACTIVE_VMS" | grep -w "$candidate")
-		if [ "$VM_EXISTS" == "" ]; then
+		if [ -z "$VM_EXISTS" ]; then
 			printf "${YELLOW}WARNING:${NC} $candidate is not an active VM\n"
 		else
 			printf "${GREEN}INFO:${NC} Rebooting active VM $candidate\n"
@@ -772,43 +791,43 @@ reboot_func() {
 case "$1" in
 	activate)
 		shift
-		activate_func "$@"
+		activate_cmd "$@"
 		;;
 	annihilate)
 		shift
-		annihilate_func "$@"
+		annihilate_cmd "$@"
 		;;
 	attach)
 		shift
-		attach_func "$@"
+		attach_cmd "$@"
 		;;
 	check-service)
 		shift
-		checkservice_func "$@"
+		checkservice_cmd "$@"
 		;;
 	clone)
 		shift
-		clone_func "$@"
+		clone_cmd "$@"
 		;;
 	deactivate)
 		shift
-		deactivate_func "$@"
+		deactivate_cmd "$@"
 		;;
 	define)
 		shift
-		define_func "$@"
+		define_cmd "$@"
 		;;
 	getmac)
 		shift
-		getmac_func "$@"
+		getmac_cmd "$@"
 		;;
 	ping)
 		shift
-		ping_func "$@"
+		ping_cmd "$@"
 		;;
 	reboot)
 		shift
-		reboot_func "$@"
+		reboot_cmd "$@"
 		;;
 	*)
 		show_usage help
