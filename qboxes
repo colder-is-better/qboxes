@@ -140,13 +140,13 @@ show_usage() {
 	esac
 }
 
-is_vm_name_valid() {
-	VM_NAME="$1"
-	FIRST_CHAR_TEST=$(echo "${VM_NAME:0:1}" | tr -d "[:alnum:]")
+is_name_valid() {
+	THE_NAME="$1"
+	FIRST_CHAR_TEST=$(echo "${THE_NAME:0:1}" | tr -d "[:alnum:]")
 	if [ -n "$FIRST_CHAR_TEST" ]; then
 		return 0
 	else
-		VALID_NAME_TEST=$(echo "$VM_NAME" | tr -d "[:alnum:]-_")
+		VALID_NAME_TEST=$(echo "$THE_NAME" | tr -d "[:alnum:]-_")
 		if [ -n "$VALID_NAME_TEST" ]; then
 			return 0
 		else
@@ -168,7 +168,7 @@ activate_cmd() {
 	fi
 	VMs_ACTIVATED=0
 	for candidate; do
-		is_vm_name_valid "$candidate"
+		is_name_valid "$candidate"
 		TEST_RESULT="$?"
 		if [ $TEST_RESULT == 0 ]; then
 			printf "${YELLOW}WARNING:${NC} %s is not a valid VM name\n" "$candidate"
