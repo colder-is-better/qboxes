@@ -161,12 +161,13 @@ activate_cmd() {
 		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least %d)\n\n" $LOWEST_NUM_ARGS
 		show_usage activate
 	fi
+
 	ALL_INACTIVE_VMS=$(virsh list --name --inactive)
 	if [ -z "$ALL_INACTIVE_VMS" ]; then
 		printf "\n${RED}ERROR:${NC} I cannot seem to find a single inactive VM (is LIBVIRT_DEFAULT_URI set?)\n"
 		show_usage activate
 	fi
-	VMs_ACTIVATED=0
+
 	for candidate; do
 		is_name_valid "$candidate"
 		TEST_RESULT="$?"
@@ -178,18 +179,11 @@ activate_cmd() {
 				printf "${YELLOW}WARNING:${NC} %s is not an inactive VM\n" "$candidate"
 			else
 				printf "${GREEN}INFO:${NC} Powering inactive VM %s up\n" "$candidate"
-				virsh --quiet start "$candidate"
-				VIRSH_ERROR_CODE="$?"
-				if [ $VIRSH_ERROR_CODE -ne 0 ]; then
-					printf "${RED}ERROR:${NC} Operation failed, virsh returned error code %d\n" $VIRSH_ERROR_CODE
-				else
-					VMs_ACTIVATED=$((VMs_ACTIVATED + 1))
-				fi
+				virsh --quiet start "$candidate" || printf "${RED}ERROR:${NC} Operation failed, virsh returned error code %d\n" $?
 				sleep 1
-			fi
+            fi
 		fi
 	done
-	printf "${GREEN}SUMMARY:${NC} %d VM(s) successfully activated.\n" $VMs_ACTIVATED
 }
 
 annihilate_cmd() {
