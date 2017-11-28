@@ -235,7 +235,7 @@ annihilate_cmd() {
 attach_cmd() {
 	LOWEST_NUM_ARGS=5
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
+		printf "\n${RED}Incorrect number of arguments (I need at least %d)${NC}\n\n" $LOWEST_NUM_ARGS
 		show_usage attach
 	fi
 
@@ -250,39 +250,52 @@ attach_cmd() {
 		case $PARAM in
 			--name)
 				if [ -z "$VALUE" ]; then
-					printf "${RED}ERROR:${NC} Invalid volume name\n"
+					printf "${RED}Volume name not specified${NC}\n"
 					exit 1
-				fi
-				VOLUME_NAME=$VALUE
-				;;
+                else
+                    is_name_valid "$VALUE"
+                    if [ $? == 0 ]; then
+                        printf "${YELLOW}%s is not a valid volume name${NC}\n" "$VALUE"
+                        exit 1
+                    else
+				        VOLUME_NAME=$VALUE
+                    fi
+                fi
+			;;
 			--size)
 				if [ -z "$VALUE" ]; then
-					printf "${RED}ERROR:${NC} Invalid volume size\n"
+					printf "${RED}Volume size not specified${NC}\n"
 					exit 1
 				fi
 				VOLUME_SIZE=$VALUE
-				;;
+			;;
 			--pool)
 				if [ -z "$VALUE" ]; then
-					printf "${RED}ERROR:${NC} Invalid pool name\n"
+					printf "${RED}Pool name not specified${NC}\n"
 					exit 1
 				fi
-				POOL_NAME=$VALUE
-				POOL_EXISTS=$(virsh pool-list | grep -w "$POOL_NAME")
-				if [ -z "$POOL_EXISTS" ]; then
-					printf "${RED}ERROR:${NC} I cannot seem to find pool $POOL_NAME\n"
-					exit 1
-				fi
-				;;
+                is_name_valid "$VALUE"
+                if [ $? == 0 ]; then
+                    printf "${YELLOW}%s is not a valid pool name${NC}\n" "$VALUE"
+                    exit 1
+                else
+				    POOL_EXISTS=$(virsh pool-list | grep -w "$VALUE")
+				    if [ -z "$POOL_EXISTS" ]; then
+					    printf "${RED}I cannot seem to find pool %s${NC}\n" "$VALUE"
+					    exit 1
+				    fi
+                    POOL_NAME=$VALUE
+                fi
+			;;
 			--vmdev)
 				if [ -z "$VALUE" ]; then
-					printf "${RED}ERROR:${NC} Invalid device file\n"
+					printf "${RED}Device file not specified${NC}\n"
 					exit 1
 				fi
 				VM_DEV=$VALUE
 				;;
 			*)
-				printf "\n${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n"
+				printf "\n${RED}I do not recognize this '%s' argument${NC}\n\n" "$PARAM"
 				show_usage attach
 				;;
 		esac
@@ -290,47 +303,51 @@ attach_cmd() {
 	done
 
 	if [ -z "$VOLUME_NAME" ] || [ -z "$VOLUME_SIZE" ] || [ -z "$POOL_NAME" ] || [ -z "$VM_DEV" ]; then
-		printf "\n${RED}ERROR:${NC} One of the required arguments has not been set\n"
+		printf "\n${RED}At least one of the required arguments has not been set${NC}\n\n"
 		show_usage attach
 	fi
 
-	ALL_VMS=$(virsh list --name --all)
-	if [ -z "$ALL_VMS" ]; then
-		printf "\n${RED}ERROR:${NC} I cannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI properly set?)\n"
+	ALL_VMs=$(virsh list --name --all)
+	if [ -z "$ALL_VMs" ]; then
+		printf "\n${RED}I cannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI properly set?)${NC}\n"
 		show_usage attach
 	fi
 
 	POOL_PATH=$(virsh pool-dumpxml "$POOL_NAME" | grep "<path>" | awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
-	VOLUMES_ATTACHED=0
+
 	for candidate; do
-		VM_EXISTS=$(echo "$ALL_VMS" | grep -w "$candidate")
-		if [ -z "$VM_EXISTS" ]; then
-			printf "${YELLOW}WARNING:${NC} VM $candidate does not seem to exist\n"
-		else
-			QCOW2_NAME="$candidate"_"$VM_DEV"_"$VOLUME_NAME"_"$VOLUME_SIZE".qcow2
-			QCOW2_PATH="$POOL_PATH"/"$QCOW2_NAME"
-			printf "${GREEN}INFO:${NC} Creating QCOW2 image $QCOW2_NAME for $candidate\n"
+        is_name_valid "$candidate"
+        if [ $? == 0 ]; then
+            printf "${YELLOW}%s is not a valid VM name${NC}\n" "$candidate"
+        else
+            isVM=$(echo "$ALL_VMs" | grep -w "$candidate")
+            if [ -z "$isVM" ]; then
+                printf "${YELLOW}%s does not look like a VM${NC}\n" "$candidate"
+            else
+                QCOW2_NAME="$candidate"_"$VM_DEV"_"$VOLUME_NAME"_"$VOLUME_SIZE".qcow2
+                QCOW2_PATH="$POOL_PATH"/"$QCOW2_NAME"
 
-			virsh --quiet vol-create-as "$POOL_NAME" --name "$QCOW2_NAME" --capacity "$VOLUME_SIZE" --format qcow2
+                printf "${GREEN}Creating QCOW2 image %s for %s${NC}\n" "$QCOW2_NAME" "$candidate"
 
-			VIRSH_ERROR_CODE="$?"
-			if [ $VIRSH_ERROR_CODE -ne 0 ]; then
-				printf "${RED}ERROR:${NC} Operation failed, virsh returned error code $VIRSH_ERROR_CODE, terminating now.\n"
-				exit 2
-			fi
-			printf "${GREEN}INFO:${NC} Attaching $QCOW2_NAME to $candidate\n\n"
+                virsh --quiet vol-create-as "$POOL_NAME" --name "$QCOW2_NAME" --capacity "$VOLUME_SIZE" --format qcow2
 
-			virsh --quiet attach-disk "$candidate" "$QCOW2_PATH" "$VM_DEV" --driver qemu --subdriver qcow2 --targetbus virtio --persistent
+                if [ $? -ne 0 ]; then
+                    printf "${RED}Operation failed, virsh returned error code %d, terminating now.${NC}\n" $?
+                    exit 2
+                fi
 
-			VIRSH_ERROR_CODE="$?"
-			if [ $VIRSH_ERROR_CODE -ne 0 ]; then
-				printf "${RED}ERROR:${NC} Operation failed, virsh returned error code $VIRSH_ERROR_CODE, terminating now.\n"
-				exit 2
-			fi
-			VOLUMES_ATTACHED=$((VOLUMES_ATTACHED + 1))
-		fi
+                printf "${GREEN}Attaching %s to %s${NC}\n\n" "$QCOW2_NAME" "$candidate"
+
+                virsh --quiet attach-disk "$candidate" "$QCOW2_PATH" "$VM_DEV" \
+                --driver qemu --subdriver qcow2 --targetbus virtio --persistent
+
+                if [ $? -ne 0 ]; then
+                    printf "${RED}Operation failed, virsh returned error code %d, terminating now.${NC}\n" $?
+                    exit 2
+                fi
+            fi
+        fi
 	done
-	printf "${GREEN}SUMMARY:${NC} $VOLUMES_ATTACHED storage volume(s) successfully attached.\n"
 }
 
 checkservice_cmd() {
@@ -412,7 +429,7 @@ clone_cmd() {
 				fi
 				;;
 			*)
-				printf "\n${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n"
+				printf "\n${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n\n"
 				show_usage clone
 				;;
 		esac
