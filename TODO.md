@@ -9,7 +9,7 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 
 `attach`
 * before attaching a new volume, automatically pick the first available block device name (`vdb`, `vdc`, etc.)
-* sanitize user input (volume/pool/VM names, volume sizes)
+* sanitize user input (volume/pool/VM names, volume sizes) (__pending volume sizes__)
 
 `check-service`
 * sanitize user input (TCP port number, VM name)
