@@ -15,10 +15,10 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 * sanitize user input (TCP port number, VM name) (pending __TCP port number__)
 
 `clone`
+* sanitize user input (template/VM/pool names) (__DONE__)
 * investigate failures while trying to clone "empty" VMs
 * use virt-customize before moving volume to new pool
 * clone VMs with more than one storage volumes
-* sanitize user input (template/VM/pool names)
 
 `deactivate`
 * sanitize user input (VM names)

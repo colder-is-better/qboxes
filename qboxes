@@ -253,15 +253,13 @@ attach_cmd() {
 				if [ -z "$VALUE" ]; then
 					printf "${RED}Volume name not specified${NC}\n"
 					exit 1
-                else
-                    is_name_valid "$VALUE"
-                    if [ $? == 0 ]; then
-                        printf "${YELLOW}%s is not a valid volume name${NC}\n" "$VALUE"
-                        exit 1
-                    else
-				        VOLUME_NAME=$VALUE
-                    fi
                 fi
+                is_name_valid "$VALUE"
+                if [ $? == 0 ]; then
+                    printf "${RED}%s is not a valid volume name${NC}\n" "$VALUE"
+                    exit 1
+                fi
+                VOLUME_NAME=$VALUE
 			;;
 			--size)
 				if [ -z "$VALUE" ]; then
@@ -277,16 +275,15 @@ attach_cmd() {
 				fi
                 is_name_valid "$VALUE"
                 if [ $? == 0 ]; then
-                    printf "${YELLOW}%s is not a valid pool name${NC}\n" "$VALUE"
+                    printf "${RED}%s is not a valid pool name${NC}\n" "$VALUE"
                     exit 1
-                else
-				    POOL_EXISTS=$(virsh pool-list | grep -w "$VALUE")
-				    if [ -z "$POOL_EXISTS" ]; then
-					    printf "${RED}I cannot seem to find pool %s${NC}\n" "$VALUE"
-					    exit 1
-				    fi
-                    POOL_NAME=$VALUE
                 fi
+                POOL_EXISTS=$(virsh pool-list | grep -w "$VALUE")
+                if [ -z "$POOL_EXISTS" ]; then
+                    printf "${RED}I cannot seem to find pool %s${NC}\n" "$VALUE"
+                    exit 1
+                fi
+                POOL_NAME=$VALUE
 			;;
 			--vmdev)
 				if [ -z "$VALUE" ]; then
@@ -294,11 +291,11 @@ attach_cmd() {
 					exit 1
 				fi
 				VM_DEV=$VALUE
-				;;
+            ;;
 			*)
 				printf "\n${RED}I do not recognize this '%s' argument${NC}\n\n" "$PARAM"
 				show_usage attach
-				;;
+            ;;
 		esac
 		shift
 	done
@@ -367,15 +364,14 @@ checkservice_cmd() {
 		if [ -z "$VALUE" ]; then
 			printf "${RED}Invalid TCP port${NC}\n"
 			exit 1
-		else
-			TCP_PORT=$VALUE
 		fi
+        TCP_PORT=$VALUE
 	fi
 
 	VM="$2"
     is_name_valid "$VM"
     if [ $? == 0 ]; then
-        printf "${YELLOW}%s is not a valid VM name${NC}\n" "$VM"
+        printf "${RED}%s is not a valid VM name${NC}\n" "$VM"
         exit 1
     fi
 
@@ -397,7 +393,7 @@ checkservice_cmd() {
 clone_cmd() {
 	LOWEST_NUM_ARGS=3
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
+		printf "\n${RED}Incorrect number of arguments (I need at least %d)${NC}\n\n" $LOWEST_NUM_ARGS
 		show_usage clone
 	fi
 
@@ -409,40 +405,50 @@ clone_cmd() {
 		case $PARAM in
 			--template)
 				if [ -z "$VALUE" ]; then
-					printf "${RED}ERROR:${NC} Invalid template name\n"
+					printf "${RED}Template name not specified${NC}\n"
 					exit 1
 				fi
-
-				TEMPLATE_VM=$VALUE
-				TEMPLATE_EXISTS=$(virsh list --name --inactive | grep -w "$TEMPLATE_VM")
+                is_name_valid "$VALUE"
+                if [ $? == 0 ]; then
+                    printf "${RED}%s is not a valid template name${NC}\n" "$VALUE"
+                    exit 1
+                fi
+				TEMPLATE_EXISTS=$(virsh list --name --inactive | grep -w "$VALUE")
 				if [ -z "$TEMPLATE_EXISTS" ]; then
-					printf "${RED}ERROR:${NC} Template should be an existing inactive VM\n"
+					printf "${RED}Template should be an existing inactive VM${NC}\n"
 					exit 1
 				fi
-				;;
+                TEMPLATE_VM=$VALUE
+            ;;
 			--target-pool)
 				if [ -z "$VALUE" ]; then
-					printf "${RED}ERROR:${NC} Invalid pool name\n"
+					printf "${RED}Target pool not specified${NC}\n"
 					exit 1
 				fi
 
-				CLONE_POOL_NAME=$VALUE
-				POOL_EXISTS=$(virsh pool-list | grep -w "$CLONE_POOL_NAME")
+                is_name_valid "$VALUE"
+                if [ $? == 0 ]; then
+                    printf "${RED}%s is not a valid pool name${NC}\n" "$VALUE"
+                    exit 1
+                fi
+
+				POOL_EXISTS=$(virsh pool-list | grep -w "$VALUE")
 				if [ -z "$POOL_EXISTS" ]; then
-					printf "${RED}ERROR:${NC} I cannot seem to find pool $CLONE_POOL_NAME\n"
+					printf "${RED}I cannot seem to find pool %s${NC}\n" "$VALUE"
 					exit 1
 				fi
-				;;
+                CLONE_POOL_NAME=$VALUE
+            ;;
 			*)
-				printf "\n${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n\n"
+				printf "\n${RED}I do not recognize this '%s' argument${NC}\n\n" "$PARAM"
 				show_usage clone
-				;;
+			;;
 		esac
 		shift
 	done
 
 	if [ -z "$TEMPLATE_VM" ] || [ -z "$CLONE_POOL_NAME" ]; then
-		printf "\n${RED}ERROR:${NC} One of the required arguments is not set\n"
+		printf "\n${RED}One of the required arguments is not set${NC}\n"
 		show_usage clone
 	fi
 
@@ -462,65 +468,63 @@ clone_cmd() {
 	done
 
 	TEMPLATE_VOLUME_NAME=$(echo "$TEMPLATE_VOLUME_PATH" | awk -F "${TEMPLATE_POOL_PATH}/" '{ print $2 }')
-	CLONES_CREATED=0
-	ALL_VMS=$(virsh list --name --all)
+	ALL_VMs=$(virsh list --name --all)
 	CLONE_POOL_PATH=$(virsh pool-dumpxml "$CLONE_POOL_NAME" | grep "<path>" | awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
 
 	for candidate; do
-		VM_EXISTS=$(echo "$ALL_VMS" | grep -w "$candidate")
-		if [ -n "$VM_EXISTS" ]; then
-			printf "${YELLOW}WARNING:${NC} There is already a VM $candidate, so I am skipping this one\n"
-		else
-			CLONE_VOLUME_NAME="$candidate".qcow2
+        is_name_valid "$candidate"
+        if [ $? == 0 ]; then
+            printf "${YELLOW}%s is not a valid VM name${NC}\n" "$candidate"
+        else
+            VM_EXISTS=$(echo "$ALL_VMs" | grep -w "$candidate")
+            if [ -n "$VM_EXISTS" ]; then
+                printf "${YELLOW}There is already a VM %s, so I am skipping this one${NC}\n" "$candidate"
+            else
+                CLONE_VOLUME_NAME="$candidate".qcow2
 
-			printf "${GREEN}INFO:${NC} Cloning $TEMPLATE_VOLUME_NAME into $CLONE_VOLUME_NAME\n"
+                printf "${GREEN}Cloning %s into %s${NC}\n" "$TEMPLATE_VOLUME_NAME" "$CLONE_VOLUME_NAME"
 
-			virsh --quiet vol-clone --pool "$TEMPLATE_POOL_NAME" "$TEMPLATE_VOLUME_NAME" "$CLONE_VOLUME_NAME"
+                virsh --quiet vol-clone --pool "$TEMPLATE_POOL_NAME" "$TEMPLATE_VOLUME_NAME" "$CLONE_VOLUME_NAME"
 
-			ERROR_CODE="$?"
-			if [ $ERROR_CODE -ne 0 ]; then
-				printf "${RED}ERROR:${NC} Operation failed, virsh returned error code $ERROR_CODE, terminating now.\n"
-				exit 2
-			fi
+                if [ $? -ne 0 ]; then
+                    printf "${RED}Operation failed, virsh returned error code %d, terminating now.${NC}\n" $?
+                    exit 2
+                fi
 
-			if [ "$TEMPLATE_POOL_PATH" != "$CLONE_POOL_PATH" ]; then
-				printf "${GREEN}INFO:${NC} Moving $CLONE_VOLUME_NAME between pools ($TEMPLATE_POOL_NAME ==> $CLONE_POOL_NAME)\n"
-				sudo mv "$TEMPLATE_POOL_PATH"/"$CLONE_VOLUME_NAME" "$CLONE_POOL_PATH"/
+                if [ "$TEMPLATE_POOL_PATH" != "$CLONE_POOL_PATH" ]; then
+                    printf "${GREEN}Moving %s between pools (%s ==> %s)${NC}\n" "$CLONE_VOLUME_NAME" "$TEMPLATE_POOL_NAME" "$CLONE_POOL_NAME"
 
-				ERROR_CODE="$?"
-				if [ $ERROR_CODE -ne 0 ]; then
-					printf "${RED}ERROR:${NC} Operation failed, mv returned error code $ERROR_CODE, terminating now.\n"
-					exit 2
-				fi
+                    sudo mv "$TEMPLATE_POOL_PATH"/"$CLONE_VOLUME_NAME" "$CLONE_POOL_PATH"/
 
-				virsh --quiet pool-refresh "$TEMPLATE_POOL_NAME"
-				virsh --quiet pool-refresh "$CLONE_POOL_NAME"
-			fi
+                    if [ $? -ne 0 ]; then
+                        printf "${RED}Operation failed, mv returned error code %d, terminating now.${NC}\n" $ERROR_CODE
+                        exit 2
+                    fi
 
-			printf "${GREEN}INFO:${NC} Cloning $TEMPLATE_VM into $candidate and attaching $CLONE_VOLUME_NAME to it\n"
+                    virsh --quiet pool-refresh "$TEMPLATE_POOL_NAME"
+                    virsh --quiet pool-refresh "$CLONE_POOL_NAME"
+                fi
 
-			virt-clone --quiet -o "$TEMPLATE_VM" -n "$candidate" --preserve-data -f "$CLONE_POOL_PATH"/"$CLONE_VOLUME_NAME"
+                printf "${GREEN}Cloning %s into %s and attaching %s to it${NC}\n" "$TEMPLATE_VM" "$candidate" "$CLONE_VOLUME_NAME"
 
-			ERROR_CODE="$?"
-			if [ $ERROR_CODE -ne 0 ]; then
-				printf "${RED}ERROR:${NC} Operation failed, virt-clone returned error code $ERROR_CODE, terminating now.\n"
-				exit 2
-			fi
+                virt-clone --quiet -o "$TEMPLATE_VM" -n "$candidate" --preserve-data -f "$CLONE_POOL_PATH"/"$CLONE_VOLUME_NAME"
 
-			printf "${GREEN}INFO:${NC} Setting hostname for ${candidate} (this may take a while)\n\n"
+                if [ $? -ne 0 ]; then
+                    printf "${RED}Operation failed, virt-clone returned error code %d, terminating now.${NC}\n" $?
+                    exit 2
+                fi
 
-			sudo virt-customize --quiet -d "$candidate" --hostname "$candidate"
+                printf "${GREEN}Setting hostname for %s (this may take a while)${NC}\n\n" "$candidate"
 
-			ERROR_CODE="$?"
-			if [ $ERROR_CODE -ne 0 ]; then
-				printf "${RED}ERROR:${NC} Operation failed, virt-customize returned error code $ERROR_CODE\n"
-			fi
+                sudo virt-customize --quiet -d "$candidate" --hostname "$candidate"
 
-			CLONES_CREATED=$((CLONES_CREATED + 1))
-		fi
+                if [ $? -ne 0 ]; then
+                    printf "${RED}Operation failed, virt-customize returned error code %d, terminating now.${NC}\n" $?
+                    exit 2
+                fi
+            fi
+        fi
 	done
-
-	printf "${GREEN}SUMMARY:${NC} $CLONES_CREATED VM(s) successfully cloned from template VM $TEMPLATE_VM.\n"
 }
 
 deactivate_cmd() {
@@ -647,11 +651,11 @@ define_cmd() {
 	fi
 
 	VMs_DEFINED=0
-	ALL_VMS=$(virsh list --name --all)
+	ALL_VMs=$(virsh list --name --all)
 	POOL_PATH=$(virsh pool-dumpxml "$POOL_NAME" | grep "<path>" | awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
 
 	for candidate; do
-		VM_EXISTS=$(echo "$ALL_VMS" | grep -w "$candidate")
+		VM_EXISTS=$(echo "$ALL_VMs" | grep -w "$candidate")
 		if [ -n "$VM_EXISTS" ]; then
 			printf "${YELLOW}WARNING:${NC} There is already a VM $candidate, so I am skipping this one\n"
 		else
@@ -714,14 +718,14 @@ getmac_cmd() {
 		show_usage getmac
 	fi
 
-	ALL_VMS=$(virsh list --name --all)
-	if [ -z "$ALL_VMS" ]; then
+	ALL_VMs=$(virsh list --name --all)
+	if [ -z "$ALL_VMs" ]; then
 		printf "\n${RED}ERROR:${NC} I cannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI set?)\n"
 		show_usage getmac
 	fi
 
 	for candidate; do
-		VM_EXISTS=$(echo "$ALL_VMS" | grep -w "$candidate")
+		VM_EXISTS=$(echo "$ALL_VMs" | grep -w "$candidate")
 		if [ -z "$VM_EXISTS" ]; then
 			printf "${YELLOW}WARNING:${NC} I cannot seem to find this '$candidate' VM\n"
 		else
