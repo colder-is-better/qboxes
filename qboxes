@@ -105,21 +105,21 @@ show_usage() {
 			printf "SYNOPSIS\n"
 			printf "  ping --count=<number_of_packets> <active_VM_1> ... <active_VM_k>\n\n"
 			printf "DESCRIPTION\n"
-        		printf "  Send a specified number of ICMP packets to one or more active VMs\n\n"
+            printf "  Send a specified number of ICMP packets to one or more active VMs\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
 			printf "  ~/bin> ${BFACE}qboxes ping --count=3 sles12sp2 sles12sp3${NFACE}\n\n"
-        		exit 1
+            exit 1
 			;;
 		reboot)
 			printf "COMMAND NAME\n";
 			printf "  reboot - restart active VMs\n\n";
-        		printf "SYNOPSIS\n";
-        		printf "  reboot <active_VM_1> ... <active_VM_k>\n\n";
-        		printf "DESCRIPTION\n";
-        		printf "  Try to gracefully restart one or more active VMs\n\n"
+            printf "SYNOPSIS\n";
+            printf "  reboot <active_VM_1> ... <active_VM_k>\n\n";
+            printf "DESCRIPTION\n";
+            printf "  Try to gracefully restart one or more active VMs\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
 			printf "  ~/bin> ${BFACE}qboxes reboot sles12sp3${NFACE}\n"
-        		exit 1
+            exit 1
 			;;
 		*)
 			printf "\nThis is ${GREEN}qboxes${NC}, a simple command line tool for managing local QEMU/KVM VMs.\n"
@@ -136,6 +136,7 @@ show_usage() {
 			printf "  reboot\t: restart active VMs\n\n"
 			printf "  help\t\t: display this summary of commands\n\n"
 			printf "Type ${GREEN}qboxes command_name${NC} for the syntax and a usage example of a specific command.\n\n"
+            exit 1
 			;;
 	esac
 }
@@ -353,18 +354,18 @@ attach_cmd() {
 checkservice_cmd() {
 	NUM_ARGS=2
 	if [ $# -ne $NUM_ARGS ]; then
-		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need exactly $NUM_ARGS)\n\n"
+		printf "\n${RED}Incorrect number of arguments (I need exactly $NUM_ARGS)${NC}\n\n"
 		show_usage check-service
 	fi
 
 	PARAM=$(echo "$1" | awk -F= '{print $1}')
 	VALUE=$(echo "$1" | awk -F= '{print $2}')
 	if [ "$PARAM" != "--port" ]; then
-		printf "\n${RED}ERROR:${NC} I do not recognize this '$PARAM' argument\n"
+		printf "\n${RED}I do not recognize this '$PARAM' argument${NC}\n\n"
 		show_usage check-service
 	else
 		if [ -z "$VALUE" ]; then
-			printf "${RED}ERROR:${NC} Invalid TCP port\n"
+			printf "${RED}Invalid TCP port${NC}\n"
 			exit 1
 		else
 			TCP_PORT=$VALUE
@@ -372,21 +373,25 @@ checkservice_cmd() {
 	fi
 
 	VM="$2"
-	IS_ACTIVE=$(virsh list --name | grep -w "$VM")
-	if [ -z "$IS_ACTIVE" ]; then
-		printf "${RED}ERROR:${NC} $VM is not an active VM\n"
-		exit 2
+    is_name_valid "$VM"
+    if [ $? == 0 ]; then
+        printf "${YELLOW}%s is not a valid VM name${NC}\n" "$VM"
+        exit 1
+    fi
+
+	isActive=$(virsh list --name | grep -w "$VM")
+	if [ -z "$isActive" ]; then
+		printf "${RED}%s is not an active VM${NC}\n" "$VM"
+		exit 1
 	fi
 
 	nc -z -w 1 "$VM" "$TCP_PORT" > /dev/null 2>&1
 
-	ERROR_CODE="$?"
-	if [ $ERROR_CODE == 0 ]; then
-		printf "${GREEN}INFO:${NC} $VM is ${GREEN}accepting${NC} packets on port $TCP_PORT/TCP\n"
+	if [ $? == 0 ]; then
+		printf "${GREEN}%s is accepting packets on port %d/TCP${NC}\n" "$VM" "$TCP_PORT"
 	else
-		printf "${GREEN}INFO:${NC} $VM is ${RED}not accepting${NC} packets on port $TCP_PORT/TCP\n"
+		printf "${RED}%s is not accepting packets on port %d/TCP${NC}\n" "$VM" "$TCP_PORT"
 	fi
-	exit $ERROR_CODE
 }
 
 clone_cmd() {
