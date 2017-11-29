@@ -8,11 +8,11 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 * delete DHCP leases of annihilated domains (see `virbr*.status` files, in `/var/lib/libvirt/dnsmasq`)
 
 `attach`
+* sanitize user input (volume/pool/VM names, volume sizes) (pending __volume sizes__)
 * before attaching a new volume, automatically pick the first available block device name (`vdb`, `vdc`, etc.)
-* sanitize user input (volume/pool/VM names, volume sizes) (__pending volume sizes__)
 
 `check-service`
-* sanitize user input (TCP port number, VM name)
+* sanitize user input (TCP port number, VM name) (pending __TCP port number__)
 
 `clone`
 * investigate failures while trying to clone "empty" VMs
