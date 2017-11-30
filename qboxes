@@ -147,7 +147,7 @@ is_name_valid() {
 	if [ -n "$FIRST_CHAR_TEST" ]; then
 		return 0
 	else
-		VALID_NAME_TEST=$(echo "$THE_NAME" | tr -d "[:alnum:]-_")
+		VALID_NAME_TEST=$(echo "$THE_NAME" | tr -d "[:alnum:]-_.")
 		if [ -n "$VALID_NAME_TEST" ]; then
 			return 0
 		else
@@ -180,7 +180,7 @@ activate_cmd() {
 			else
 				printf "${GREEN}Powering up %s${NC}\n" "$candidate"
 				virsh --quiet start "$candidate" \
-                || printf "${RED}Operation failed, virsh returned error code %d${NC}\n" $?
+                || printf "${YELLOW}Operation failed, virsh returned error code %d${NC}\n" $?
             fi
 		fi
 	done
@@ -212,18 +212,16 @@ annihilate_cmd() {
                 ALL_SNAPSHOTS=$(virsh snapshot-list --name "$candidate")
                 if [ -n "$ALL_SNAPSHOTS" ]; then
                     for each_snapshot in "$ALL_SNAPSHOTS"; do
-
                         virsh --quiet snapshot-delete --domain "$candidate" --snapshotname "$each_snapshot"
-
                         if [ $? -ne 0 ]; then
-                            printf "${RED}Failed to delete snapshot %s of %s, virsh returned error code %d, terminating now.${NC}\n" "$each_snapshot" "$candidate" $?
+                            printf \
+                            "${RED}Failed to delete snapshot %s of %s, virsh returned error code %d, terminating now.${NC}\n" \
+                            "$each_snapshot" "$candidate" $?
                             exit 2
                         fi
                     done
                 fi
-
                 virsh --quiet undefine "$candidate" --remove-all-storage --wipe-storage
-
                 if [ $? -ne 0 ]; then
                     printf "${RED}Operation failed, virsh returned error code %d, terminating now.${NC}\n" $?
                     exit 2
@@ -425,13 +423,11 @@ clone_cmd() {
 					printf "${RED}Target pool not specified${NC}\n"
 					exit 1
 				fi
-
                 is_name_valid "$VALUE"
                 if [ $? == 0 ]; then
                     printf "${RED}%s is not a valid pool name${NC}\n" "$VALUE"
                     exit 1
                 fi
-
 				POOL_EXISTS=$(virsh pool-list | grep -w "$VALUE")
 				if [ -z "$POOL_EXISTS" ]; then
 					printf "${RED}I cannot seem to find pool %s${NC}\n" "$VALUE"
@@ -530,36 +526,36 @@ clone_cmd() {
 deactivate_cmd() {
 	LOWEST_NUM_ARGS=1
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
+		printf "\n${RED}Incorrect number of arguments (I need at least %d)${NC}\n\n" $LOWEST_NUM_ARGS
 		show_usage deactivate
 	fi
 
-	ALL_ACTIVE_VMS=$(virsh list --name)
-	if [ -z "$ALL_ACTIVE_VMS" ]; then
-		printf "\n${RED}ERROR:${NC} I cannot seem to find a single active VM (is LIBVIRT_DEFAULT_URI set?)\n"
+	ALL_ACTIVE_VMs=$(virsh list --name)
+	if [ -z "$ALL_ACTIVE_VMs" ]; then
+		printf "\n${RED}I cannot seem to find a single active VM (is LIBVIRT_DEFAULT_URI set?)${NC}\n"
 		show_usage deactivate
 	fi
 
-	VMs_DEACTIVATED=0
 	for candidate; do
-		VM_EXISTS=$(echo "$ALL_ACTIVE_VMS" | grep -w "$candidate")
-		if [ -z "$VM_EXISTS" ]; then
-			printf "${YELLOW}WARNING:${NC} $candidate is not an active VM\n"
-		else
-			printf "${GREEN}INFO:${NC} Shutting active VM $candidate down\n"
+        is_name_valid "$candidate"
+        if [ $? == 0 ]; then
+            printf "${YELLOW}%s is not a valid VM name${NC}\n" "$candidate"
+        else
+            VM_EXISTS=$(echo "$ALL_ACTIVE_VMs" | grep -w "$candidate")
+            if [ -z "$VM_EXISTS" ]; then
+                printf "${YELLOW}%s is not an active VM${NC}\n" "$candidate"
+            else
+                printf "${GREEN}Shutting down %s${NC}\n" "$candidate"
 
-			virsh --quiet shutdown $candidate
+                virsh --quiet shutdown $candidate
 
-			VIRSH_ERROR_CODE="$?"
-			if [ $VIRSH_ERROR_CODE -ne 0 ]; then
-				printf "${RED}ERROR:${NC} Operation failed, virsh returned error code $VIRSH_ERROR_CODE\n"
-			else
-				VMs_DEACTIVATED=$((VMs_DEACTIVATED + 1))
-			fi
-			sleep 1
-		fi
+                if [ $? -ne 0 ]; then
+                    printf "${RED}Operation failed, virsh returned error code %d, terminating now.\n" $?
+                    exit 2
+                fi
+            fi
+        fi
 	done
-	printf "${GREEN}SUMMARY:${NC} $VMs_DEACTIVATED VM(s) successfully deactivated.\n"
 }
 
 define_cmd() {

@@ -21,7 +21,7 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 * clone VMs with more than one storage volumes
 
 `deactivate`
-* sanitize user input (VM names)
+* sanitize user input (VM names) (__DONE__)
 
 `define`
 * sanitize user input (RAM size, CPU core count, volume capacity, network name, OS variant, pool/VM names)
