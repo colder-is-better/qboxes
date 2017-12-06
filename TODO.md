@@ -22,7 +22,6 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 * sanitize user input (pool/VM names) (__DONE__)
 * improve the matching of pool/VM names with dashes (__DONE__)
 * investigate failures while trying to clone "empty" VMs
-* use virt-customize before moving volume to new pool
 * clone VMs with more than one storage volumes
 
 `deactivate`
@@ -32,6 +31,7 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 `define`
 * sanitize user input (RAM, CPU cores, volume capacity, network name, OS variant, pool/VM names)
   (pending __RAM__, __CPU cores__, __volume capacity__)
+* improve the matching of network/OS variant/pool/VM names with dashes (__DONE__)
 
 `getmac`
 * sanitize user input (VM names)
