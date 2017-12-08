@@ -7,6 +7,7 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 `annihilate`
 * sanitize user input (VM names) (__DONE__)
 * improve the matching of VM names with dashes (__DONE__)
+* remove entries from .ssh/known_hosts
 * delete DHCP leases of annihilated domains (see files in `/var/lib/libvirt/dnsmasq`)
 
 `attach`
@@ -21,6 +22,7 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 `clone`
 * sanitize user input (pool/VM names) (__DONE__)
 * improve the matching of pool/VM names with dashes (__DONE__)
+* delete SSH host keys in clones (__DONE__)
 * investigate failures while trying to clone "empty" VMs
 * clone VMs with more than one storage volumes
 

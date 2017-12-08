@@ -545,9 +545,28 @@ clone_cmd() {
                     exit 2
                 fi
 
-                printf "${GREEN}Setting hostname for %s (this may take a while)${NC}\n\n" "$candidate"
+                printf "${GREEN}Setting hostname for %s (this may take a while)${NC}\n" "$candidate"
 
                 sudo virt-customize --quiet -d "$candidate" --hostname "$candidate"
+
+                if [ $? -ne 0 ]; then
+                    printf "${RED}Operation failed, virt-customize returned error code %d, terminating now.${NC}\n" $?
+                    exit 2
+                fi
+
+                printf "${GREEN}Deleting SSH host keys from %s (this may take a while)${NC}\n\n" "$candidate"
+
+                sudo virt-customize --quiet -d "$candidate" \
+                --delete /etc/ssh/ssh_host_dsa_key \
+                --delete /etc/ssh/ssh_host_dsa_key.pub \
+                --delete /etc/ssh/ssh_host_ecdsa_key \
+                --delete /etc/ssh/ssh_host_ecdsa_key.pub \
+                --delete /etc/ssh/ssh_host_ed25519_key \
+                --delete /etc/ssh/ssh_host_ed25519_key.pub \
+                --delete /etc/ssh/ssh_host_key \
+                --delete /etc/ssh/ssh_host_key.pub \
+                --delete /etc/ssh/ssh_host_rsa_key \
+                --delete /etc/ssh/ssh_host_rsa_key.pub
 
                 if [ $? -ne 0 ]; then
                     printf "${RED}Operation failed, virt-customize returned error code %d, terminating now.${NC}\n" $?
