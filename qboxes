@@ -147,7 +147,7 @@ is_name_valid() {
 	if [ -n "$FIRST_CHAR_TEST" ]; then
 		return 0
 	else
-		VALID_NAME_TEST=$(echo "$THE_NAME" | tr -d "[:alnum:]-_")
+		VALID_NAME_TEST=$(echo "$THE_NAME" | tr -d "[:alnum:]-_.")
 		if [ -n "$VALID_NAME_TEST" ]; then
 			return 0
 		else
@@ -680,7 +680,8 @@ define_cmd() {
 					printf "${RED}OS variant not specified${NC}\n"
 					exit 1
 				fi
-                if [ -n "$(echo "${VALUE:0:1}" | tr -d "[:alnum:]")" ] || [ -n "$(echo "$VALUE" | tr -d "[:alnum:]-_.")" ]; then
+                is_name_valid $VALUE
+                if [ $? == 0 ]; then
                     printf "${RED}%s is not a valid OS variant name${NC}\n" "$VALUE"
                     exit 1
                 fi
