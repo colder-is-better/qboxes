@@ -196,6 +196,7 @@ activate_cmd() {
                 printf "${GREEN}Powering up %s${NC}\n" "$candidate"
                 virsh --quiet start "$candidate" \
                 || printf "${YELLOW}Operation failed, virsh returned error code %d${NC}\n" $?
+                sleep 1
             fi            
 		fi
 	done
@@ -349,7 +350,7 @@ attach_cmd() {
 
                 printf "${GREEN}Creating QCOW2 image %s for %s${NC}\n" "$QCOW2_NAME" "$candidate"
 
-                virsh --quiet vol-create-as "$POOL_NAME" --name "$QCOW2_NAME" --capacity "$VOLUME_SIZE" --format qcow2
+                virsh --quiet vol-create-as "$POOL_NAME" --name "$QCOW2_NAME" --capacity ${VOLUME_SIZE}G --format qcow2
 
                 if [ $? -ne 0 ]; then
                     printf "${RED}Operation failed, virsh returned error code %d, terminating now.${NC}\n" $?
@@ -528,7 +529,7 @@ clone_cmd() {
                     sudo mv "$TEMPLATE_POOL_PATH"/"$CLONE_VOLUME_NAME" "$CLONE_POOL_PATH"/
 
                     if [ $? -ne 0 ]; then
-                        printf "${RED}Operation failed, mv returned error code %d, terminating now.${NC}\n" $ERROR_CODE
+                        printf "${RED}Operation failed, mv returned error code %d, terminating now.${NC}\n" $?
                         exit 2
                     fi
 
@@ -619,13 +620,13 @@ define_cmd() {
 	LOWEST_NUM_ARGS=7
 
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "\n${RED}ERROR:${NC} Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)\n\n"
+		printf "\n${RED}Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)${NC}\n\n"
 		show_usage define
 	fi
 
 	MEMORY_SIZE=""
 	CPU_CORES=""
-	VOLUME_CAPACITY=""
+	VOLUME_SIZE=""
 	LIBVIRT_NETWORK=""
 	OS_VARIANT=""
 	POOL_NAME=""
@@ -655,7 +656,7 @@ define_cmd() {
 					printf "${RED}Invalid volume size${NC}\n"
 					exit 1
 				fi
-				VOLUME_CAPACITY=$VALUE
+				VOLUME_SIZE=$VALUE
             ;;
 			--network)
                 if [ -z "$VALUE" ]; then
@@ -719,7 +720,7 @@ define_cmd() {
 		shift
 	done
 
-	if [ -z "$MEMORY_SIZE" ] || [ -z "$CPU_CORES" ] || [ -z "$VOLUME_CAPACITY" ] \
+	if [ -z "$MEMORY_SIZE" ] || [ -z "$CPU_CORES" ] || [ -z "$VOLUME_SIZE" ] \
     || [ -z "$LIBVIRT_NETWORK" ] || [ -z "$OS_VARIANT" ] || [ -z "$POOL_NAME" ]; then
 		printf "\n${RED}One of the required arguments is not set${NC}\n\n"
 		show_usage define
@@ -744,7 +745,7 @@ define_cmd() {
 
                 printf "${GREEN}Creating volume %s for VM %s${NC}\n" "$QCOW2_NAME" "$candidate"
 
-                virsh --quiet vol-create-as "$POOL_NAME" --name "$QCOW2_NAME" --capacity "$VOLUME_CAPACITY" --format qcow2
+                virsh --quiet vol-create-as "$POOL_NAME" --name "$QCOW2_NAME" --capacity ${VOLUME_SIZE}G --format qcow2
 
                 if [ $? -ne 0 ]; then
                     printf "${RED}Operation failed, virsh returned error code %d, terminating now.${NC}\n" $?
