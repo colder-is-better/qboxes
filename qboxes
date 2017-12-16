@@ -20,29 +20,33 @@ show_usage() {
 			printf "${BFACE}EXAMPLE${NFACE}\n"
 			printf "  ~/bin> ${BFACE}qboxes activate leap423 sles11sp4${NFACE}\n\n"
 			exit 1
-			;;
+		;;
 		annihilate)
 			printf "COMMAND NAME\n"
 			printf "  annihilate - remove any trace of inactive VMs\n\n"
 			printf "SYNOPSIS\n"
 			printf "  annihilate <inactive_VM_1> ... <inactive_VM_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Undefine one or more inactive VMs, delete all snapshots and associated storage volumes (${RED}think TWICE before annihilating!${NC})\n\n"
+			printf "  Undefine one or more inactive VMs, delete all snapshots and"
+			printf " associated storage volumes (${RED}think TWICE before annihilating${NC})\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes annihilate guest_{1..5}${NFACE}\n\n" 
+			printf "  ~/bin> ${BFACE}qboxes annihilate guest_{1..5}${NFACE}\n\n"
 			exit 1
-			;;
+		;;
 		attach)
 			printf "COMMAND NAME\n"
 			printf "  attach - attach storage volumes to VMs\n\n"
 			printf "SYNOPSIS\n"
-			printf "  attach --name=<volume_name> --size=<capacity_in_GiB> --pool=<name> --vmdev=<VM_device> <VM_1> ... <VM_k>\n\n"
+			printf "  attach --name=<volume_name> --size=<capacity_in_GiB> --pool=<name>"
+			printf " --vmdev=<VM_device> <VM_1> ... <VM_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Create sparse QCOW2 files in specified pool, attach them as virtual hard drives to VMs\n\n"
+			printf "  Create sparse QCOW2 files in specified pool, attach them as virtual"
+			printf " hard drives to VMs\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes attach --name=data --size=4096 --pool=services --vmdev=vdb osd_node_{1,2,3}${NFACE}\n\n"
+			printf "  ~/bin> ${BFACE}qboxes attach --name=data --size=4096 --pool=lab"
+			printf " --vmdev=vdb osd_node_{1,2,3}${NFACE}\n\n"
 			exit 1
-			;;
+		;;
 		check-service)
 			printf "COMMAND NAME\n"
 			printf "  check-service - check if connections to specified TCP port of a VM are possible\n\n"
@@ -53,18 +57,20 @@ show_usage() {
 			printf "${BFACE}EXAMPLE${NFACE}\n"
 			printf "  ~/bin> ${BFACE}qboxes check-service --port=22 smt-server${NFACE}\n\n"
 			exit 1
-			;;
+		;;
 		clone)
 			printf "COMMAND NAME\n"
 			printf "  clone - clone a template VM into one or more new VMs\n\n"
 			printf "SYNOPSIS\n"
 			printf "  clone --template=<VM_0> --target-pool=<pool_name> <VM_1> ... <VM_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Clone an existing inactive template VM into one or more new VMs, indicate a target storage pool for the cloned volumes\n\n"
+			printf "  Clone an existing inactive template VM into one or more new VMs, indicate"
+			printf " a target storage pool for the cloned volumes\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes clone --template=sles12sp3 --target-pool=services www_server_1 www_server_2 balancer${NFACE}\n\n"
+			printf "  ~/bin> ${BFACE}qboxes clone --template=sles12sp3 --target-pool=services"
+			printf " www-srv-1 www-srv-2 balancer${NFACE}\n\n"
 			exit 1
-			;;
+		;;
 		deactivate)
 			printf "COMMAND NAME\n"
 			printf "  deactivate - shutdown active VMs\n\n"
@@ -75,19 +81,22 @@ show_usage() {
 			printf "${BFACE}EXAMPLE${NFACE}\n"
 			printf "  ~/bin> ${BFACE}qboxes deactivate leap423${NFACE}\n\n"
 			exit 1
-			;;
+		;;
 		define)
 			printf "COMMAND NAME\n"
 			printf "  define - define one or more new VMs\n\n"
 			printf "SYNOPSIS\n"
-			printf "  define --ram=<size_in_MiB> --cores=<count> --disk-size=<capacity_in_GiB> --network=<name> --guest-os=<os_variant> --pool=<name> <VM_1> ... <VM_k>\n\n"
+			printf "  define --ram=<size_in_MiB> --cores=<count> --disk-size=<capacity_in_GiB>"
+			printf " --network=<name> --guest-os=<os_variant> --pool=<name> <VM_1> ... <VM_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Define one or more VMs according to specifications, do not install a guest OS on any of them\n"
+			printf "  Define one or more VMs according to specifications, do not install a guest"
+			printf " OS on any of them\n"
 			printf "  (Tip: Type ${BFACE}osinfo-query os${NFACE} for a list of all the supported OS variants)\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes define --ram=2048 --cores=2 --disk-size=1024 --network=grimsey --guest-os=opensuse42.3 --pool=services osd_node_{1..5}${NFACE}\n\n"
+			printf "  ~/bin> ${BFACE}qboxes define --ram=2048 --cores=2 --disk-size=256 --network=default"
+			printf " --guest-os=opensuse42.3 --pool=ceph osd{1..5}${NFACE}\n\n"
 			exit 1
-			;;
+		;;
 		getmac)
 			printf "COMMAND NAME\n"
 			printf "  getmac - reveal MAC addresses\n\n"
@@ -98,36 +107,38 @@ show_usage() {
 			printf "${BFACE}EXAMPLE${NFACE}\n"
 			printf "  ~/bin> ${BFACE}qboxes getmac sles12sp{1,2,3}${NFACE}\n\n"
 			exit 1
-			;;
+		;;
 		ping)
 			printf "COMMAND NAME\n"
 			printf "  ping - send ICMP packets to active VMs\n\n"
 			printf "SYNOPSIS\n"
 			printf "  ping --count=<number_of_packets> <active_VM_1> ... <active_VM_k>\n\n"
 			printf "DESCRIPTION\n"
-            printf "  Send a specified number of ICMP packets to one or more active VMs\n\n"
+			printf "  Send a specified number of ICMP packets to one or more active VMs\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
 			printf "  ~/bin> ${BFACE}qboxes ping --count=3 sles12sp2 sles12sp3${NFACE}\n\n"
-            exit 1
-			;;
+			exit 1
+		;;
 		reboot)
 			printf "COMMAND NAME\n";
 			printf "  reboot - restart active VMs\n\n";
-            printf "SYNOPSIS\n";
-            printf "  reboot <active_VM_1> ... <active_VM_k>\n\n";
-            printf "DESCRIPTION\n";
-            printf "  Try to gracefully restart one or more active VMs\n\n"
+			printf "SYNOPSIS\n";
+			printf "  reboot <active_VM_1> ... <active_VM_k>\n\n";
+			printf "DESCRIPTION\n";
+			printf "  Try to gracefully restart one or more active VMs\n\n"
 			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes reboot sles12sp3${NFACE}\n"
-            exit 1
-			;;
+			printf "  ~/bin> ${BFACE}qboxes reboot sles12sp3${NFACE}\n\n"
+			exit 1
+		;;
 		*)
-			printf "\nThis is ${GREEN}qboxes${NC}, a simple command line tool for managing local QEMU/KVM VMs.\n"
+			printf "\nThis is ${GREEN}qboxes${NC}, a simple command line tool"
+			printf " for managing local QEMU/KVM VMs.\n"
 			printf "Currently the following commands are implemented:\n\n"
 			printf "  activate\t: bring inactive VMs up\n"
 			printf "  annihilate\t: remove any trace of inactive VMs\n"
 			printf "  attach\t: attach storage volumes to VMs\n"
-			printf "  check-service\t: check if connections to specified TCP port of a VM are possible\n"
+			printf "  check-service\t: check if connections to specified"
+			printf " TCP port of a VM are possible\n"
 			printf "  clone\t\t: clone a template VM into one or more new VMs\n"
 			printf "  deactivate\t: shutdown active VMs\n"
 			printf "  define\t: define one or more new VMs\n"
@@ -135,9 +146,10 @@ show_usage() {
 			printf "  ping\t\t: send ICMP packets to active VMs\n"
 			printf "  reboot\t: restart active VMs\n\n"
 			printf "  help\t\t: display this summary of commands\n\n"
-			printf "Type ${GREEN}qboxes command_name${NC} for the syntax and a usage example of a specific command.\n\n"
-            exit 1
-			;;
+			printf "Type ${GREEN}qboxes command_name${NC} for the syntax"
+			printf " and a usage example of a specific command.\n\n"
+			exit 1
+		;;
 	esac
 }
 
@@ -156,6 +168,16 @@ is_name_valid() {
 	fi
 }
 
+is_number_valid() {
+    THE_NUMBER="$1"
+    VALID_NUMBER_TEST=$(echo "$THE_NUMBER" | tr -d "[:digit:]")
+    if [ -n "$VALID_NUMBER_TEST" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 is_a_member() {
     item="$1"
     theSET="$2"
@@ -164,7 +186,7 @@ is_a_member() {
         if [ $item == $each_one ]; then
             included=1
             break
-        fi  
+        fi
     done
     return $included
 }
@@ -177,7 +199,7 @@ activate_cmd() {
 		show_usage activate
 	fi
 
-    ALL_INACTIVE_VMs=$(virsh list --name --inactive)
+	ALL_INACTIVE_VMs=$(virsh list --name --inactive)
 
 	if [ -z "$ALL_INACTIVE_VMs" ]; then
 		printf "\n${RED}I cannot seem to find a single inactive VM (is LIBVIRT_DEFAULT_URI set?)${NC}\n\n"
@@ -187,17 +209,17 @@ activate_cmd() {
 	for candidate; do
 		is_name_valid "$candidate"
 		if [ $? == 0 ]; then
-			printf "${YELLOW}%s is not a valid VM name${NC}\n" "$candidate"
+			printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
 		else
-            is_a_member "$candidate" "$ALL_INACTIVE_VMs"
-            if [ $? == 0 ]; then
-                printf "${YELLOW}%s does not look like an inactive VM${NC}\n" "$candidate"
-            else
-                printf "${GREEN}Powering up %s${NC}\n" "$candidate"
-                virsh --quiet start "$candidate" \
-                || printf "${YELLOW}Operation failed, virsh returned error code %d${NC}\n" $?
-                sleep 1
-            fi            
+		    is_a_member "$candidate" "$ALL_INACTIVE_VMs"
+		    if [ $? == 0 ]; then
+				printf "${YELLOW}%s does not look like an inactive VM${NC}\n" "$candidate"
+		    else
+				printf "${GREEN}Powering up %s${NC}\n" "$candidate"
+				virsh --quiet start "$candidate" \
+				|| printf "${YELLOW}Operation failed, virsh returned error code %d${NC}\n" $?
+				sleep 1
+		    fi
 		fi
 	done
 }
@@ -220,7 +242,7 @@ annihilate_cmd() {
 	for candidate; do
         is_name_valid "$candidate"
         if [ $? == 0 ]; then
-            printf "${YELLOW}%s is not a valid VM name${NC}\n" "$candidate"
+            printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
         else
             is_a_member "$candidate" "$ALL_INACTIVE_VMs"
             if [ $? == 0 ]; then
@@ -264,7 +286,7 @@ attach_cmd() {
 	POOL_NAME=""
 	VM_DEV=""
 
-	for ((argument=1 ; argument <= $((LOWEST_NUM_ARGS - 1)) ; argument++)); do
+	for ((argument=1 ; argument <= $(($LOWEST_NUM_ARGS - 1)) ; argument++)); do
 
 		PARAM=$(echo "$1" | awk -F= '{print $1}')
 		VALUE=$(echo "$1" | awk -F= '{print $2}')
@@ -277,7 +299,7 @@ attach_cmd() {
                 fi
                 is_name_valid "$VALUE"
                 if [ $? == 0 ]; then
-                    printf "${RED}%s is not a valid volume name${NC}\n" "$VALUE"
+                    printf "${RED}'%s' is not a valid volume name${NC}\n" "$VALUE"
                     exit 1
                 fi
                 VOLUME_NAME=$VALUE
@@ -287,6 +309,20 @@ attach_cmd() {
 					printf "${RED}Volume size not specified${NC}\n"
 					exit 1
 				fi
+                is_number_valid "$VALUE"
+                if [ $? == 0 ]; then
+                    printf "${RED}'%s' does not look like a positive integer${NC}\n" "$VALUE"
+                    exit 1
+                fi
+				VOLUME_SIZE_MIN=128
+				VOLUME_SIZE_MAX=4096
+                if [ $VALUE -lt $VOLUME_SIZE_MIN ] \
+				|| [ $VALUE -gt $VOLUME_SIZE_MAX ] \
+				|| [ $(($VALUE % $VOLUME_SIZE_MIN)) -gt 0 ]; then
+                    printf "${RED}Volume size must be between %d and %d GiB inclusive, and an integer multiple of %d${NC}\n" \
+					$VOLUME_SIZE_MIN $VOLUME_SIZE_MAX $VOLUME_SIZE_MIN
+                    exit 1
+                fi
 				VOLUME_SIZE=$VALUE
 			;;
 			--pool)
@@ -296,7 +332,7 @@ attach_cmd() {
 				fi
                 is_name_valid "$VALUE"
                 if [ $? == 0 ]; then
-                    printf "${RED}%s is not a valid pool name${NC}\n" "$VALUE"
+                    printf "${RED}'%s' is not a valid pool name${NC}\n" "$VALUE"
                     exit 1
                 fi
                 ALL_ACTIVE_POOLS=$(virsh pool-list --name)
@@ -322,7 +358,8 @@ attach_cmd() {
 		shift
 	done
 
-	if [ -z "$VOLUME_NAME" ] || [ -z "$VOLUME_SIZE" ] || [ -z "$POOL_NAME" ] || [ -z "$VM_DEV" ]; then
+	if [ -z "$VOLUME_NAME" ] || [ -z "$VOLUME_SIZE" ] \
+	|| [ -z "$POOL_NAME" ] || [ -z "$VM_DEV" ]; then
 		printf "\n${RED}At least one of the required arguments has not been set${NC}\n\n"
 		show_usage attach
 	fi
@@ -334,12 +371,13 @@ attach_cmd() {
 		show_usage attach
 	fi
 
-	POOL_PATH=$(virsh pool-dumpxml "$POOL_NAME" | grep "<path>" | awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
+	POOL_PATH=$(virsh pool-dumpxml "$POOL_NAME" \
+	| grep "<path>" | awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
 
 	for candidate; do
         is_name_valid "$candidate"
         if [ $? == 0 ]; then
-            printf "${YELLOW}%s is not a valid VM name${NC}\n" "$candidate"
+            printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
         else
             is_a_member "$candidate" "$ALL_VMs"
             if [ $? == 0 ]; then
@@ -375,7 +413,7 @@ checkservice_cmd() {
 	NUM_ARGS=2
 
 	if [ $# -ne $NUM_ARGS ]; then
-		printf "\n${RED}Incorrect number of arguments (I need exactly $NUM_ARGS)${NC}\n\n"
+		printf "\n${RED}Incorrect number of arguments (I need exactly %s)${NC}\n\n" "$NUM_ARGS"
 		show_usage check-service
 	fi
 
@@ -383,21 +421,34 @@ checkservice_cmd() {
 	VALUE=$(echo "$1" | awk -F= '{print $2}')
 
 	if [ "$PARAM" != "--port" ]; then
-		printf "\n${RED}I do not recognize this '$PARAM' argument${NC}\n\n"
+		printf "\n${RED}I do not recognize this '%s' argument${NC}\n\n" "$PARAM"
 		show_usage check-service
-	else
-		if [ -z "$VALUE" ]; then
-			printf "${RED}Invalid TCP port${NC}\n"
-			exit 1
-		fi
-        TCP_PORT=$VALUE
+    fi
+
+    if [ -z "$VALUE" ]; then
+	    printf "${RED}TCP port not specified${NC}\n"
+		exit 1
 	fi
+
+    is_number_valid "$VALUE"
+
+    if [ $? == 0 ]; then
+        printf "${RED}'%s' does not look like a positive integer${NC}\n" "$VALUE"
+        exit 1
+    fi
+
+    if [ $VALUE -lt 1 ] || [ $VALUE -gt 65535 ]; then
+        printf "${RED}TCP port number must be between 1 and 65535 inclusive${NC}\n"
+        exit 1
+    fi
+
+    TCP_PORT=$VALUE
 
 	VM="$2"
 
     is_name_valid "$VM"
     if [ $? == 0 ]; then
-        printf "${RED}%s is not a valid VM name${NC}\n" "$VM"
+        printf "${RED}'%s' is not a valid VM name${NC}\n" "$VM"
         exit 1
     fi
 
@@ -430,7 +481,7 @@ clone_cmd() {
 	TEMPLATE_VM=""
 	CLONE_POOL_NAME=""
 
-	for ((argument=1 ; argument <= $((LOWEST_NUM_ARGS - 1)) ; argument++)); do
+	for ((argument=1 ; argument <= $(($LOWEST_NUM_ARGS - 1)) ; argument++)); do
 
 		PARAM=$(echo "$1" | awk -F= '{print $1}')
 		VALUE=$(echo "$1" | awk -F= '{print $2}')
@@ -443,7 +494,7 @@ clone_cmd() {
 				fi
                 is_name_valid "$VALUE"
                 if [ $? == 0 ]; then
-                    printf "${RED}%s is not a valid template name${NC}\n" "$VALUE"
+                    printf "${RED}'%s' is not a valid template name${NC}\n" "$VALUE"
                     exit 1
                 fi
                 ALL_INACTIVE_VMs=$(virsh list --name --inactive)
@@ -461,7 +512,7 @@ clone_cmd() {
 				fi
                 is_name_valid "$VALUE"
                 if [ $? == 0 ]; then
-                    printf "${RED}%s is not a valid pool name${NC}\n" "$VALUE"
+                    printf "${RED}'%s' is not a valid pool name${NC}\n" "$VALUE"
                     exit 1
                 fi
                 ALL_ACTIVE_POOLS=$(virsh pool-list --name)
@@ -487,26 +538,30 @@ clone_cmd() {
 
 	TEMPLATE_POOL_NAME=""
 	TEMPLATE_POOL_PATH=""
-	TEMPLATE_VOLUME_PATH=$(virsh dumpxml "$TEMPLATE_VM" | grep "<source file='" | awk -F "='" '{ print $2 }' | awk -F "'/>" '{ print $1 }')
+	TEMPLATE_VOLUME_PATH=$(virsh dumpxml "$TEMPLATE_VM" \
+	| grep "<source file='" | awk -F "='" '{ print $2 }' | awk -F "'/>" '{ print $1 }')
 
 	for pool in $ALL_ACTIVE_POOLS; do
 		VOLUMES_IN_POOL=$(virsh vol-list "$pool")
 		TEMPLATE_VOLUME_IN_LIST=$(echo "$VOLUMES_IN_POOL" | grep "$TEMPLATE_VOLUME_PATH")
 		if [ -n "$TEMPLATE_VOLUME_IN_LIST" ]; then
 			TEMPLATE_POOL_NAME=$pool
-			TEMPLATE_POOL_PATH=$(virsh pool-dumpxml "$pool" | grep "<path>" | awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
+			TEMPLATE_POOL_PATH=$(virsh pool-dumpxml "$pool" \
+			| grep "<path>" | awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
 			ALL_ACTIVE_POOLS=""
 		fi
 	done
 
     ALL_VMs=$(virsh list --name --all)
-	TEMPLATE_VOLUME_NAME=$(echo "$TEMPLATE_VOLUME_PATH" | awk -F "${TEMPLATE_POOL_PATH}/" '{ print $2 }')
-	CLONE_POOL_PATH=$(virsh pool-dumpxml "$CLONE_POOL_NAME" | grep "<path>" | awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
+	TEMPLATE_VOLUME_NAME=$(echo "$TEMPLATE_VOLUME_PATH" \
+	| awk -F "${TEMPLATE_POOL_PATH}/" '{ print $2 }')
+	CLONE_POOL_PATH=$(virsh pool-dumpxml "$CLONE_POOL_NAME" \
+	| grep "<path>" | awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
 
 	for candidate; do
         is_name_valid "$candidate"
         if [ $? == 0 ]; then
-            printf "${YELLOW}%s is not a valid VM name${NC}\n" "$candidate"
+            printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
         else
             is_a_member "$candidate" "$ALL_VMs"
             if [ $? == 1 ]; then
@@ -524,7 +579,8 @@ clone_cmd() {
                 fi
 
                 if [ "$TEMPLATE_POOL_PATH" != "$CLONE_POOL_PATH" ]; then
-                    printf "${GREEN}Moving %s between pools (%s ==> %s)${NC}\n" "$CLONE_VOLUME_NAME" "$TEMPLATE_POOL_NAME" "$CLONE_POOL_NAME"
+                    printf "${GREEN}Moving %s between pools (%s ==> %s)${NC}\n" \
+					"$CLONE_VOLUME_NAME" "$TEMPLATE_POOL_NAME" "$CLONE_POOL_NAME"
 
                     sudo mv "$TEMPLATE_POOL_PATH"/"$CLONE_VOLUME_NAME" "$CLONE_POOL_PATH"/
 
@@ -537,7 +593,8 @@ clone_cmd() {
                     virsh --quiet pool-refresh "$CLONE_POOL_NAME"
                 fi
 
-                printf "${GREEN}Cloning %s into %s and attaching %s to it${NC}\n" "$TEMPLATE_VM" "$candidate" "$CLONE_VOLUME_NAME"
+                printf "${GREEN}Cloning %s into %s and attaching %s to it${NC}\n" \
+				"$TEMPLATE_VM" "$candidate" "$CLONE_VOLUME_NAME"
 
                 virt-clone --quiet -o "$TEMPLATE_VM" -n "$candidate" --preserve-data -f "$CLONE_POOL_PATH"/"$CLONE_VOLUME_NAME"
 
@@ -596,7 +653,7 @@ deactivate_cmd() {
 	for candidate; do
         is_name_valid "$candidate"
         if [ $? == 0 ]; then
-            printf "${YELLOW}%s is not a valid VM name${NC}\n" "$candidate"
+            printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
         else
             is_a_member "$candidate" "$ALL_ACTIVE_VMs"
             if [ $? == 0 ]; then
@@ -610,13 +667,13 @@ deactivate_cmd() {
                     printf "${RED}Operation failed, virsh returned error code %d, terminating now.${NC}\n" $?
                     exit 2
                 fi
+                sleep 1
             fi
         fi
 	done
 }
 
 define_cmd() {
-
 	LOWEST_NUM_ARGS=7
 
 	if [ $# -lt $LOWEST_NUM_ARGS ]; then
@@ -631,7 +688,7 @@ define_cmd() {
 	OS_VARIANT=""
 	POOL_NAME=""
 
-	for ((argument=1 ; argument <= $((LOWEST_NUM_ARGS - 1)) ; argument++)); do
+	for ((argument=1 ; argument <= $(($LOWEST_NUM_ARGS - 1)) ; argument++)); do
 
 		PARAM=$(echo "$1" | awk -F= '{print $1}')
 		VALUE=$(echo "$1" | awk -F= '{print $2}')
@@ -639,21 +696,59 @@ define_cmd() {
 		case $PARAM in
 			--ram)
 				if [ -z "$VALUE" ]; then
-					printf "${RED}Invalid memory size${NC}\n"
+					printf "${RED}Memory size not specified${NC}\n"
+					exit 1
+				fi
+                is_number_valid "$VALUE"
+                if [ $? == 0 ]; then
+                    printf "${RED}'%s' does not look like a positive integer${NC}\n" "$VALUE"
+                    exit 1
+                fi
+				MEMORY_SIZE_MIN=32
+				MEMORY_SIZE_MAX=16384
+				if [ $VALUE -lt $MEMORY_SIZE_MIN ] \
+				|| [ $VALUE -gt $MEMORY_SIZE_MAX ] \
+				|| [ $(($VALUE % $MEMORY_SIZE_MIN)) -gt 0 ]; then
+					printf "${RED}Memory size must be between %d and %d MiB inclusive, and an integer multiple of %d${NC}\n" \
+                    $MEMORY_SIZE_MIN $MEMORY_SIZE_MAX $MEMORY_SIZE_MIN
 					exit 1
 				fi
 				MEMORY_SIZE=$VALUE
             ;;
 			--cores)
 				if [ -z "$VALUE" ]; then
-					printf "${RED}Invalid CPU core count${NC}\n"
+					printf "${RED}Number of CPU cores not specified${NC}\n"
+					exit 1
+				fi
+				is_number_valid "$VALUE"
+                if [ $? == 0 ]; then
+                    printf "${RED}'%s' does not look like a positive integer${NC}\n" "$VALUE"
+                    exit 1
+                fi
+				CPU_CORES_MAX=$(virsh nodeinfo | grep "CPU(s):" | awk -F ":" '{ print $2 }')
+				if [ $VALUE -lt 1 ] || [ $VALUE -gt $CPU_CORES_MAX ]; then
+					printf "${RED}Number of CPU cores should be between 1 and %d inclusive${NC}\n" $CPU_CORES_MAX
 					exit 1
 				fi
 				CPU_CORES=$VALUE
             ;;
 			--disk-size)
 				if [ -z "$VALUE" ]; then
-					printf "${RED}Invalid volume size${NC}\n"
+					printf "${RED}Volume size not specified${NC}\n"
+					exit 1
+				fi
+				is_number_valid "$VALUE"
+				if [ $? == 0 ]; then
+					printf "${RED}'%s' does not look like a positive integer${NC}\n" "$VALUE"
+					exit 1
+				fi
+                VOLUME_SIZE_MIN=16
+				VOLUME_SIZE_MAX=512
+				if [ $VALUE -lt $VOLUME_SIZE_MIN ] \
+				|| [ $VALUE -gt $VOLUME_SIZE_MAX ] \
+				|| [ $(($VALUE % $VOLUME_SIZE_MIN)) -gt 0 ]; then
+					printf "${RED}Volume size must be between %d and %d GiB inclusive, and an integer multiple of %d${NC}\n" \
+                   	$VOLUME_SIZE_MIN $VOLUME_SIZE_MAX $VOLUME_SIZE_MIN
 					exit 1
 				fi
 				VOLUME_SIZE=$VALUE
@@ -665,7 +760,7 @@ define_cmd() {
                 fi
                 is_name_valid "$VALUE"
 				if [ $? == 0 ]; then
-					printf "${RED}%s is not a valid network name${NC}\n" "$VALUE"
+					printf "${RED}'%s' is not a valid network name${NC}\n" "$VALUE"
 					exit 1
 				fi
 				ALL_ACTIVE_NETWORKS=$(virsh net-list --name)
@@ -683,7 +778,7 @@ define_cmd() {
 				fi
                 is_name_valid $VALUE
                 if [ $? == 0 ]; then
-                    printf "${RED}%s is not a valid OS variant name${NC}\n" "$VALUE"
+                    printf "${RED}'%s' is not a valid OS variant name${NC}\n" "$VALUE"
                     exit 1
                 fi
 				ALL_OS_VARIANTS=$(osinfo-query os -f short-id)
@@ -701,7 +796,7 @@ define_cmd() {
 				fi
 				is_name_valid "$VALUE"
                 if [ $? == 0 ]; then
-                    printf "${RED}%s is not a valid pool name${NC}\n" "$VALUE"
+                    printf "${RED}'%s' is not a valid pool name${NC}\n" "$VALUE"
                     exit 1
                 fi
 				ALL_ACTIVE_POOLS=$(virsh pool-list --name)
@@ -732,12 +827,12 @@ define_cmd() {
 	for candidate; do
         is_name_valid "$candidate"
         if [ $? == 0 ]; then
-            printf "${YELLOW}%s is not a valid VM name${NC}\n" "$candidate"
+            printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
         else
             is_a_member "$candidate" "$ALL_VMs"
             if [ $? == 1 ]; then
                 printf "${YELLOW}There is already a VM %s, so I am skipping that one${NC}\n" "$candidate"
-            else    
+            else
                 RANDOM_ALPHANUM=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n')
                 XML_PATH="$candidate"_"$RANDOM_ALPHANUM".xml
                 QCOW2_NAME="$candidate".qcow2
@@ -803,7 +898,7 @@ getmac_cmd() {
 	for candidate; do
         is_name_valid "$candidate"
         if [ $? == 0 ]; then
-            printf "${YELLOW}%s is not a valid VM name${NC}\n" "$candidate"
+            printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
         else
             is_a_member "$candidate" "$ALL_VMs"
             if [ $? == 0 ]; then
@@ -834,9 +929,24 @@ ping_cmd() {
     fi
 
     if [ -z "$VALUE" ]; then
-        printf "${RED}Invalid number of packets${NC}\n"
+        printf "${RED}Number of packets not specified${NC}\n"
         exit 1
     fi
+
+	is_number_valid "$VALUE"
+
+	if []; then
+		printf "${RED}'%s' does not look like a positive integer${NC}\n" "$VALUE"
+		exit 1
+	fi
+
+	COUNT_MIN=1
+	COUNT_MAX=64
+
+	if [ $VALUE -lt $COUNT_MIN ] || [ $VALUE -gt $COUNT_MAX ]; then
+		printf "${RED}Packet count should be between %d and %d inclusive${NC}\n" $COUNT_MIN $COUNT_MAX
+		exit 1
+	fi
 
     HOW_MANY="$VALUE"
 
@@ -852,9 +962,9 @@ ping_cmd() {
 	for candidate; do
         is_name_valid "$candidate"
         if [ $? == 0 ]; then
-            printf "${YELLOW}%s is not a valid VM name${NC}\n" "$candidate"
+            printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
         else
-            is_a_member "$candidate" "$ALL_ACTIVE_VMs" 
+            is_a_member "$candidate" "$ALL_ACTIVE_VMs"
             if [ $? == 0 ]; then
                 printf "${YELLOW}%s is not an active VM${NC}\n" "$candidate"
             else
@@ -884,7 +994,7 @@ reboot_cmd() {
 	for candidate; do
         is_name_valid "$candidate"
         if [ $? == 0 ]; then
-            printf "${YELLOW}%s is not a valid VM name${NC}\n" "$candidate"
+            printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
         else
             is_a_member "$candidate" "$ALL_ACTIVE_VMs"
             if [ $? == 0 ]; then

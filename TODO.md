@@ -11,12 +11,12 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 * delete DHCP leases of annihilated domains (see files in `/var/lib/libvirt/dnsmasq`)
 
 `attach`
-* sanitize user input (volume/pool/VM names, volume capacity) (pending __volume capacity__)
+* sanitize user input (volume/pool/VM names, volume capacity) (__DONE__)
 * improve the matching of pool/VM names with dashes (__DONE__)
 * automatically pick the first available block device name (`vdb`, `vdc`, etc) for new volumes
 
 `check-service`
-* sanitize user input (TCP port number, VM name) (pending __TCP port number__)
+* sanitize user input (TCP port number, VM name) (__DONE__)
 * improve the matching of VM names with dashes (__DONE__)
 
 `clone`
@@ -31,8 +31,7 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 * improve the matching of VM names with dashes (__DONE__)
 
 `define`
-* sanitize user input (RAM, CPU cores, volume capacity, network name, OS variant, pool/VM names)
-  (pending __RAM__, __CPU cores__, __volume capacity__)
+* sanitize user input (RAM, CPU cores, volume capacity, network name, OS variant, pool/VM names) (__DONE__)
 * improve the matching of network/OS variant/pool/VM names with dashes (__DONE__)
 
 `getmac`
@@ -41,7 +40,7 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 * handle domains with more than one virtual Ethernet adapters
 
 `ping`
-* sanitize user input (packet count, VM names) (pending __packet count__)
+* sanitize user input (packet count, VM names) (__DONE__)
 * improve the matching of VM names with dashes (__DONE__)
 
 `reboot`
