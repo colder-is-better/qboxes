@@ -35,7 +35,7 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 * improve the matching of network/OS variant/pool/VM names with dashes (__DONE__)
 
 `getmac`
-* sanitize user input (VM names)
+* sanitize user input (VM names) (__DONE__)
 * improve the matching of VM names with dashes (__DONE__)
 * handle domains with more than one virtual Ethernet adapters
 
@@ -44,6 +44,6 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 * improve the matching of VM names with dashes (__DONE__)
 
 `reboot`
-* sanitize user input (VM names)
+* sanitize user input (VM names) (__DONE__)
 * improve the matching of VM names with dashes (__DONE__)
 

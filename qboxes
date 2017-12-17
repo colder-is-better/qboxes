@@ -314,7 +314,7 @@ attach_cmd() {
 				fi
 				VOLUME_SIZE_MIN=128
 				VOLUME_SIZE_MAX=4096
-                if [ $VALUE -lt $VOLUME_SIZE_MIN ] \
+				if [ $VALUE -lt $VOLUME_SIZE_MIN ] \
 				|| [ $VALUE -gt $VOLUME_SIZE_MAX ] \
 				|| [ $(($VALUE % $VOLUME_SIZE_MIN)) -gt 0 ]; then
 					printf "${RED}Volume size must be between %d and %d GiB inclusive, and an integer multiple of %d${NC}\n" \
@@ -874,7 +874,7 @@ define_cmd() {
 
 				rm -f ~/"$XML_PATH"
 			fi
-fi
+		fi
 	done
 }
 
