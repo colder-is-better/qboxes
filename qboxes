@@ -1,12 +1,11 @@
 #!/bin/bash
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-NC='\033[0m'
+red=$(tput setaf 1)
+green=$(tput setaf 2)
+yellow=$(tput setaf 3)
 
-BFACE=$(tput bold)
-NFACE=$(tput sgr0)
+bold=$(tput bold)
+regular=$(tput sgr0)
 
 show_usage() {
 	case "$1" in
@@ -17,8 +16,8 @@ show_usage() {
 			printf "  activate <inactive_VM_1> ... <inactive_VM_k>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Power one or more inactive VMs up\n\n"
-			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes activate leap423 sles11sp4${NFACE}\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~/bin> %sqboxes activate leap423 sles11sp4%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		annihilate)
@@ -28,9 +27,9 @@ show_usage() {
 			printf "  annihilate <inactive_VM_1> ... <inactive_VM_k>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Undefine one or more inactive VMs, delete all snapshots and"
-			printf " associated storage volumes (${RED}think TWICE before annihilating${NC})\n\n"
-			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes annihilate guest_{1..5}${NFACE}\n\n"
+			printf " associated storage volumes (%sthink TWICE before annihilating%s)\n\n" "$red" "$regular"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~/bin> %sqboxes annihilate guest_{1..5}%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		attach)
@@ -42,9 +41,9 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Create sparse QCOW2 files in specified pool, attach them as virtual"
 			printf " hard drives to VMs\n\n"
-			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes attach --name=data --size=4096 --pool=lab"
-			printf " --vmdev=vdb osd_node_{1,2,3}${NFACE}\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~/bin> %sqboxes attach --name=data --size=4096 --pool=lab" "$bold"
+			printf " --vmdev=vdb osd_node_{1,2,3}%s\n\n" "$regular"
 			exit 1
 		;;
 		check-service)
@@ -54,8 +53,8 @@ show_usage() {
 			printf "  check-service --port=<tcp_port> <active_VM>\n\n";
 			printf "DESCRIPTION\n";
 			printf "  Check if an active VM is reachable via specificied TCP port\n\n"
-			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes check-service --port=22 smt-server${NFACE}\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~/bin> %sqboxes check-service --port=22 smt-server%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		clone)
@@ -66,9 +65,9 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Clone an existing inactive template VM into one or more new VMs, indicate"
 			printf " a target storage pool for the cloned volumes\n\n"
-			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes clone --template=sles12sp3 --target-pool=services"
-			printf " www-srv-1 www-srv-2 balancer${NFACE}\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~/bin> %sqboxes clone --template=sles12sp3 --target-pool=services" "$bold"
+			printf " www-srv-1 www-srv-2 balancer%s\n\n" "$regular"
 			exit 1
 		;;
 		deactivate)
@@ -78,23 +77,23 @@ show_usage() {
 			printf "  deactivate <active_VM_1> ... <active_VM_k>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Try to gracefully shutdown one or more active VMs\n\n"
-			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes deactivate leap423${NFACE}\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~/bin> %sqboxes deactivate leap423%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		define)
 			printf "COMMAND NAME\n"
 			printf "  define - define one or more new VMs\n\n"
 			printf "SYNOPSIS\n"
-			printf "  define --ram=<size_in_MiB> --cores=<count> --disk-size=<capacity_in_GiB>"
+			printf "  define --ram=<size_in_MiB> --cores=<count> --volume-size=<capacity_in_GiB>"
 			printf " --network=<name> --guest-os=<os_variant> --pool=<name> <VM_1> ... <VM_k>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Define one or more VMs according to specifications, do not install a guest"
 			printf " OS on any of them\n"
-			printf "  (Tip: Type ${BFACE}osinfo-query os${NFACE} for a list of all the supported OS variants)\n\n"
-			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes define --ram=2048 --cores=2 --disk-size=256 --network=default"
-			printf " --guest-os=opensuse42.3 --pool=ceph osd{1..5}${NFACE}\n\n"
+			printf "  (Tip: Type %sosinfo-query os%s for a list of all the supported OS variants)\n\n" "$bold" "$regular"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~/bin> %sqboxes define --ram=2048 --cores=2 --volume-size=256 --network=default" "$bold"
+			printf " --guest-os=opensuse42.3 --pool=ceph osd{1..5}%s\n\n" "$regular"
 			exit 1
 		;;
 		getmac)
@@ -104,8 +103,8 @@ show_usage() {
 			printf "  getmac <VM_1> ... <VM_k>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Reveal the first Ethernet adapter's MAC address of one or more VMs\n\n"
-			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes getmac sles12sp{1,2,3}${NFACE}\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~/bin> %sqboxes getmac sles12sp{1,2,3}%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		ping)
@@ -115,8 +114,8 @@ show_usage() {
 			printf "  ping --count=<number_of_packets> <active_VM_1> ... <active_VM_k>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Send a specified number of ICMP packets to one or more active VMs\n\n"
-			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes ping --count=3 sles12sp2 sles12sp3${NFACE}\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~/bin> %sqboxes ping --count=3 sles12sp2 sles12sp3%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		reboot)
@@ -126,12 +125,12 @@ show_usage() {
 			printf "  reboot <active_VM_1> ... <active_VM_k>\n\n";
 			printf "DESCRIPTION\n";
 			printf "  Try to gracefully restart one or more active VMs\n\n"
-			printf "${BFACE}EXAMPLE${NFACE}\n"
-			printf "  ~/bin> ${BFACE}qboxes reboot sles12sp3${NFACE}\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~/bin> %sqboxes reboot sles12sp3%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		*)
-			printf "\nThis is ${GREEN}qboxes${NC}, a simple command line tool"
+			printf "\nThis is %sqboxes%s, a simple command line tool" "$green" "$regular"
 			printf " for managing local QEMU/KVM VMs.\n"
 			printf "Currently the following commands are implemented:\n\n"
 			printf "  activate\t: bring inactive VMs up\n"
@@ -146,7 +145,7 @@ show_usage() {
 			printf "  ping\t\t: send ICMP packets to active VMs\n"
 			printf "  reboot\t: restart active VMs\n\n"
 			printf "  help\t\t: display this summary of commands\n\n"
-			printf "Type ${GREEN}qboxes command_name${NC} for the syntax"
+			printf "Type %sqboxes command-name%s for the syntax" "$green" "$regular"
 			printf " and a usage example of a specific command.\n\n"
 			exit 1
 		;;
@@ -154,13 +153,13 @@ show_usage() {
 }
 
 is_name_valid() {
-	THE_NAME="$1"
-	FIRST_CHAR_TEST=$(echo "${THE_NAME:0:1}" | tr -d "[:alnum:]")
-	if [ -n "$FIRST_CHAR_TEST" ]; then
+	the_name="$1"
+	first_char_test=$(echo "${the_name:0:1}" | tr -d "[:alnum:]")
+	if [ -n "$first_char_test" ]; then
 		return 0
 	else
-		VALID_NAME_TEST=$(echo "$THE_NAME" | tr -d "[:alnum:]-_.")
-		if [ -n "$VALID_NAME_TEST" ]; then
+		valid_name_test=$(echo "$the_name" | tr -d "[:alnum:]-_.")
+		if [ -n "$valid_name_test" ]; then
 			return 0
 		else
 			return 1
@@ -169,9 +168,9 @@ is_name_valid() {
 }
 
 is_number_valid() {
-	THE_NUMBER="$1"
-	VALID_NUMBER_TEST=$(echo "$THE_NUMBER" | tr -d "[:digit:]")
-	if [ -n "$VALID_NUMBER_TEST" ]; then
+	the_number="$1"
+	valid_number_test=$(echo "$the_number" | tr -d "[:digit:]")
+	if [ -n "$valid_number_test" ]; then
 		return 0
 	else
 		return 1
@@ -180,9 +179,9 @@ is_number_valid() {
 
 is_a_member() {
 	item="$1"
-	theSET="$2"
+	the_set="$2"
 	included=0
-	for each_one in $theSET; do
+	for each_one in $the_set; do
 		if [ $item == $each_one ]; then
 			included=1
 			break
@@ -192,78 +191,85 @@ is_a_member() {
 }
 
 activate_cmd() {
-	LOWEST_NUM_ARGS=1
-
-	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "\n${RED}Incorrect number of arguments (I need at least %d)${NC}\n\n" $LOWEST_NUM_ARGS
+	lowest_num_args=1
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" $lowest_num_args "$regular"
 		show_usage activate
 	fi
 
-	ALL_INACTIVE_VMs=$(virsh list --name --inactive)
-
-	if [ -z "$ALL_INACTIVE_VMs" ]; then
-		printf "\n${RED}I cannot seem to find a single inactive VM (is LIBVIRT_DEFAULT_URI set?)${NC}\n\n"
+	all_inactive_VMs=$(virsh list --name --inactive)
+	if [ -z "$all_inactive_VMs" ]; then
+		printf "\n%scannot seem to find a single inactive VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
 		show_usage activate
 	fi
 
 	for candidate; do
 		is_name_valid "$candidate"
-		if [ $? == 0 ]; then
-			printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
+		what_is_it=$?
+		if [ $what_is_it -eq 0 ]; then
+			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
-			is_a_member "$candidate" "$ALL_INACTIVE_VMs"
-			if [ $? == 0 ]; then
-				printf "${YELLOW}%s does not look like an inactive VM${NC}\n" "$candidate"
+			is_a_member "$candidate" "$all_inactive_VMs"
+			what_is_it=$?
+			if [ $what_is_it -eq 0 ]; then
+				printf "%s'%s' does not look like an inactive VM%s\n" "$yellow" "$candidate" "$regular"
 			else
-				printf "${GREEN}Powering up %s${NC}\n" "$candidate"
-				virsh --quiet start "$candidate" \
-				|| printf "${YELLOW}Operation failed, virsh returned error code %d${NC}\n" $?
-				sleep 1
+				printf "%spowering up %s%s\n" "$green" "$candidate" "$regular"
+				virsh --quiet start "$candidate"
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d%s\n" "$yellow" $virsh_ec "$regular"
+				else
+					sleep 1
+				fi
 			fi
 		fi
 	done
 }
 
 annihilate_cmd() {
-	LOWEST_NUM_ARGS=1
-
-	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "\n${RED}Incorrect number of arguments (I need at least %d)${NC}\n\n" $LOWEST_NUM_ARGS
+	lowest_num_args=1
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" $lowest_num_args "$regular"
 		show_usage annihilate
 	fi
 
-	ALL_INACTIVE_VMs=$(virsh list --name --inactive)
-
-	if [ -z "$ALL_INACTIVE_VMs" ]; then
-		printf "\n${RED}I cannot seem to find a single inactive VM (is LIBVIRT_DEFAULT_URI set?)${NC}\n\n"
+	all_inactive_VMs=$(virsh list --name --inactive)
+	if [ -z "$all_inactive_VMs" ]; then
+		printf "\n%scannot seem to find a single inactive VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
 		show_usage annihilate
 	fi
 
 	for candidate; do
 		is_name_valid "$candidate"
-		if [ $? == 0 ]; then
-			printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
+		what_is_it=$?
+		if [ $what_is_it -eq 0 ]; then
+			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
-			is_a_member "$candidate" "$ALL_INACTIVE_VMs"
-			if [ $? == 0 ]; then
-				printf "${YELLOW}%s does not look like an inactive VM${NC}\n" "$candidate"
+			is_a_member "$candidate" "$all_inactive_VMs"
+			what_is_it=$?
+			if [ $what_is_it -eq 0 ]; then
+				printf "%s'%s' does not look like an inactive VM%s\n" "$yellow" "$candidate" "$regular"
 			else
-				printf "${GREEN}Annihilating %s (this may take a while)${NC}\n" "$candidate"
-				ALL_SNAPSHOTS=$(virsh snapshot-list --name "$candidate")
-				if [ -n "$ALL_SNAPSHOTS" ]; then
-					for each_one in "$ALL_SNAPSHOTS"; do
+				printf "%sannihilating %s (this may take a while)%s\n" "$green" "$candidate" "$regular"
+				all_snapshots=$(virsh snapshot-list --name "$candidate")
+				if [ -n "$all_snapshots" ]; then
+					for each_one in $all_snapshots; do
+						printf "  %sdeleting snapshot '%s'%s\n" "$green" "$each_one" "$regular"
 						virsh --quiet snapshot-delete --domain "$candidate" --snapshotname "$each_one"
-						if [ $? -ne 0 ]; then
+						virsh_ec=$?
+						if [ $virsh_ec -ne 0 ]; then
 							printf \
-							"${RED}Failed to delete snapshot %s of %s, virsh returned error code %d, terminating now.${NC}\n" \
-							"$each_one" "$candidate" $?
+							"%sfailed to delete snapshot '%s' of %s, virsh returned error code %d, terminating now%s\n" \
+								"$red" "$each_one" "$candidate" $virsh_ec "$regular"
 							exit 2
 						fi
 					done
 				fi
 				virsh --quiet undefine "$candidate" --remove-all-storage --wipe-storage
-				if [ $? -ne 0 ]; then
-					printf "${RED}Operation failed, virsh returned error code %d, terminating now.${NC}\n" $?
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
 					exit 2
 				fi
 			fi
@@ -272,134 +278,144 @@ annihilate_cmd() {
 }
 
 attach_cmd() {
-	LOWEST_NUM_ARGS=5
-
-	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "\n${RED}Incorrect number of arguments (I need at least %d)${NC}\n\n" $LOWEST_NUM_ARGS
+	lowest_num_args=5
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" $lowest_num_args "$regular"
 		show_usage attach
 	fi
 
-	VOLUME_NAME=""
-	VOLUME_SIZE=""
-	POOL_NAME=""
-	VM_DEV=""
+	volume_name=""
+	volume_size=""
+	pool_name=""
+	vm_dev=""
 
-	for ((argument=1 ; argument <= $(($LOWEST_NUM_ARGS - 1)) ; argument++)); do
+	for ((argument=1 ; argument <= $((lowest_num_args - 1)) ; argument++)); do
 
-		PARAM=$(echo "$1" | awk -F= '{print $1}')
-		VALUE=$(echo "$1" | awk -F= '{print $2}')
+		param=$(echo "$1" | awk -F= '{print $1}')
+		value=$(echo "$1" | awk -F= '{print $2}')
 
-		case $PARAM in
+		case $param in
 			--name)
-				if [ -z "$VALUE" ]; then
-					printf "${RED}Volume name not specified${NC}\n"
+				if [ -z "$value" ]; then
+					printf "%svolume name not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
-				is_name_valid "$VALUE"
-				if [ $? == 0 ]; then
-					printf "${RED}'%s' is not a valid volume name${NC}\n" "$VALUE"
+				is_name_valid "$value"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%s'%s' is not a valid volume name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				VOLUME_NAME=$VALUE
+				volume_name=$value
 			;;
 			--size)
-				if [ -z "$VALUE" ]; then
-					printf "${RED}Volume size not specified${NC}\n"
+				if [ -z "$value" ]; then
+					printf "%svolume size not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
-				is_number_valid "$VALUE"
-				if [ $? == 0 ]; then
-					printf "${RED}'%s' does not look like a positive integer${NC}\n" "$VALUE"
+				is_number_valid "$value"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				VOLUME_SIZE_MIN=128
-				VOLUME_SIZE_MAX=4096
-				if [ $VALUE -lt $VOLUME_SIZE_MIN ] \
-				|| [ $VALUE -gt $VOLUME_SIZE_MAX ] \
-				|| [ $(($VALUE % $VOLUME_SIZE_MIN)) -gt 0 ]; then
-					printf "${RED}Volume size must be between %d and %d GiB inclusive, and an integer multiple of %d${NC}\n" \
-					$VOLUME_SIZE_MIN $VOLUME_SIZE_MAX $VOLUME_SIZE_MIN
+				volume_size_min=128
+				volume_size_max=4096
+				if [ $value -lt $volume_size_min ] \
+					|| [ $value -gt $volume_size_max ] \
+					|| [ $((value % volume_size_min)) -gt 0 ]; then
+					printf "%svolume size must be between %d and %d GiB inclusive, and an integer multiple of %d%s\n" \
+						"$red" $volume_size_min $volume_size_max $volume_size_min "$regular"
 					exit 1
 				fi
-				VOLUME_SIZE=$VALUE
+				volume_size=$value
 			;;
 			--pool)
-				if [ -z "$VALUE" ]; then
-					printf "${RED}Pool name not specified${NC}\n"
+				if [ -z "$value" ]; then
+					printf "%spool name not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
-				is_name_valid "$VALUE"
-				if [ $? == 0 ]; then
-					printf "${RED}'%s' is not a valid pool name${NC}\n" "$VALUE"
+				is_name_valid "$value"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				ALL_ACTIVE_POOLS=$(virsh pool-list --name)
-				is_a_member "$VALUE" "$ALL_ACTIVE_POOLS"
-				if [ $? == 0 ]; then
-					printf "${RED}I cannot seem to find pool %s${NC}\n" "$VALUE"
+				all_active_pools=$(virsh pool-list --name)
+				is_a_member "$value" "$all_active_pools"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%scannot seem to find pool '%s'%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				POOL_NAME=$VALUE
+				pool_name=$value
 			;;
 			--vmdev)
-				if [ -z "$VALUE" ]; then
-					printf "${RED}Device file not specified${NC}\n"
+				if [ -z "$value" ]; then
+					printf "%sdevice file not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
-				VM_DEV=$VALUE
+				vm_dev=$value
 			;;
 			*)
-				printf "\n${RED}I do not recognize this '%s' argument${NC}\n\n" "$PARAM"
+				printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
 				show_usage attach
 			;;
 		esac
 		shift
 	done
 
-	if [ -z "$VOLUME_NAME" ] || [ -z "$VOLUME_SIZE" ] \
-	|| [ -z "$POOL_NAME" ] || [ -z "$VM_DEV" ]; then
-		printf "\n${RED}At least one of the required arguments has not been set${NC}\n\n"
+	if [ -z "$volume_name" ] \
+		|| [ -z "$volume_size" ] \
+		|| [ -z "$pool_name" ] \
+		|| [ -z "$vm_dev" ]; then
+		printf "\n%sat least one of the required arguments has not been set%s\n\n" "$red" "$regular"
 		show_usage attach
 	fi
 
-	ALL_VMs=$(virsh list --name --all)
-
-	if [ -z "$ALL_VMs" ]; then
-		printf "\n${RED}I cannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI properly set?)${NC}\n\n"
+	all_VMs=$(virsh list --name --all)
+	if [ -z "$all_VMs" ]; then
+		printf "\n%scannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
 		show_usage attach
 	fi
 
-	POOL_PATH=$(virsh pool-dumpxml "$POOL_NAME" \
-	| grep "<path>" | awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
+	pool_path=$(virsh pool-dumpxml "$pool_name" \
+		| grep "<path>" \
+		| awk -F "<path>" '{ print $2 }' \
+		| awk -F "</path>" '{ print $1 }')
 
 	for candidate; do
 		is_name_valid "$candidate"
-		if [ $? == 0 ]; then
-			printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
+		what_is_it=$?
+		if [ $what_is_it -eq 0 ]; then
+			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
-			is_a_member "$candidate" "$ALL_VMs"
-			if [ $? == 0 ]; then
-				printf "${YELLOW}%s does not look like a VM${NC}\n" "$candidate"
+			is_a_member "$candidate" "$all_VMs"
+			what_is_it=$?
+			if [ $what_is_it -eq 0 ]; then
+				printf "%s'%s' does not look like a VM%s\n" "$yellow" "$candidate" "$regular"
 			else
-				QCOW2_NAME="$candidate"_"$VM_DEV"_"$VOLUME_NAME"_"$VOLUME_SIZE".qcow2
-				QCOW2_PATH="$POOL_PATH"/"$QCOW2_NAME"
+				qcow2_name="$candidate"_"$vm_dev"_"$volume_name"_"$volume_size".qcow2
+				qcow2_path="$pool_path"/"$qcow2_name"
 
-				printf "${GREEN}Creating QCOW2 image %s for %s${NC}\n" "$QCOW2_NAME" "$candidate"
+				printf "%screating QCOW2 image %s for %s%s\n" \
+					"$green" "$qcow2_name" "$candidate" "$regular"
 
-				virsh --quiet vol-create-as "$POOL_NAME" --name "$QCOW2_NAME" --capacity ${VOLUME_SIZE}G --format qcow2
-
-				if [ $? -ne 0 ]; then
-					printf "${RED}Operation failed, virsh returned error code %d, terminating now.${NC}\n" $?
+				virsh --quiet vol-create-as "$pool_name" --name "$qcow2_name" \
+					--capacity "$volume_size"G --format qcow2
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
 					exit 2
 				fi
 
-				printf "${GREEN}Attaching %s to %s${NC}\n\n" "$QCOW2_NAME" "$candidate"
+				printf "%sattaching %s to %s%s\n\n" "$green" "$qcow2_name" "$candidate" "$regular"
 
-				virsh --quiet attach-disk "$candidate" "$QCOW2_PATH" "$VM_DEV" \
-				--driver qemu --subdriver qcow2 --targetbus virtio --persistent
-
-				if [ $? -ne 0 ]; then
-					printf "${RED}Operation failed, virsh returned error code %d, terminating now.${NC}\n" $?
+				virsh --quiet attach-disk "$candidate" "$qcow2_path" "$vm_dev" \
+					--driver qemu --subdriver qcow2 --targetbus virtio --persistent
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
 					exit 2
 				fi
 			fi
@@ -408,224 +424,240 @@ attach_cmd() {
 }
 
 checkservice_cmd() {
-	NUM_ARGS=2
-
-	if [ $# -ne $NUM_ARGS ]; then
-		printf "\n${RED}Incorrect number of arguments (I need exactly %s)${NC}\n\n" "$NUM_ARGS"
+	lowest_num_args=2
+	if [ $# -ne $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (need exactly %s)%s\n\n" "$red" "$lowest_num_args" "$regular"
 		show_usage check-service
 	fi
 
-	PARAM=$(echo "$1" | awk -F= '{print $1}')
-	VALUE=$(echo "$1" | awk -F= '{print $2}')
+	param=$(echo "$1" | awk -F= '{print $1}')
+	value=$(echo "$1" | awk -F= '{print $2}')
 
-	if [ "$PARAM" != "--port" ]; then
-		printf "\n${RED}I do not recognize this '%s' argument${NC}\n\n" "$PARAM"
+	if [ "$param" != "--port" ]; then
+		printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
 		show_usage check-service
 	fi
 
-	if [ -z "$VALUE" ]; then
-		printf "${RED}TCP port not specified${NC}\n"
+	if [ -z "$value" ]; then
+		printf "%sTCP port not specified%s\n" "$red" "$regular"
 		exit 1
 	fi
 
-	is_number_valid "$VALUE"
-
-	if [ $? == 0 ]; then
-		printf "${RED}'%s' does not look like a positive integer${NC}\n" "$VALUE"
+	is_number_valid "$value"
+	what_is_it=$?
+	if [ $what_is_it -eq 0 ]; then
+		printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 		exit 1
 	fi
 
-	if [ $VALUE -lt 1 ] || [ $VALUE -gt 65535 ]; then
-		printf "${RED}TCP port number must be between 1 and 65535 inclusive${NC}\n"
+	if [ $value -lt 1 ] || [ $value -gt 65535 ]; then
+		printf "%sTCP port number must be between 1 and 65535 inclusive%s\n" "$red" "$regular"
 		exit 1
 	fi
 
-	TCP_PORT=$VALUE
+	tcp_port=$value
 
 	VM="$2"
-
 	is_name_valid "$VM"
-	if [ $? == 0 ]; then
-		printf "${RED}'%s' is not a valid VM name${NC}\n" "$VM"
+	what_is_it=$?
+	if [ $what_is_it -eq 0 ]; then
+		printf "%s'%s' is not a valid VM name%s\n" "$red" "$VM" "$regular"
 		exit 1
 	fi
 
-	ALL_ACTIVE_VMs=$(virsh list --name)
-
-	is_a_member "$VM" "$ALL_ACTIVE_VMs"
-
-	if [ $? == 0 ]; then
-		printf "${RED}%s is not an active VM${NC}\n" "$VM"
+	all_active_VMs=$(virsh list --name)
+	is_a_member "$VM" "$all_active_VMs"
+	what_is_it=$?
+	if [ $what_is_it -eq 0 ]; then
+		printf "%s'%s' is not an active VM%s\n" "$red" "$VM" "$regular"
 		exit 1
 	fi
 
-	nc -z -w 1 "$VM" "$TCP_PORT" > /dev/null 2>&1
-
-	if [ $? == 0 ]; then
-		printf "${GREEN}%s is accepting packets on port %d/TCP${NC}\n" "$VM" "$TCP_PORT"
+	nc -z -w 1 "$VM" "$tcp_port" > /dev/null 2>&1
+	netcat_ec=$?
+	if [ $netcat_ec -eq 0 ]; then
+		printf "%s%s is accepting packets on port %d/TCP%s\n" "$green" "$VM" "$tcp_port" "$regular"
 	else
-		printf "${RED}%s is not accepting packets on port %d/TCP${NC}\n" "$VM" "$TCP_PORT"
+		printf "%s%s is not accepting packets on port %d/TCP%s\n" "$red" "$VM" "$tcp_port" "$regular"
 	fi
 }
 
 clone_cmd() {
-	LOWEST_NUM_ARGS=3
-
-	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "\n${RED}Incorrect number of arguments (I need at least %d)${NC}\n\n" $LOWEST_NUM_ARGS
+	lowest_num_args=3
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" $lowest_num_args "$regular"
 		show_usage clone
 	fi
 
-	TEMPLATE_VM=""
-	CLONE_POOL_NAME=""
+	template_VM=""
+	clone_pool_name=""
 
-	for ((argument=1 ; argument <= $(($LOWEST_NUM_ARGS - 1)) ; argument++)); do
+	for ((argument=1 ; argument <= $((lowest_num_args - 1)) ; argument++)); do
 
-		PARAM=$(echo "$1" | awk -F= '{print $1}')
-		VALUE=$(echo "$1" | awk -F= '{print $2}')
+		param=$(echo "$1" | awk -F= '{print $1}')
+		value=$(echo "$1" | awk -F= '{print $2}')
 
-		case $PARAM in
+		case $param in
 			--template)
-				if [ -z "$VALUE" ]; then
-					printf "${RED}Template name not specified${NC}\n"
+				if [ -z "$value" ]; then
+					printf "%stemplate name not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
-				is_name_valid "$VALUE"
-				if [ $? == 0 ]; then
-					printf "${RED}'%s' is not a valid template name${NC}\n" "$VALUE"
+				is_name_valid "$value"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%s'%s' is not a valid template name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				ALL_INACTIVE_VMs=$(virsh list --name --inactive)
-				is_a_member "$VALUE" "$ALL_INACTIVE_VMs"
-				if [ $? == 0 ]; then
-					printf "${RED}Template should be an existing inactive VM${NC}\n"
+				all_inactive_VMs=$(virsh list --name --inactive)
+				is_a_member "$value" "$all_inactive_VMs"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%stemplate should be an existing inactive VM%s\n" "$red" "$regular"
 					exit 1
 				fi
-				TEMPLATE_VM=$VALUE
+				template_VM=$value
 			;;
 			--target-pool)
-				if [ -z "$VALUE" ]; then
-					printf "${RED}Target pool not specified${NC}\n"
+				if [ -z "$value" ]; then
+					printf "%starget pool not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
-				is_name_valid "$VALUE"
-				if [ $? == 0 ]; then
-					printf "${RED}'%s' is not a valid pool name${NC}\n" "$VALUE"
+				is_name_valid "$value"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				ALL_ACTIVE_POOLS=$(virsh pool-list --name)
-				is_a_member "$VALUE" "$ALL_ACTIVE_POOLS"
-				if [ $? == 0 ]; then
-					printf "${RED}I cannot seem to find pool %s${NC}\n" "$VALUE"
+				all_active_pools=$(virsh pool-list --name)
+				is_a_member "$value" "$all_active_pools"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%scannot seem to find pool '%s'%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				CLONE_POOL_NAME=$VALUE
+				clone_pool_name=$value
 				;;
 			*)
-				printf "\n${RED}I do not recognize this '%s' argument${NC}\n\n" "$PARAM"
+				printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
 				show_usage clone
 			;;
 		esac
 		shift
 	done
 
-	if [ -z "$TEMPLATE_VM" ] || [ -z "$CLONE_POOL_NAME" ]; then
-		printf "\n${RED}One of the required arguments is not set${NC}\n\n"
+	if [ -z "$template_VM" ] || [ -z "$clone_pool_name" ]; then
+		printf "\n%sat least one of the required arguments has not been set%s\n\n" "$red" "$regular"
 		show_usage clone
 	fi
 
-	TEMPLATE_POOL_NAME=""
-	TEMPLATE_POOL_PATH=""
-	TEMPLATE_VOLUME_PATH=$(virsh dumpxml "$TEMPLATE_VM" \
-	| grep "<source file='" | awk -F "='" '{ print $2 }' | awk -F "'/>" '{ print $1 }')
+	template_pool_name=""
+	template_pool_path=""
+	template_volume_path=$(virsh dumpxml "$template_VM" \
+		| grep "<source file='" \
+		| awk -F "='" '{ print $2 }' \
+		| awk -F "'/>" '{ print $1 }')
 
-	for pool in $ALL_ACTIVE_POOLS; do
-		VOLUMES_IN_POOL=$(virsh vol-list "$pool")
-		TEMPLATE_VOLUME_IN_LIST=$(echo "$VOLUMES_IN_POOL" | grep "$TEMPLATE_VOLUME_PATH")
-		if [ -n "$TEMPLATE_VOLUME_IN_LIST" ]; then
-			TEMPLATE_POOL_NAME=$pool
-			TEMPLATE_POOL_PATH=$(virsh pool-dumpxml "$pool" \
-			| grep "<path>" | awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
-			ALL_ACTIVE_POOLS=""
+	for pool in $all_active_pools; do
+		volumes_in_pool=$(virsh vol-list "$pool")
+		template_volume_in_list=$(echo "$volumes_in_pool" | grep "$template_volume_path")
+		if [ -n "$template_volume_in_list" ]; then
+			template_pool_name=$pool
+			template_pool_path=$(virsh pool-dumpxml "$pool" \
+				| grep "<path>" \
+				| awk -F "<path>" '{ print $2 }' \
+				| awk -F "</path>" '{ print $1 }')
+			all_active_pools=""
 		fi
 	done
 
-	ALL_VMs=$(virsh list --name --all)
-	TEMPLATE_VOLUME_NAME=$(echo "$TEMPLATE_VOLUME_PATH" \
-	| awk -F "${TEMPLATE_POOL_PATH}/" '{ print $2 }')
-	CLONE_POOL_PATH=$(virsh pool-dumpxml "$CLONE_POOL_NAME" \
-	| grep "<path>" | awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
+	all_VMs=$(virsh list --name --all)
+
+	template_volume_name=$(echo "$template_volume_path" \
+		| awk -F "${template_pool_path}/" '{ print $2 }')
+	clone_pool_path=$(virsh pool-dumpxml "$clone_pool_name" \
+		| grep "<path>" \
+		| awk -F "<path>" '{ print $2 }' \
+		| awk -F "</path>" '{ print $1 }')
 
 	for candidate; do
 		is_name_valid "$candidate"
-		if [ $? == 0 ]; then
-			printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
+		what_is_it=$?
+		if [ $what_is_it -eq 0 ]; then
+			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
-			is_a_member "$candidate" "$ALL_VMs"
-			if [ $? == 1 ]; then
-				printf "${YELLOW}There is already a VM %s, so I am skipping that one${NC}\n" "$candidate"
+			is_a_member "$candidate" "$all_VMs"
+			what_is_it=$?
+			if [ $what_is_it -eq 1 ]; then
+				printf "%sthere is already a VM '%s', so I am skipping that one%s\n" "$yellow" "$candidate" "$regular"
 			else
-				CLONE_VOLUME_NAME="$candidate".qcow2
+				clone_volume_name="$candidate".qcow2
 
-				printf "${GREEN}Cloning %s into %s${NC}\n" "$TEMPLATE_VOLUME_NAME" "$CLONE_VOLUME_NAME"
+				printf "%scloning %s into %s%s\n" "$green" "$template_volume_name" "$clone_volume_name" "$regular"
 
-				virsh --quiet vol-clone --pool "$TEMPLATE_POOL_NAME" "$TEMPLATE_VOLUME_NAME" "$CLONE_VOLUME_NAME"
-
-				if [ $? -ne 0 ]; then
-					printf "${RED}Operation failed, virsh returned error code %d, terminating now.${NC}\n" $?
+				virsh --quiet vol-clone --pool "$template_pool_name" "$template_volume_name" "$clone_volume_name"
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
 					exit 2
 				fi
 
-				if [ "$TEMPLATE_POOL_PATH" != "$CLONE_POOL_PATH" ]; then
-					printf "${GREEN}Moving %s between pools (%s ==> %s)${NC}\n" \
-					"$CLONE_VOLUME_NAME" "$TEMPLATE_POOL_NAME" "$CLONE_POOL_NAME"
+				if [ "$template_pool_path" != "$clone_pool_path" ]; then
+					printf "%smoving %s between pools (%s ==> %s)%s\n" \
+						"$green" "$clone_volume_name" "$template_pool_name" "$clone_pool_name" "$regular"
 
-					sudo mv "$TEMPLATE_POOL_PATH"/"$CLONE_VOLUME_NAME" "$CLONE_POOL_PATH"/
-
-					if [ $? -ne 0 ]; then
-						printf "${RED}Operation failed, mv returned error code %d, terminating now.${NC}\n" $?
+					sudo mv "$template_pool_path"/"$clone_volume_name" "$clone_pool_path"/
+					sudo_ec=$?
+					if [ $sudo_ec -ne 0 ]; then
+						printf "%soperation failed, mv returned error code %d, terminating now%s\n" "$red" $sudo_ec "$regular"
 						exit 2
 					fi
 
-					virsh --quiet pool-refresh "$TEMPLATE_POOL_NAME"
-					virsh --quiet pool-refresh "$CLONE_POOL_NAME"
+					virsh --quiet pool-refresh "$template_pool_name"
+					virsh --quiet pool-refresh "$clone_pool_name"
 				fi
 
-				printf "${GREEN}Cloning %s into %s and attaching %s to it${NC}\n" \
-				"$TEMPLATE_VM" "$candidate" "$CLONE_VOLUME_NAME"
+				printf "%scloning %s into %s and attaching %s to it%s\n" \
+					"$green" "$template_VM" "$candidate" "$clone_volume_name" "$regular"
 
-				virt-clone --quiet -o "$TEMPLATE_VM" -n "$candidate" --preserve-data -f "$CLONE_POOL_PATH"/"$CLONE_VOLUME_NAME"
-
-				if [ $? -ne 0 ]; then
-					printf "${RED}Operation failed, virt-clone returned error code %d, terminating now.${NC}\n" $?
+				virt-clone --quiet -o "$template_VM" -n "$candidate" \
+					--preserve-data -f "$clone_pool_path"/"$clone_volume_name"
+				virt_clone_ec=$?
+				if [ $virt_clone_ec -ne 0 ]; then
+					printf "%soperation failed, virt-clone returned error code %d, terminating now%s\n" \
+						"$red" $virt_clone_ec "$regular"
 					exit 2
 				fi
 
-				printf "${GREEN}Setting hostname for %s (this may take a while)${NC}\n" "$candidate"
+				printf "%ssetting hostname for %s (this may take a while)%s\n" \
+					"$green" "$candidate" "$regular"
 
 				sudo virt-customize --quiet -d "$candidate" --hostname "$candidate"
-
-				if [ $? -ne 0 ]; then
-					printf "${RED}Operation failed, virt-customize returned error code %d, terminating now.${NC}\n" $?
+				virt_customize_ec=$?
+				if [ $virt_customize_ec -ne 0 ]; then
+					printf "%soperation failed, virt-customize returned error code %d, terminating now%s\n" \
+						"$red" $virt_customize_ec "$regular"
 					exit 2
 				fi
 
-				printf "${GREEN}Deleting SSH host keys from %s (this may take a while)${NC}\n\n" "$candidate"
+				printf "%sdeleting SSH host keys from %s (this may take a while)%s\n\n" "$green" "$candidate" "$regular"
 
 				sudo virt-customize --quiet -d "$candidate" \
-				--delete /etc/ssh/ssh_host_dsa_key \
-				--delete /etc/ssh/ssh_host_dsa_key.pub \
-				--delete /etc/ssh/ssh_host_ecdsa_key \
-				--delete /etc/ssh/ssh_host_ecdsa_key.pub \
-				--delete /etc/ssh/ssh_host_ed25519_key \
-				--delete /etc/ssh/ssh_host_ed25519_key.pub \
-				--delete /etc/ssh/ssh_host_key \
-				--delete /etc/ssh/ssh_host_key.pub \
-				--delete /etc/ssh/ssh_host_rsa_key \
-				--delete /etc/ssh/ssh_host_rsa_key.pub
+					--delete /etc/ssh/ssh_host_dsa_key \
+					--delete /etc/ssh/ssh_host_dsa_key.pub \
+					--delete /etc/ssh/ssh_host_ecdsa_key \
+					--delete /etc/ssh/ssh_host_ecdsa_key.pub \
+					--delete /etc/ssh/ssh_host_ed25519_key \
+					--delete /etc/ssh/ssh_host_ed25519_key.pub \
+					--delete /etc/ssh/ssh_host_key \
+					--delete /etc/ssh/ssh_host_key.pub \
+					--delete /etc/ssh/ssh_host_rsa_key \
+					--delete /etc/ssh/ssh_host_rsa_key.pub
 
-				if [ $? -ne 0 ]; then
-					printf "${RED}Operation failed, virt-customize returned error code %d, terminating now.${NC}\n" $?
+				virt_customize_ec=$?
+				if [ $virt_customize_ec -ne 0 ]; then
+					printf "%soperation failed, virt-customize returned error code %d, terminating now%s\n" \
+						"$red" $virt_customize_ec "$regular"
 					exit 2
 				fi
 			fi
@@ -634,35 +666,36 @@ clone_cmd() {
 }
 
 deactivate_cmd() {
-	LOWEST_NUM_ARGS=1
-
-	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "\n${RED}Incorrect number of arguments (I need at least %d)${NC}\n\n" $LOWEST_NUM_ARGS
+	lowest_num_args=1
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" \
+			"$red" $lowest_num_args "$regular"
 		show_usage deactivate
 	fi
 
-	ALL_ACTIVE_VMs=$(virsh list --name)
-
-	if [ -z "$ALL_ACTIVE_VMs" ]; then
-		printf "\n${RED}I cannot seem to find a single active VM (is LIBVIRT_DEFAULT_URI set?)${NC}\n\n"
+	all_active_VMs=$(virsh list --name)
+	if [ -z "$all_active_VMs" ]; then
+		printf "\n%scannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
 		show_usage deactivate
 	fi
 
 	for candidate; do
 		is_name_valid "$candidate"
-		if [ $? == 0 ]; then
-			printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
+		what_is_it=$?
+		if [ $what_is_it -eq 0 ]; then
+			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
-			is_a_member "$candidate" "$ALL_ACTIVE_VMs"
-			if [ $? == 0 ]; then
-				printf "${YELLOW}%s is not an active VM${NC}\n" "$candidate"
+			is_a_member "$candidate" "$all_active_VMs"
+			what_is_it=$?
+			if [ $what_is_it -eq 0 ]; then
+				printf "%s'%s' is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
-				printf "${GREEN}Shutting down %s${NC}\n" "$candidate"
+				printf "%sshutting down %s%s\n" "$green" "$candidate" "$regular"
 
 				virsh --quiet shutdown $candidate
-
-				if [ $? -ne 0 ]; then
-					printf "${RED}Operation failed, virsh returned error code %d, terminating now.${NC}\n" $?
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
 					exit 2
 				fi
 				sleep 1
@@ -672,286 +705,305 @@ deactivate_cmd() {
 }
 
 define_cmd() {
-	LOWEST_NUM_ARGS=7
-
-	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "\n${RED}Incorrect number of arguments (I need at least $LOWEST_NUM_ARGS)${NC}\n\n"
+	lowest_num_args=7
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" $lowest_num_args "$regular"
 		show_usage define
 	fi
 
-	MEMORY_SIZE=""
-	CPU_CORES=""
-	VOLUME_SIZE=""
-	LIBVIRT_NETWORK=""
-	OS_VARIANT=""
-	POOL_NAME=""
+	memory_size=""
+	cpu_cores=""
+	volume_size=""
+	libvirt_network=""
+	os_variant=""
+	pool_name=""
 
-	for ((argument=1 ; argument <= $(($LOWEST_NUM_ARGS - 1)) ; argument++)); do
+	for ((argument=1 ; argument <= $((lowest_num_args - 1)) ; argument++)); do
 
-		PARAM=$(echo "$1" | awk -F= '{print $1}')
-		VALUE=$(echo "$1" | awk -F= '{print $2}')
+		param=$(echo "$1" | awk -F= '{print $1}')
+		value=$(echo "$1" | awk -F= '{print $2}')
 
-		case $PARAM in
+		case $param in
 			--ram)
-				if [ -z "$VALUE" ]; then
-					printf "${RED}Memory size not specified${NC}\n"
+				if [ -z "$value" ]; then
+					printf "%smemory size not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
-				is_number_valid "$VALUE"
-				if [ $? == 0 ]; then
-					printf "${RED}'%s' does not look like a positive integer${NC}\n" "$VALUE"
+				is_number_valid "$value"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				MEMORY_SIZE_MIN=32
-				MEMORY_SIZE_MAX=16384
-				if [ $VALUE -lt $MEMORY_SIZE_MIN ] \
-				|| [ $VALUE -gt $MEMORY_SIZE_MAX ] \
-				|| [ $(($VALUE % $MEMORY_SIZE_MIN)) -gt 0 ]; then
-					printf "${RED}Memory size must be between %d and %d MiB inclusive, and an integer multiple of %d${NC}\n" \
-					$MEMORY_SIZE_MIN $MEMORY_SIZE_MAX $MEMORY_SIZE_MIN
+				memory_size_min=32
+				memory_size_max=16384
+				if [ $value -lt $memory_size_min ] \
+					|| [ $value -gt $memory_size_max ] \
+					|| [ $((value % memory_size_min)) -gt 0 ]; then
+					printf "%smemory size must be between %d and %d MiB inclusive, and an integer multiple of %d%s\n" \
+					"$red" $memory_size_min $memory_size_max $memory_size_min "$regular"
 					exit 1
 				fi
-				MEMORY_SIZE=$VALUE
+				memory_size=$value
 			;;
 			--cores)
-				if [ -z "$VALUE" ]; then
-					printf "${RED}Number of CPU cores not specified${NC}\n"
+				if [ -z "$value" ]; then
+					printf "%snumber of CPU cores not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
-				is_number_valid "$VALUE"
-				if [ $? == 0 ]; then
-					printf "${RED}'%s' does not look like a positive integer${NC}\n" "$VALUE"
+				is_number_valid "$value"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				CPU_CORES_MAX=$(virsh nodeinfo | grep "CPU(s):" | awk -F ":" '{ print $2 }')
-				if [ $VALUE -lt 1 ] || [ $VALUE -gt $CPU_CORES_MAX ]; then
-					printf "${RED}Number of CPU cores should be between 1 and %d inclusive${NC}\n" $CPU_CORES_MAX
+				cpu_cores_max=$(virsh nodeinfo | grep "CPU(s):" | awk -F ":" '{ print $2 }')
+				if [ $value -lt 1 ] || [ $value -gt $cpu_cores_max ]; then
+					printf "%snumber of CPU cores should be between 1 and %d inclusive%s\n" "$red" "$cpu_cores_max" "$regular"
 					exit 1
 				fi
-				CPU_CORES=$VALUE
+				cpu_cores=$value
 			;;
-			--disk-size)
-				if [ -z "$VALUE" ]; then
-					printf "${RED}Volume size not specified${NC}\n"
+			--volume-size)
+				if [ -z "$value" ]; then
+					printf "%svolume size not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
-				is_number_valid "$VALUE"
-				if [ $? == 0 ]; then
-					printf "${RED}'%s' does not look like a positive integer${NC}\n" "$VALUE"
+				is_number_valid "$value"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				VOLUME_SIZE_MIN=16
-				VOLUME_SIZE_MAX=512
-				if [ $VALUE -lt $VOLUME_SIZE_MIN ] \
-				|| [ $VALUE -gt $VOLUME_SIZE_MAX ] \
-				|| [ $(($VALUE % $VOLUME_SIZE_MIN)) -gt 0 ]; then
-					printf "${RED}Volume size must be between %d and %d GiB inclusive, and an integer multiple of %d${NC}\n" \
-					$VOLUME_SIZE_MIN $VOLUME_SIZE_MAX $VOLUME_SIZE_MIN
+				volume_size_min=16
+				volume_size_max=512
+				if [ $value -lt $volume_size_min ] \
+					|| [ $value -gt $volume_size_max ] \
+					|| [ $((value % volume_size_min)) -gt 0 ]; then
+					printf "%svolume size must be between %d and %d GiB inclusive, and an integer multiple of %d%s\n" \
+						"$red" $volume_size_min $volume_size_max $volume_size_min "$regular"
 					exit 1
 				fi
-				VOLUME_SIZE=$VALUE
+				volume_size=$value
 			;;
 			--network)
-				if [ -z "$VALUE" ]; then
-					printf "${RED}Network name not specified${NC}\n"
+				if [ -z "$value" ]; then
+					printf "%snetwork name not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
-				is_name_valid "$VALUE"
-				if [ $? == 0 ]; then
-					printf "${RED}'%s' is not a valid network name${NC}\n" "$VALUE"
+				is_name_valid "$value"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%s'%s' is not a valid network name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				ALL_ACTIVE_NETWORKS=$(virsh net-list --name)
-				is_a_member "$VALUE" "$ALL_ACTIVE_NETWORKS"
-				if [ $? == 0 ]; then
-					printf "${RED}I cannot seem to find network %s${NC}\n" "$VALUE"
+				all_active_networks=$(virsh net-list --name)
+				is_a_member "$value" "$all_active_networks"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%sI cannot seem to find network %s%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				LIBVIRT_NETWORK=$VALUE
+				libvirt_network=$value
 			;;
 			--guest-os)
-				if [ -z "$VALUE" ]; then
-					printf "${RED}OS variant not specified${NC}\n"
+				if [ -z "$value" ]; then
+					printf "%sOS variant not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
-				is_name_valid $VALUE
-				if [ $? == 0 ]; then
-					printf "${RED}'%s' is not a valid OS variant name${NC}\n" "$VALUE"
+				is_name_valid "$value"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%s'%s' is not a valid OS variant name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				ALL_OS_VARIANTS=$(osinfo-query os -f short-id)
-				is_a_member "$VALUE" "$ALL_OS_VARIANTS"
-				if [ $? == 0 ]; then
-					printf "${RED}I do not recognize OS variant %s${NC}\n" "$VALUE"
+				all_os_variants=$(osinfo-query os -f short-id)
+				is_a_member "$value" "$all_os_variants"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%sunknown OS variant '%s'%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				OS_VARIANT=$VALUE
+				os_variant=$value
 			;;
 			--pool)
-				if [ -z "$VALUE" ]; then
-					printf "${RED}Pool name not specified${NC}\n"
+				if [ -z "$value" ]; then
+					printf "%spool name not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
-				is_name_valid "$VALUE"
-				if [ $? == 0 ]; then
-					printf "${RED}'%s' is not a valid pool name${NC}\n" "$VALUE"
+				is_name_valid "$value"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				ALL_ACTIVE_POOLS=$(virsh pool-list --name)
-				is_a_member "$VALUE" "$ALL_ACTIVE_POOLS"
-				if [ $? == 0 ]; then
-					printf "${RED}I cannot seem to find pool %s${NC}\n" "$VALUE"
+				all_active_pools=$(virsh pool-list --name)
+				is_a_member "$value" "$all_active_pools"
+				what_is_it=$?
+				if [ $what_is_it -eq 0 ]; then
+					printf "%scannot seem to find pool '%s'%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				POOL_NAME=$VALUE
+				pool_name=$value
 			;;
 			*)
-				printf "\n${RED}I do not recognize this '%s' argument${NC}\n\n" "$PARAM"
+				printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
 				show_usage define
 			;;
 		esac
 		shift
 	done
 
-	if [ -z "$MEMORY_SIZE" ] || [ -z "$CPU_CORES" ] || [ -z "$VOLUME_SIZE" ] \
-	|| [ -z "$LIBVIRT_NETWORK" ] || [ -z "$OS_VARIANT" ] || [ -z "$POOL_NAME" ]; then
-		printf "\n${RED}One of the required arguments is not set${NC}\n\n"
+	if [ -z "$memory_size" ] \
+		|| [ -z "$cpu_cores" ] \
+		|| [ -z "$volume_size" ] \
+		|| [ -z "$libvirt_network" ] \
+		|| [ -z "$os_variant" ] \
+		|| [ -z "$pool_name" ]; then
+		printf "\n%sat least one of the required arguments has not been set%s\n\n" "$red" "$regular"
 		show_usage define
 	fi
 
-	ALL_VMs=$(virsh list --name --all)
-	POOL_PATH=$(virsh pool-dumpxml "$POOL_NAME" | grep "<path>" | awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
+	all_VMs=$(virsh list --name --all)
+	pool_path=$(virsh pool-dumpxml "$pool_name" \
+		| grep "<path>" \
+		| awk -F "<path>" '{ print $2 }' \
+		| awk -F "</path>" '{ print $1 }')
 
 	for candidate; do
 		is_name_valid "$candidate"
-		if [ $? == 0 ]; then
-			printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
+		what_is_it=$?
+		if [ $what_is_it -eq 0 ]; then
+			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
-			is_a_member "$candidate" "$ALL_VMs"
-			if [ $? == 1 ]; then
-				printf "${YELLOW}There is already a VM %s, so I am skipping that one${NC}\n" "$candidate"
+			is_a_member "$candidate" "$all_VMs"
+			what_is_it=$?
+			if [ $what_is_it -eq 1 ]; then
+				printf "%sthere is already a VM '%s', so I am skipping that one%s\n" "$yellow" "$candidate" "$regular"
 			else
-				RANDOM_ALPHANUM=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n')
-				XML_PATH="$candidate"_"$RANDOM_ALPHANUM".xml
-				QCOW2_NAME="$candidate".qcow2
-				QCOW2_PATH="$POOL_PATH"/"$QCOW2_NAME"
+				random_alphanum=$(strings /dev/urandom \
+					| grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n')
+				xml_path="$candidate"_"$random_alphanum".xml
+				qcow2_name="$candidate".qcow2
+				qcow2_path="$pool_path"/"$qcow2_name"
 
-				printf "${GREEN}Creating volume %s for VM %s${NC}\n" "$QCOW2_NAME" "$candidate"
+				printf "%screating volume %s for %s%s\n" \
+					"$green" "$qcow2_name" "$candidate" "$regular"
 
-				virsh --quiet vol-create-as "$POOL_NAME" --name "$QCOW2_NAME" --capacity ${VOLUME_SIZE}G --format qcow2
-
-				if [ $? -ne 0 ]; then
-					printf "${RED}Operation failed, virsh returned error code %d, terminating now.${NC}\n" $?
+				virsh --quiet vol-create-as "$pool_name" --name "$qcow2_name" --capacity "$volume_size"G --format qcow2
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
 					exit 2
 				fi
 
-				printf "${GREEN}Coming up with a detailed XML description of %s${NC}\n" "$candidate"
+				printf "%scoming up with a detailed XML description of %s%s\n" "$green" "$candidate" "$regular"
 
-				virt-install --quiet --name "$candidate" --os-variant "$OS_VARIANT" \
-				--memory "$MEMORY_SIZE" --cpu host --vcpus="$CPU_CORES" --network network="$LIBVIRT_NETWORK",model=virtio \
-				--disk "$QCOW2_PATH",bus=virtio --boot network,hd --print-xml 1 > ~/"$XML_PATH"
-
-				if [ $? -ne 0 ]; then
-					printf "${RED}Operation failed, virt-install returned error code %d, terminating now.${NC}\n" $?
-					rm -f ~/"$XML_PATH"
+				virt-install --quiet --name "$candidate" --os-variant "$os_variant" \
+					--memory "$memory_size" --cpu host --vcpus="$cpu_cores" \
+					--network network="$libvirt_network",model=virtio \
+					--disk "$qcow2_path",bus=virtio --boot network,hd \
+					--print-xml 1 > ~/"$xml_path"
+				virt_install_ec=$?
+				if [ $virt_install_ec -ne 0 ]; then
+					printf "%soperation failed, virt-install returned error code %d, terminating now%s\n" \
+						"$red" $virt_install_ec "$regular"
+					rm -f ~/"$xml_path"
 					exit 2
 				fi
 
-				printf "${GREEN}Retracting sound card & tablet input devices from XML description${NC}\n"
+				printf "%sretracting sound card & tablet input devices from XML description%s\n" "$green" "$regular"
 
-				sed -i /"<sound model"/d ~/"$XML_PATH"
-				sed -i /'<input type="tablet'/d ~/"$XML_PATH"
+				sed -i /"<sound model"/d ~/"$xml_path"
+				sed -i /'<input type="tablet'/d ~/"$xml_path"
 
-				printf "${GREEN}Defining VM %s${NC}\n\n" "$candidate"
+				printf "%sdefining VM %s%s\n\n" "$green" "$candidate" "$regular"
 
-				virsh --quiet define ~/"$XML_PATH" --validate
-
-				if [ $? -ne 0 ]; then
-					printf "${RED}Operation failed, virsh returned error code %d, terminating now.${NC}\n" $?
-					rm -f ~/"$XML_PATH"
+				virsh --quiet define ~/"$xml_path" --validate
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
+					rm -f ~/"$xml_path"
 					exit 2
 				fi
-
-				rm -f ~/"$XML_PATH"
+				rm -f ~/"$xml_path"
 			fi
 		fi
 	done
 }
 
 getmac_cmd() {
-	LOWEST_NUM_ARGS=1
-
-	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "\n${RED}Incorrect number of arguments (I need at least %d)${NC}\n\n" $LOWEST_NUM_ARGS
+	lowest_num_args=1
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" $lowest_num_args "$regular"
 		show_usage getmac
 	fi
 
-	ALL_VMs=$(virsh list --name --all)
-
-	if [ -z "$ALL_VMs" ]; then
-		printf "\n${RED}I cannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI set?)${NC}\n\n"
+	all_VMs=$(virsh list --name --all)
+	if [ -z "$all_VMs" ]; then
+		printf "\n%scannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
 		show_usage getmac
 	fi
 
 	for candidate; do
 		is_name_valid "$candidate"
-		if [ $? == 0 ]; then
-			printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
+		what_is_it=$?
+		if [ $what_is_it -eq 0 ]; then
+			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
-			is_a_member "$candidate" "$ALL_VMs"
-			if [ $? == 0 ]; then
-				printf "${YELLOW}I cannot seem to find VM %s${NC}\n" "$candidate"
+			is_a_member "$candidate" "$all_VMs"
+			what_is_it=$?
+			if [ $what_is_it -eq 0 ]; then
+				printf "%scannot seem to find VM '%s'%s\n" "$yellow" "$candidate" "$regular"
 			else
-				MAC_ADDR=$(virsh --quiet dumpxml "$candidate" | grep "mac address" \
-				| awk -F "<mac address='" '{ print $2 }' | awk -F "'/>" '{ print $1 }')
-				printf "${GREEN}%s looks like %s${NC}\n" "$candidate" "$MAC_ADDR"
+				mac_addr=$(virsh --quiet dumpxml "$candidate" | grep "mac address" \
+					| awk -F "<mac address='" '{ print $2 }' | awk -F "'/>" '{ print $1 }')
+				printf "%s%s looks like %s in the local network%s\n" "$green" "$candidate" "$mac_addr" "$regular"
 			fi
 		fi
 	done
 }
 
 ping_cmd() {
-	LOWEST_NUM_ARGS=2
-
-	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "\n${RED}Incorrect number of arguments (I need at least %d)${NC}\n\n" $LOWEST_NUM_ARGS
+	lowest_num_args=2
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" $lowest_num_args "$regular"
 		show_usage ping
 	fi
 
-	PARAM=$(echo "$1" | awk -F= '{print $1}')
-	VALUE=$(echo "$1" | awk -F= '{print $2}')
+	param=$(echo "$1" | awk -F= '{print $1}')
+	value=$(echo "$1" | awk -F= '{print $2}')
 
-	if [ "$PARAM" != "--count" ]; then
-		printf "\n${RED}I do not recognize this '%s' argument${NC}\n\n" "$PARAM"
+	if [ "$param" != "--count" ]; then
+		printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
 		show_usage ping
 	fi
 
-	if [ -z "$VALUE" ]; then
-		printf "${RED}Number of packets not specified${NC}\n"
+	if [ -z "$value" ]; then
+		printf "%snumber of packets not specified%s\n" "$red" "$regular"
 		exit 1
 	fi
 
-	is_number_valid "$VALUE"
-
-	if []; then
-		printf "${RED}'%s' does not look like a positive integer${NC}\n" "$VALUE"
+	is_number_valid "$value"
+	what_is_it=$?
+	if [ $what_is_it -eq 0 ]; then
+		printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 		exit 1
 	fi
 
-	COUNT_MIN=1
-	COUNT_MAX=64
+	count_min=1
+	count_max=64
 
-	if [ $VALUE -lt $COUNT_MIN ] || [ $VALUE -gt $COUNT_MAX ]; then
-		printf "${RED}Packet count should be between %d and %d inclusive${NC}\n" $COUNT_MIN $COUNT_MAX
+	if [ $value -lt $count_min ] || [ $value -gt $count_max ]; then
+		printf "%spacket count should be between %d and %d inclusive%s\n" "$red" $count_min $count_max "$regular"
 		exit 1
 	fi
 
-	HOW_MANY="$VALUE"
+	n_packets="$value"
 
-	ALL_ACTIVE_VMs=$(virsh list --name)
-
-	if [ -z "$ALL_ACTIVE_VMs" ]; then
-		printf "\n${RED}I cannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI properly set?)${NC}\n\n"
+	all_active_VMs=$(virsh list --name)
+	if [ -z "$all_active_VMs" ]; then
+		printf "\n%scannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
 		show_usage ping
 	fi
 
@@ -959,51 +1011,52 @@ ping_cmd() {
 
 	for candidate; do
 		is_name_valid "$candidate"
-		if [ $? == 0 ]; then
-			printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
+		what_is_it=$?
+		if [ $what_is_it -eq 0 ]; then
+			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
-			is_a_member "$candidate" "$ALL_ACTIVE_VMs"
-			if [ $? == 0 ]; then
-				printf "${YELLOW}%s is not an active VM${NC}\n" "$candidate"
+			is_a_member "$candidate" "$all_active_VMs"
+			what_is_it=$?
+			if [ $what_is_it -eq 0 ]; then
+				printf "%s%s is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
-				printf "${GREEN}Now pinging %s${NC}\n" "$candidate"
-				/usr/bin/ping -c "$HOW_MANY" "$candidate"
+				printf "\n%snow trying to ping %s%s\n" "$green" "$candidate" "$regular"
+				/usr/bin/ping -q -c "$n_packets" "$candidate"
 			fi
 		fi
 	done
 }
 
 reboot_cmd() {
-
-	LOWEST_NUM_ARGS=1
-
-	if [ $# -lt $LOWEST_NUM_ARGS ]; then
-		printf "\n${RED}Incorrect number of arguments (I need at least %d)${NC}\n\n" $LOWEST_NUM_ARGS
+	lowest_num_args=1
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" $lowest_num_args "$regular"
 		show_usage reboot
 	fi
 
-	ALL_ACTIVE_VMs=$(virsh list --name)
-
-	if [ -z "$ALL_ACTIVE_VMs" ]; then
-		printf "\n${RED}I cannot seem to find a single active VM (is LIBVIRT_DEFAULT_URI set?)${NC}\n\n"
+	all_active_VMs=$(virsh list --name)
+	if [ -z "$all_active_VMs" ]; then
+		printf "\n%scannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
 		show_usage reboot
 	fi
 
 	for candidate; do
 		is_name_valid "$candidate"
-		if [ $? == 0 ]; then
-			printf "${YELLOW}'%s' is not a valid VM name${NC}\n" "$candidate"
+		what_is_it=$?
+		if [ $what_is_it -eq 0 ]; then
+			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
-			is_a_member "$candidate" "$ALL_ACTIVE_VMs"
-			if [ $? == 0 ]; then
-				printf "${YELLOW}%s is not an active VM${NC}\n" "$candidate"
+			is_a_member "$candidate" "$all_active_VMs"
+			what_is_it=$?
+			if [ $what_is_it -eq 0 ]; then
+				printf "%s'%s' is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
-				printf "${GREEN}Rebooting active VM %s${NC}\n" "$candidate"
+				printf "%srebooting active VM %s%s\n" "$green" "$candidate" "$regular"
 
 				virsh --quiet reboot "$candidate";
-
-				if [ $? -ne 0 ]; then
-					printf "${RED}Operation failed, virsh returned error code %d${NC}\n" $?
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d%s\n" "$red" $virsh_ec "$regular"
 				else
 					sleep 1
 				fi
