@@ -425,8 +425,8 @@ attach_cmd() {
 
 checkservice_cmd() {
 	lowest_num_args=2
-	if [ $# -ne $lowest_num_args ]; then
-		printf "\n%sincorrect number of arguments (need exactly %s)%s\n\n" "$red" "$lowest_num_args" "$regular"
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" "$lowest_num_args" "$regular"
 		show_usage check-service
 	fi
 
@@ -476,12 +476,12 @@ checkservice_cmd() {
 			if [ $what_is_it -eq 0 ]; then
 				printf "%s'%s' is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
-				nc -z -w 1 "$VM" "$tcp_port" > /dev/null 2>&1
+				nc -z -w 1 "$candidate" "$tcp_port" > /dev/null 2>&1
 				netcat_ec=$?
 				if [ $netcat_ec -eq 0 ]; then
-					printf "%s%s is accepting packets on port %d/TCP%s\n" "$green" "$VM" "$tcp_port" "$regular"
+					printf "%s%s is accepting packets on port %d/TCP%s\n" "$green" "$candidate" "$tcp_port" "$regular"
 				else
-					printf "%s%s is not accepting packets on port %d/TCP%s\n" "$red" "$VM" "$tcp_port" "$regular"
+					printf "%s%s is not accepting packets on port %d/TCP%s\n" "$red" "$candidate" "$tcp_port" "$regular"
 				fi
 			fi
 		fi
