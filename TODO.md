@@ -18,12 +18,13 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 `check-service`
 * sanitize user input (TCP port number, VM name) (__DONE__)
 * improve the matching of VM names with dashes (__DONE__)
+* support checking of multiple VMs (__DONE__)
 
 `clone`
 * sanitize user input (pool/VM names) (__DONE__)
 * improve the matching of pool/VM names with dashes (__DONE__)
 * delete SSH host keys in clones (__DONE__)
-* investigate failures while trying to clone "empty" VMs
+* handle the cloning of "empty" VMs
 * clone VMs with more than one storage volumes
 
 `deactivate`

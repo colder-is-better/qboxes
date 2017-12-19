@@ -48,13 +48,13 @@ show_usage() {
 		;;
 		check-service)
 			printf "COMMAND NAME\n"
-			printf "  check-service - check if connections to specified TCP port of a VM are possible\n\n"
+			printf "  check-service - check if connections to specified TCP port of a set of VMs are possible\n\n"
 			printf "SYNOPSIS\n";
-			printf "  check-service --port=<tcp_port> <active_VM>\n\n";
+			printf "  check-service --port=<tcp_port> <active_VM_1> ... <active_VM_k>\n\n";
 			printf "DESCRIPTION\n";
-			printf "  Check if an active VM is reachable via specificied TCP port\n\n"
+			printf "  Check if one or more active VMs are reachable via specificied TCP port\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~/bin> %sqboxes check-service --port=22 smt-server%s\n\n" "$bold" "$regular"
+			printf "  ~/bin> %sqboxes check-service --port=22 smt-server master%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		clone)
@@ -457,29 +457,35 @@ checkservice_cmd() {
 
 	tcp_port=$value
 
-	VM="$2"
-	is_name_valid "$VM"
-	what_is_it=$?
-	if [ $what_is_it -eq 0 ]; then
-		printf "%s'%s' is not a valid VM name%s\n" "$red" "$VM" "$regular"
-		exit 1
-	fi
-
 	all_active_VMs=$(virsh list --name)
-	is_a_member "$VM" "$all_active_VMs"
-	what_is_it=$?
-	if [ $what_is_it -eq 0 ]; then
-		printf "%s'%s' is not an active VM%s\n" "$red" "$VM" "$regular"
-		exit 1
+	if [ -z "$all_active_VMs" ]; then
+		printf "\n%scannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		show_usage check-service
 	fi
 
-	nc -z -w 1 "$VM" "$tcp_port" > /dev/null 2>&1
-	netcat_ec=$?
-	if [ $netcat_ec -eq 0 ]; then
-		printf "%s%s is accepting packets on port %d/TCP%s\n" "$green" "$VM" "$tcp_port" "$regular"
-	else
-		printf "%s%s is not accepting packets on port %d/TCP%s\n" "$red" "$VM" "$tcp_port" "$regular"
-	fi
+	shift
+
+	for candidate; do
+		is_name_valid "$candidate"
+		what_is_it=$?
+		if [ $what_is_it -eq 0 ]; then
+			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
+		else
+			is_a_member "$candidate" "$all_active_VMs"
+			what_is_it=$?
+			if [ $what_is_it -eq 0 ]; then
+				printf "%s'%s' is not an active VM%s\n" "$yellow" "$candidate" "$regular"
+			else
+				nc -z -w 1 "$VM" "$tcp_port" > /dev/null 2>&1
+				netcat_ec=$?
+				if [ $netcat_ec -eq 0 ]; then
+					printf "%s%s is accepting packets on port %d/TCP%s\n" "$green" "$VM" "$tcp_port" "$regular"
+				else
+					printf "%s%s is not accepting packets on port %d/TCP%s\n" "$red" "$VM" "$tcp_port" "$regular"
+				fi
+			fi
+		fi
+	done
 }
 
 clone_cmd() {
@@ -917,7 +923,7 @@ define_cmd() {
 				sed -i /"<sound model"/d ~/"$xml_path"
 				sed -i /'<input type="tablet'/d ~/"$xml_path"
 
-				printf "%sdefining VM %s%s\n\n" "$green" "$candidate" "$regular"
+				printf "%sdefining %s%s\n\n" "$green" "$candidate" "$regular"
 
 				virsh --quiet define ~/"$xml_path" --validate
 				virsh_ec=$?
@@ -1051,7 +1057,7 @@ reboot_cmd() {
 			if [ $what_is_it -eq 0 ]; then
 				printf "%s'%s' is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
-				printf "%srebooting active VM %s%s\n" "$green" "$candidate" "$regular"
+				printf "%srebooting %s%s\n" "$green" "$candidate" "$regular"
 
 				virsh --quiet reboot "$candidate";
 				virsh_ec=$?
