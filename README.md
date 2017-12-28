@@ -17,18 +17,18 @@ To get an overview of the tool just type `qboxes`.
 This is qboxes, a simple command line tool for managing local QEMU/KVM VMs.
 Currently the following commands are implemented:
 
-  activate		: bring inactive VMs up
+  activate	: bring inactive VMs up
   annihilate	: remove any trace of inactive VMs
-  attach		: attach storage volumes to (in)active VMs
+  attach	: attach storage volumes to (in)active VMs
   check-service	: attempt to connect to specified TCP port of one or more active VMs
-  clone			: clone a template VM into one or more new VMs
+  clone		: clone a template VM into one or more new VMs
   deactivate	: shutdown active VMs
-  define		: define one or more new VMs
-  getmac		: reveal MAC addresses
-  ping			: send ICMP packets to active VMs
-  reboot		: restart active VMs
+  define	: define one or more new VMs
+  getmac	: reveal MAC addresses
+  ping		: send ICMP packets to active VMs
+  reboot	: restart active VMs
 
-help			: display this summary of commands
+  help		: display this summary of commands
 
 Type qboxes command-name for the syntax and a usage example of a specific command.
 ```
