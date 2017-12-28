@@ -34,13 +34,13 @@ show_usage() {
 		;;
 		attach)
 			printf "COMMAND NAME\n"
-			printf "  attach - attach storage volumes to VMs\n\n"
+			printf "  attach - attach storage volumes to (in)active VMs\n\n"
 			printf "SYNOPSIS\n"
 			printf "  attach --name=<volume_name> --size=<capacity_in_GiB> --pool=<name>"
 			printf " --vmdev=<VM_device> <VM_1> ... <VM_k>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Create sparse QCOW2 files in specified pool, attach them as virtual"
-			printf " hard drives to VMs\n\n"
+			printf " hard drives to (in)active VMs\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~/bin> %sqboxes attach --name=data --size=4096 --pool=lab" "$bold"
 			printf " --vmdev=vdb osd_node_{1,2,3}%s\n\n" "$regular"
@@ -48,7 +48,7 @@ show_usage() {
 		;;
 		check-service)
 			printf "COMMAND NAME\n"
-			printf "  check-service - check if connections to specified TCP port of a set of VMs are possible\n\n"
+			printf "  check-service - attempt to connect to specified TCP port of one or more active VMs\n\n"
 			printf "SYNOPSIS\n";
 			printf "  check-service --port=<tcp_port> <active_VM_1> ... <active_VM_k>\n\n";
 			printf "DESCRIPTION\n";
@@ -102,7 +102,7 @@ show_usage() {
 			printf "SYNOPSIS\n"
 			printf "  getmac <VM_1> ... <VM_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Reveal the first Ethernet adapter's MAC address of one or more VMs\n\n"
+			printf "  Reveal the first Ethernet adapter's MAC address of one or more (in)active VMs\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~/bin> %sqboxes getmac sles12sp{1,2,3}%s\n\n" "$bold" "$regular"
 			exit 1
@@ -135,9 +135,8 @@ show_usage() {
 			printf "Currently the following commands are implemented:\n\n"
 			printf "  activate\t: bring inactive VMs up\n"
 			printf "  annihilate\t: remove any trace of inactive VMs\n"
-			printf "  attach\t: attach storage volumes to VMs\n"
-			printf "  check-service\t: check if connections to specified"
-			printf " TCP port of a VM are possible\n"
+			printf "  attach\t: attach storage volumes to (in)active VMs\n"
+			printf "  check-service\t: attempt to connect to specified TCP port of one or more active VMs\n"
 			printf "  clone\t\t: clone a template VM into one or more new VMs\n"
 			printf "  deactivate\t: shutdown active VMs\n"
 			printf "  define\t: define one or more new VMs\n"
