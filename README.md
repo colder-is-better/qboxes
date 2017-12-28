@@ -28,7 +28,7 @@ Currently the following commands are implemented:
   ping			: send ICMP packets to active VMs
   reboot		: restart active VMs
 
-  help			: display this summary of commands
+help			: display this summary of commands
 
 Type qboxes command-name for the syntax and a usage example of a specific command.
 ```

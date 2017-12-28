@@ -36,14 +36,12 @@ show_usage() {
 			printf "COMMAND NAME\n"
 			printf "  attach - attach storage volumes to (in)active VMs\n\n"
 			printf "SYNOPSIS\n"
-			printf "  attach --name=<volume_name> --size=<capacity_in_GiB> --pool=<name>"
-			printf " --vmdev=<VM_device> <VM_1> ... <VM_k>\n\n"
+			printf "  attach --name=<volume_name> --size=<capacity_in_GiB> --pool=<name> <VM_1> ... <VM_k>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Create sparse QCOW2 files in specified pool, attach them as virtual"
 			printf " hard drives to (in)active VMs\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~/bin> %sqboxes attach --name=data --size=4096 --pool=lab" "$bold"
-			printf " --vmdev=vdb osd_node_{1,2,3}%s\n\n" "$regular"
+			printf "  ~/bin> %sqboxes attach --name=data --size=4096 --pool=lab osd_node_{1,2,3}%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		check-service)
@@ -277,7 +275,7 @@ annihilate_cmd() {
 }
 
 attach_cmd() {
-	lowest_num_args=5
+	lowest_num_args=4
 	if [ $# -lt $lowest_num_args ]; then
 		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" $lowest_num_args "$regular"
 		show_usage attach
@@ -286,7 +284,6 @@ attach_cmd() {
 	volume_name=""
 	volume_size=""
 	pool_name=""
-	vm_dev=""
 
 	for ((argument=1 ; argument <= $((lowest_num_args - 1)) ; argument++)); do
 
@@ -319,7 +316,7 @@ attach_cmd() {
 					exit 1
 				fi
 				volume_size_min=128
-				volume_size_max=4096
+				volume_size_max=8192
 				if [ $value -lt $volume_size_min ] \
 					|| [ $value -gt $volume_size_max ] \
 					|| [ $((value % volume_size_min)) -gt 0 ]; then
@@ -349,13 +346,6 @@ attach_cmd() {
 				fi
 				pool_name=$value
 			;;
-			--vmdev)
-				if [ -z "$value" ]; then
-					printf "%sdevice file not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
-				vm_dev=$value
-			;;
 			*)
 				printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
 				show_usage attach
@@ -366,8 +356,7 @@ attach_cmd() {
 
 	if [ -z "$volume_name" ] \
 		|| [ -z "$volume_size" ] \
-		|| [ -z "$pool_name" ] \
-		|| [ -z "$vm_dev" ]; then
+		|| [ -z "$pool_name" ]; then
 		printf "\n%sat least one of the required arguments has not been set%s\n\n" "$red" "$regular"
 		show_usage attach
 	fi
@@ -394,28 +383,45 @@ attach_cmd() {
 			if [ $what_is_it -eq 0 ]; then
 				printf "%s'%s' does not look like a VM%s\n" "$yellow" "$candidate" "$regular"
 			else
-				qcow2_name="$candidate"_"$vm_dev"_"$volume_name"_"$volume_size".qcow2
-				qcow2_path="$pool_path"/"$qcow2_name"
+				virtio_dev=""
+				devices_taken=$(virsh dumpxml "$candidate" | grep "<target dev='" \
+					| awk -F "<target dev='" '{ print $2 }'  | awk -F "' bus='" '{ print $1 }')
 
-				printf "%screating QCOW2 image %s for %s%s\n" \
-					"$green" "$qcow2_name" "$candidate" "$regular"
+				for letter in {a..z}; do
+					device_name=vd"$letter"
+					is_a_member "$device_name" "$devices_taken"
+					what_is_it=$?
+					if [ $what_is_it -eq 0 ]; then
+						virtio_dev="$device_name"
+						break
+					fi
+				done
 
-				virsh --quiet vol-create-as "$pool_name" --name "$qcow2_name" \
-					--capacity "$volume_size"G --format qcow2
-				virsh_ec=$?
-				if [ $virsh_ec -ne 0 ]; then
-					printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
-					exit 2
-				fi
+				if [ "$virtio_dev" == "" ]; then
+					printf "%sthere seems to be a shortage of VirtIO storage device names for '%s'%s\n" "$yellow" "$candidate" "$regular"
+				else
+					qcow2_name="$candidate"_"$virtio_dev"_"$volume_name"_"$volume_size".qcow2
+					qcow2_path="$pool_path"/"$qcow2_name"
 
-				printf "%sattaching %s to %s%s\n\n" "$green" "$qcow2_name" "$candidate" "$regular"
+					printf "%screating QCOW2 image %s for %s%s\n" "$green" "$qcow2_name" "$candidate" "$regular"
 
-				virsh --quiet attach-disk "$candidate" "$qcow2_path" "$vm_dev" \
-					--driver qemu --subdriver qcow2 --targetbus virtio --persistent
-				virsh_ec=$?
-				if [ $virsh_ec -ne 0 ]; then
-					printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
-					exit 2
+					virsh --quiet vol-create-as "$pool_name" --name "$qcow2_name" \
+						--capacity "$volume_size"G --format qcow2
+					virsh_ec=$?
+					if [ $virsh_ec -ne 0 ]; then
+						printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
+						exit 2
+					fi
+
+					printf "%sattaching %s to %s%s\n\n" "$green" "$qcow2_name" "$candidate" "$regular"
+
+					virsh --quiet attach-disk "$candidate" "$qcow2_path" "$virtio_dev" \
+						--driver qemu --subdriver qcow2 --targetbus virtio --persistent
+					virsh_ec=$?
+					if [ $virsh_ec -ne 0 ]; then
+						printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
+						exit 2
+					fi
 				fi
 			fi
 		fi

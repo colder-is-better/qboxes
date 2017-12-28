@@ -13,7 +13,7 @@ This is an alphabetical list of the currently implemented `qboxes` commands. Fol
 `attach`
 * sanitize user input (volume/pool/VM names, volume capacity) (__DONE__)
 * improve the matching of pool/VM names with dashes (__DONE__)
-* automatically pick the first available block device name (`vdb`, `vdc`, etc) for new volumes
+* automatically pick the next available block device name (`vdb`, `vdc`, etc) for volumes
 
 `check-service`
 * sanitize user input (TCP port number, VM name) (__DONE__)
