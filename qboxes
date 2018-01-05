@@ -7,6 +7,12 @@ yellow=$(tput setaf 3)
 bold=$(tput bold)
 regular=$(tput sgr0)
 
+# ---------------------------------------------------------------------------
+# show_usage():
+#   Displays general usage information,
+#   Provides help on the syntax of each supported command
+# ---------------------------------------------------------------------------
+
 show_usage() {
 	case "$1" in
 		activate)
@@ -149,6 +155,14 @@ show_usage() {
 	esac
 }
 
+# ---------------------------------------------------------------------------
+# is_name_valid():
+#   Checks if a given name is valid
+#   A name (string) is valid for qboxes if it begins with
+#   an alphanumeric character and then comprises alphanumerics,
+#   dashes (-), underscores (_) or dots (.) only. 
+# ---------------------------------------------------------------------------
+
 is_name_valid() {
 	the_name="$1"
 	first_char_test=$(echo "${the_name:0:1}" | tr -d "[:alnum:]")
@@ -164,6 +178,13 @@ is_name_valid() {
 	fi
 }
 
+# ---------------------------------------------------------------------------
+# is_number_valid():
+#   Checks if a given number is valid
+#   A number is valid for qboxes if it comprises numeric
+#   characters only (no signs, commas, dots, units, or any other character) 
+# ---------------------------------------------------------------------------
+
 is_number_valid() {
 	the_number="$1"
 	valid_number_test=$(echo "$the_number" | tr -d "[:digit:]")
@@ -173,6 +194,11 @@ is_number_valid() {
 		return 1
 	fi
 }
+
+# ---------------------------------------------------------------------------
+# is_a_member():
+#   Checks if a string can be found in a sequence of strings
+# ---------------------------------------------------------------------------
 
 is_a_member() {
 	item="$1"
@@ -186,6 +212,11 @@ is_a_member() {
 	done
 	return $included
 }
+
+# ---------------------------------------------------------------------------
+# activate_cmd():
+#   Powers up one or more inactive VMs
+# ---------------------------------------------------------------------------
 
 activate_cmd() {
 	lowest_num_args=1
@@ -223,6 +254,12 @@ activate_cmd() {
 		fi
 	done
 }
+
+# ---------------------------------------------------------------------------
+# annihilate_cmd():
+#   Undefines one or more inactive VMs,
+#   deletes all associated storage volumes and snapshots
+# ---------------------------------------------------------------------------
 
 annihilate_cmd() {
 	lowest_num_args=1
@@ -273,6 +310,12 @@ annihilate_cmd() {
 		fi
 	done
 }
+
+# ---------------------------------------------------------------------------
+# attach_cmd():
+#   Attaches storage volumes
+#   (that is, sparse QCOW2 images) to one or more (in)active VMs
+# ---------------------------------------------------------------------------
 
 attach_cmd() {
 	lowest_num_args=4
@@ -428,6 +471,11 @@ attach_cmd() {
 	done
 }
 
+# ---------------------------------------------------------------------------
+# checkservice_cmd():
+#   Checks if one or more active VMs are reachable via a specific TCP/port
+# ---------------------------------------------------------------------------
+
 checkservice_cmd() {
 	lowest_num_args=2
 	if [ $# -lt $lowest_num_args ]; then
@@ -492,6 +540,11 @@ checkservice_cmd() {
 		fi
 	done
 }
+
+# ---------------------------------------------------------------------------
+# clone_cmd():
+#   Clones a specified template VM into one or more new VMs
+# ---------------------------------------------------------------------------
 
 clone_cmd() {
 	lowest_num_args=3
@@ -676,6 +729,11 @@ clone_cmd() {
 	done
 }
 
+# ---------------------------------------------------------------------------
+# deactivate_cmd():
+#   Powers down one or more active VMs
+# ---------------------------------------------------------------------------
+
 deactivate_cmd() {
 	lowest_num_args=1
 	if [ $# -lt $lowest_num_args ]; then
@@ -714,6 +772,11 @@ deactivate_cmd() {
 		fi
 	done
 }
+
+# ---------------------------------------------------------------------------
+# define_cmd():
+#   Defines one or more new VMs -- no guest OS is installed
+# ---------------------------------------------------------------------------
 
 define_cmd() {
 	lowest_num_args=7
@@ -943,6 +1006,11 @@ define_cmd() {
 	done
 }
 
+# ---------------------------------------------------------------------------
+# getmac_cmd():
+#   Display the MAC address of the first network adapter of one or more VMs
+# ---------------------------------------------------------------------------
+
 getmac_cmd() {
 	lowest_num_args=1
 	if [ $# -lt $lowest_num_args ]; then
@@ -974,6 +1042,11 @@ getmac_cmd() {
 		fi
 	done
 }
+
+# ---------------------------------------------------------------------------
+# ping_cmd():
+#   Sends a specified number of ICMP packets to one or more active VMs
+# ---------------------------------------------------------------------------
 
 ping_cmd() {
 	lowest_num_args=2
@@ -1031,12 +1104,17 @@ ping_cmd() {
 			if [ $what_is_it -eq 0 ]; then
 				printf "%s%s is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
-				printf "\n%snow trying to ping %s%s\n" "$green" "$candidate" "$regular"
-				/usr/bin/ping -q -c "$n_packets" "$candidate"
+				printf "\n%sattempting to ping %s%s\n" "$green" "$candidate" "$regular"
+				/usr/bin/ping -c "$n_packets" "$candidate"
 			fi
 		fi
 	done
 }
+
+# ---------------------------------------------------------------------------
+# reboot_cmd():
+#   Reboots one or more active VMs storage
+# ---------------------------------------------------------------------------
 
 reboot_cmd() {
 	lowest_num_args=1
@@ -1075,6 +1153,10 @@ reboot_cmd() {
 		fi
 	done
 }
+
+# ---------------------------------------------------------------------------
+# Main script body starts here
+# ---------------------------------------------------------------------------
 
 case "$1" in
 	activate)
