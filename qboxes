@@ -23,7 +23,7 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Power one or more inactive VMs up\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~/bin> %sqboxes activate leap423 sles11sp4%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes activate leap423 sles11sp4%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		annihilate)
@@ -35,7 +35,7 @@ show_usage() {
 			printf "  Undefine one or more inactive VMs, delete all snapshots and"
 			printf " associated storage volumes (%sthink TWICE before annihilating%s)\n\n" "$red" "$regular"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~/bin> %sqboxes annihilate guest_{1..5}%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes annihilate guest_{1..5}%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		attach)
@@ -47,7 +47,7 @@ show_usage() {
 			printf "  Create sparse QCOW2 files in specified pool, attach them as virtual"
 			printf " hard drives to (in)active VMs\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~/bin> %sqboxes attach --name=data --size=4096 --pool=lab osd_node_{1,2,3}%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes attach --name=data --size=4096 --pool=lab osd_node_{1,2,3}%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		check-service)
@@ -58,7 +58,7 @@ show_usage() {
 			printf "DESCRIPTION\n";
 			printf "  Check if one or more active VMs are reachable via specificied TCP port\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~/bin> %sqboxes check-service --port=22 smt-server master%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes check-service --port=22 smt-server master%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		clone)
@@ -70,7 +70,7 @@ show_usage() {
 			printf "  Clone an existing inactive template VM into one or more new VMs, indicate"
 			printf " a target storage pool for the cloned volumes\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~/bin> %sqboxes clone --template=sles12sp3 --target-pool=services" "$bold"
+			printf "  ~> %sqboxes clone --template=sles12sp3 --target-pool=services" "$bold"
 			printf " www-srv-1 www-srv-2 balancer%s\n\n" "$regular"
 			exit 1
 		;;
@@ -82,7 +82,7 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Try to gracefully shutdown one or more active VMs\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~/bin> %sqboxes deactivate leap423%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes deactivate leap423%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		define)
@@ -96,7 +96,7 @@ show_usage() {
 			printf " OS on any of them\n"
 			printf "  (Tip: Type %sosinfo-query os%s for a list of all the supported OS variants)\n\n" "$bold" "$regular"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~/bin> %sqboxes define --ram=2048 --cores=2 --volume-size=256 --network=default" "$bold"
+			printf "  ~> %sqboxes define --ram=2048 --cores=2 --volume-size=256 --network=default" "$bold"
 			printf " --guest-os=opensuse42.3 --pool=ceph osd{1..5}%s\n\n" "$regular"
 			exit 1
 		;;
@@ -108,7 +108,19 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Reveal the first Ethernet adapter's MAC address of one or more (in)active VMs\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~/bin> %sqboxes getmac sles12sp{1,2,3}%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes getmac sles12sp{1,2,3}%s\n\n" "$bold" "$regular"
+			exit 1
+		;;
+		list)
+			printf "COMMAND NAME\n"
+			printf "  list - return all available object types\n\n"
+			printf "SYNOPSIS\n"
+			printf "  list object_type\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Return all available object types, where object_type may be"
+			printf " any one of these strings: vms, networks, pools, volumes\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~> %sqboxes list networks%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		ping)
@@ -119,7 +131,7 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Send a specified number of ICMP packets to one or more active VMs\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~/bin> %sqboxes ping --count=3 sles12sp2 sles12sp3%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes ping --count=3 sles12sp2 sles12sp3%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		reboot)
@@ -130,7 +142,7 @@ show_usage() {
 			printf "DESCRIPTION\n";
 			printf "  Try to gracefully restart one or more active VMs\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~/bin> %sqboxes reboot sles12sp3%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes reboot sles12sp3%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		*)
@@ -145,6 +157,7 @@ show_usage() {
 			printf "  deactivate\t: shutdown active VMs\n"
 			printf "  define\t: define one or more new VMs\n"
 			printf "  getmac\t: reveal MAC addresses\n"
+			printf "  list\t\t: return all available VMs, libvirt networks, pools, or volumes\n"
 			printf "  ping\t\t: send ICMP packets to active VMs\n"
 			printf "  reboot\t: restart active VMs\n\n"
 			printf "  help\t\t: display this summary of commands\n\n"
@@ -294,7 +307,7 @@ annihilate_cmd() {
 						virsh_ec=$?
 						if [ $virsh_ec -ne 0 ]; then
 							printf \
-							"%sfailed to delete snapshot '%s' of %s, virsh returned error code %d, terminating now%s\n" \
+								"%sfailed to delete snapshot '%s' of %s, virsh returned error code %d, terminating now%s\n" \
 								"$red" "$each_one" "$candidate" $virsh_ec "$regular"
 							exit 2
 						fi
@@ -1044,6 +1057,215 @@ getmac_cmd() {
 }
 
 # ---------------------------------------------------------------------------
+# list_cmd():
+#   Returns all available VMs, libvirt networks, pools, or volumes
+# ---------------------------------------------------------------------------
+
+list_cmd() {
+	num_args=1
+	if [ $# -ne $num_args ]; then
+		printf "\n%sincorrect number of arguments (need exactly %d)%s\n\n" "$red" $num_args "$regular"
+		show_usage list
+    fi
+
+	entity="$1"
+	all_entities="vms networks pools volumes"
+	is_a_member "$entity" "$all_entities"
+	what_is_it=$?
+	if [ $what_is_it -eq 0 ]; then
+		printf "%s'%s' is not a valid object type%s\n" "$red" "$entity" "$regular"
+		exit 1
+	fi
+
+	case $entity in
+	vms)
+		all_VMs=$(virsh list --name --all)
+		if [ -z "$all_VMs" ]; then
+			printf "\n%scannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+			exit 1
+		fi
+
+		temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
+
+		echo "Name State CPU(s) RAM BLK(s) NIC(s) PrimaryNet" >> ~/"$temp_file_name"
+		echo "---- ----- ------ --- ------ ------ ----------" >> ~/"$temp_file_name"
+
+		for name in $all_VMs; do
+			state=$(virsh dominfo $name | grep State \
+				| awk -F ":" '{ print $2 }' | sed -e 's/^[ \t]*//')
+			if [ "$state" == "running" ]; then
+				state="active"
+			else
+				state="inactive"
+			fi
+
+			CPUs=$(virsh dominfo $name | grep CPU\(s\) \
+				| awk -F ":" '{ print $2 }' | sed -e 's/^[ \t]*//')
+			ram_size=$(virsh dominfo $name | grep "Max memory" \
+				| awk -F ":" '{ print $2 }' | sed -e 's/^[ \t]*//' | tr -d " ")
+			block_devices=$(($(virsh domblklist $name | wc -l)-3))
+
+			look_for="<source network='"
+
+			first_adapter_conn=$(virsh dumpxml $name | grep "<source network='" | head -n 1 \
+				| awk -F "<source network='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+			if [ -z "$first_adapter_conn" ]; then
+				look_for="<interface type='bridge'>"
+				first_adapter_conn="hostBridge"
+			fi
+
+			network_adapters=$(virsh dumpxml $name | grep "$look_for" | wc -l)
+
+			echo $name $state $CPUs $ram_size $block_devices \
+				$network_adapters $first_adapter_conn >> ~/"$temp_file_name"
+		done
+
+		echo
+		cat ~/"$temp_file_name" | column -t
+		echo
+
+		rm -f ~/"$temp_file_name"
+	;;
+	networks)
+		all_networks=$(virsh net-list --name --all)
+		if [ -z "$all_networks" ]; then
+			printf "\n%scannot seem to find a single libvirt network on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+			exit 1
+		fi
+
+		temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
+
+		echo "Name State Mode Domain MACaddr IPaddr DHCP IPbegin IPend Clients" >> ~/"$temp_file_name"
+		echo "---- ----- ---- ------ ------- ------ ---- ------- ----- -------" >> ~/"$temp_file_name"
+
+		all_VMs=$(virsh list --name --all)
+
+		for name in $all_networks; do
+			state=$(virsh net-info "$name" | grep Active \
+				| awk -F ":" ' {print $2} ' | sed -e 's/^[ \t]*//')
+			if [ "$state" == "yes" ]; then
+				state="active"
+			else
+				state="inactive"
+			fi
+
+			mode=$(virsh net-dumpxml "$name" | grep "mode='" \
+				| awk -F "mode='" '{ print $2 }' | awk -F "'" '{ print $1 }'a)
+			domain_name=$(virsh net-dumpxml "$name" | grep "<domain name='" \
+				| awk -F "<domain name='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+			if [ -z "$domain_name" ]; then
+				domain_name="n/a"
+			fi
+
+			mac_addr=$(virsh net-dumpxml "$name" | grep "<mac address='" \
+				| awk -F "<mac address='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+			ip_addr=$(virsh net-dumpxml "$name" | grep "<ip address='" \
+				| awk -F "<ip address='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+			dhcp_server=$(virsh net-dumpxml "$name" | grep '<dhcp>')
+			if [ -z "$dhcp_server" ]; then
+				dhcp_server="off"
+				ip_begin="n/a"
+				ip_end="n/a"
+			else
+				dhcp_server="on"
+				ip_begin=$(virsh net-dumpxml "$name" | grep "<range start='" \
+					| awk -F "<range start='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+				ip_end=$(virsh net-dumpxml "$name" | grep "<range start='" \
+					| awk -F "' end='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+			fi
+
+			net_clients=0
+			if [ -n "$all_VMs" ]; then
+				for guest in $all_VMs; do
+					how_many=$(virsh dumpxml "$guest" | grep "$name" | wc -l)
+					(( net_clients += $how_many ))
+				done
+			fi
+
+			echo $name $state $mode $domain_name $mac_addr $ip_addr \
+				$dhcp_server $ip_begin $ip_end $net_clients >> ~/"$temp_file_name"
+		done
+
+		echo
+		cat ~/"$temp_file_name" | column -t
+		echo
+
+		rm -f ~/"$temp_file_name"
+	;;
+	pools)
+		all_pools=$(virsh pool-list --name --all)
+		if [ -z "$all_pools" ]; then
+			printf "\n%scannot seem to find a single pool on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+			exit 1
+		fi
+
+		temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
+
+		echo "Name State Capacity Allocation Available PoolDirPath Volumes" >> ~/"$temp_file_name"
+		echo "---- ----- -------- ---------- --------- ----------- -------" >> ~/"$temp_file_name"
+
+		for name in $all_pools; do
+			state=$(virsh pool-info "$name" | grep "State:" \
+				| awk -F "State:" '{ print $2 }' | sed -e 's/^[ \t]*//')
+			if [ "$state" == "running" ]; then
+				state="active"
+			else
+				state="inactive"
+			fi
+
+			capacity=$(virsh pool-info "$name" | grep "Capacity:" \
+				| awk -F "Capacity:" '{ print $2 }' | sed -e 's/^[ \t]*//' | tr -d " ")
+			allocation=$(virsh pool-info "$name" | grep "Allocation:" \
+				| awk -F "Allocation:" '{ print $2 }' | sed -e 's/^[ \t]*//' | tr -d " ")
+			available=$(virsh pool-info "$name" | grep "Available:" \
+				| awk -F "Available:" '{ print $2 }' | sed -e 's/^[ \t]*//' | tr -d " ")
+			path2pool_dir=$(virsh pool-dumpxml "$name" | grep "<path>" \
+				| awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
+			volumes=$(($(virsh vol-list "$name" | wc -l)-3))
+
+			echo $name $state $capacity $allocation $available $path2pool_dir $volumes >> ~/"$temp_file_name"
+		done
+
+		echo
+		cat ~/"$temp_file_name" | column -t
+		echo
+
+		rm -f ~/"$temp_file_name"
+	;;
+	volumes)
+		all_pools=$(virsh pool-list --name --all)
+		if [ -z "$all_pools" ]; then
+			printf "\n%scannot seem to find a single pool on this host,\n" "$red"
+			printf " so I am assuming there are no volumes either (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$regular"
+			exit 1
+		fi
+
+		temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
+
+		echo "Volume Capacity Allocation Pool" >> ~/"$temp_file_name"
+		echo "------ -------- ---------- ----" >> ~/"$temp_file_name"
+
+		for pool in $all_pools; do
+			volumes_in_pool=$(virsh vol-list "$pool" | grep " /" | awk -F " /" '{ print $1 }')
+			for volume in $volumes_in_pool; do
+				capacity=$(virsh vol-info "$volume" "$pool" | grep "Capacity:" \
+					| awk -F "Capacity:" '{ print $2 }' | sed -e 's/^[ \t]*//' | tr -d " ")
+				allocation=$(virsh vol-info "$volume" "$pool" | grep "Allocation:" \
+					| awk -F "Allocation:" '{ print $2 }' | sed -e 's/^[ \t]*//' | tr -d " ")
+				echo $volume $capacity $allocation $pool >> ~/"$temp_file_name"
+			done
+		done
+
+		echo
+		cat ~/"$temp_file_name" | column -t
+		echo
+
+		rm -f ~/"$temp_file_name"
+	;;
+	esac
+}
+
+# ---------------------------------------------------------------------------
 # ping_cmd():
 #   Sends a specified number of ICMP packets to one or more active VMs
 # ---------------------------------------------------------------------------
@@ -1113,7 +1335,7 @@ ping_cmd() {
 
 # ---------------------------------------------------------------------------
 # reboot_cmd():
-#   Reboots one or more active VMs storage
+#   Reboots one or more active VMs
 # ---------------------------------------------------------------------------
 
 reboot_cmd() {
@@ -1190,6 +1412,10 @@ case "$1" in
 	getmac)
 		shift
 		getmac_cmd "$@"
+		;;
+	list)
+		shift
+		list_cmd "$@"
 		;;
 	ping)
 		shift
