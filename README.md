@@ -4,9 +4,10 @@ This is a very simple BASH script for managing QEMU/KVM VMs. Currently, `qboxes`
 * define one or more new VMs (with no OSes)
 * clone a template VM into one or more new VMs
 * bring inactive VMs up or shutdown/restart active VMs
-* attach storage volumes to VMs
+* attach new storage volumes to VMs
 * remove any trace of inactive VMs
 * reveal MAC addresses
+* list all available VMs, libvirt networks, pools, or volumes
 * send ICMP packets to active VMs
 * check if active VMs are reachable via a specific TCP port
 * attach storage volumes to VMs
@@ -19,12 +20,14 @@ Currently the following commands are implemented:
 
   activate	: bring inactive VMs up
   annihilate	: remove any trace of inactive VMs
-  attach	: attach storage volumes to (in)active VMs
+  attach	: attach new storage volumes to (in)active VMs
   check-service	: attempt to connect to specified TCP port of one or more active VMs
   clone		: clone a template VM into one or more new VMs
+  create	: create a new libvirt network or a new storage pool
   deactivate	: shutdown active VMs
   define	: define one or more new VMs
   getmac	: reveal MAC addresses
+  list		: return all available VMs, libvirt networks, pools, or volumes
   ping		: send ICMP packets to active VMs
   reboot	: restart active VMs
 

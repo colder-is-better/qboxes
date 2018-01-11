@@ -40,7 +40,7 @@ show_usage() {
 		;;
 		attach)
 			printf "COMMAND NAME\n"
-			printf "  attach - attach storage volumes to (in)active VMs\n\n"
+			printf "  attach - attach new storage volumes to (in)active VMs\n\n"
 			printf "SYNOPSIS\n"
 			printf "  attach --name=<volume_name> --size=<capacity_in_GiB> --pool=<name> <VM_1> ... <VM_k>\n\n"
 			printf "DESCRIPTION\n"
@@ -72,6 +72,45 @@ show_usage() {
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes clone --template=sles12sp3 --target-pool=services" "$bold"
 			printf " www-srv-1 www-srv-2 balancer%s\n\n" "$regular"
+			exit 1
+		;;
+		create)
+			printf "COMMAND NAME\n"
+			printf "  create - create a new libvirt entity\n\n"
+			printf "SYNOPSIS\n"
+			printf "  create <network|pool>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Create a new libvirt entity, where \"entity\" may"
+			printf " be any of these two strings: network, pool\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~> %sqboxes create network --name=lvirtnet --domain=local.qbx --router=10.20.30.254" "$bold"
+			printf " --netmask=255.255.255.0 --dhcp=on --from=10.20.30.100 --to=10.20.30.253%s\n\n" "$regular"
+			printf "  ~> %sqboxes create pool --name=ceph --path=/usr/local/testing/storage-clusters%s\n\n" "$bold" "$regular"
+			exit 1
+		;;
+		create_network)
+			printf "COMMAND NAME & OBJECT\n"
+			printf "  create network - create a new libvirt NATed network\n\n"
+			printf "SYNOPSIS\n"
+			printf "  create network --name=<net_name> --domain=<domain.name> --router=<router.ip.v4.address>"
+			printf " --netmask=<netmask.ip.v4.addr> --dhcp=<on|off> [--from=<from.ip.v4.addr>] [--to=<to.ip.v4.addr>]\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Create a new libvirt NATed network offering routing and DNS services,"
+			printf " optionally DHCP service also\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~> %sqboxes create network --name=localnet --domain=local.qbx --router=10.20.30.254" "$bold"
+			printf " --netmask=255.255.255.0 --dhcp=on --from=10.20.30.100 --to=10.20.30.253%s\n\n" "$regular"
+			exit 1
+		;;
+		create_pool)
+			printf "COMMAND NAME & OBJECT\n"
+			printf "  create pool - create a new libvirt storage pool\n\n"
+			printf "SYNOPSIS\n"
+			printf "  create pool --name=<pool_name> --path=<path_to_local_dir>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Create a new storage pool with given name, under existing local path\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~> %sqboxes create pool --name=ceph --path=/usr/local/testing/storage-clusters%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		deactivate)
@@ -113,14 +152,14 @@ show_usage() {
 		;;
 		list)
 			printf "COMMAND NAME\n"
-			printf "  list - return all available object types\n\n"
+			printf "  list - present all available entities of given type\n\n"
 			printf "SYNOPSIS\n"
-			printf "  list object_type\n\n"
+			printf "  list <vm|network|pool|volume>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Return all available object types, where object_type may be"
-			printf " any one of these strings: vms, networks, pools, volumes\n\n"
+			printf "  Present all available entities of given type, where \"type\""
+			printf " may be any one of these: vm, network, pool, volume\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes list networks%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes list network%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		ping)
@@ -151,13 +190,14 @@ show_usage() {
 			printf "Currently the following commands are implemented:\n\n"
 			printf "  activate\t: bring inactive VMs up\n"
 			printf "  annihilate\t: remove any trace of inactive VMs\n"
-			printf "  attach\t: attach storage volumes to (in)active VMs\n"
+			printf "  attach\t: attach new storage volumes to (in)active VMs\n"
 			printf "  check-service\t: attempt to connect to specified TCP port of one or more active VMs\n"
 			printf "  clone\t\t: clone a template VM into one or more new VMs\n"
+			printf "  create\t: create a new libvirt network or storage pool\n"
 			printf "  deactivate\t: shutdown active VMs\n"
 			printf "  define\t: define one or more new VMs\n"
 			printf "  getmac\t: reveal MAC addresses\n"
-			printf "  list\t\t: return all available VMs, libvirt networks, pools, or volumes\n"
+			printf "  list\t\t: present all available VMs, libvirt networks, pools, or volumes\n"
 			printf "  ping\t\t: send ICMP packets to active VMs\n"
 			printf "  reboot\t: restart active VMs\n\n"
 			printf "  help\t\t: display this summary of commands\n\n"
@@ -246,13 +286,13 @@ activate_cmd() {
 
 	for candidate; do
 		is_name_valid "$candidate"
-		what_is_it=$?
-		if [ $what_is_it -eq 0 ]; then
+		test_result=$?
+		if [ $test_result -eq 0 ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_inactive_VMs"
-			what_is_it=$?
-			if [ $what_is_it -eq 0 ]; then
+			test_result=$?
+			if [ $test_result -eq 0 ]; then
 				printf "%s'%s' does not look like an inactive VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%spowering up %s%s\n" "$green" "$candidate" "$regular"
@@ -289,13 +329,13 @@ annihilate_cmd() {
 
 	for candidate; do
 		is_name_valid "$candidate"
-		what_is_it=$?
-		if [ $what_is_it -eq 0 ]; then
+		test_result=$?
+		if [ $test_result -eq 0 ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_inactive_VMs"
-			what_is_it=$?
-			if [ $what_is_it -eq 0 ]; then
+			test_result=$?
+			if [ $test_result -eq 0 ]; then
 				printf "%s'%s' does not look like an inactive VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%sannihilating %s (this may take a while)%s\n" "$green" "$candidate" "$regular"
@@ -353,8 +393,8 @@ attach_cmd() {
 					exit 1
 				fi
 				is_name_valid "$value"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%s'%s' is not a valid volume name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -366,8 +406,8 @@ attach_cmd() {
 					exit 1
 				fi
 				is_number_valid "$value"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -388,15 +428,15 @@ attach_cmd() {
 					exit 1
 				fi
 				is_name_valid "$value"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				all_active_pools=$(virsh pool-list --name)
 				is_a_member "$value" "$all_active_pools"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%scannot seem to find pool '%s'%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -430,13 +470,13 @@ attach_cmd() {
 
 	for candidate; do
 		is_name_valid "$candidate"
-		what_is_it=$?
-		if [ $what_is_it -eq 0 ]; then
+		test_result=$?
+		if [ $test_result -eq 0 ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_VMs"
-			what_is_it=$?
-			if [ $what_is_it -eq 0 ]; then
+			test_result=$?
+			if [ $test_result -eq 0 ]; then
 				printf "%s'%s' does not look like a VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				virtio_dev=""
@@ -446,14 +486,14 @@ attach_cmd() {
 				for letter in {a..z}; do
 					device_name=vd"$letter"
 					is_a_member "$device_name" "$devices_taken"
-					what_is_it=$?
-					if [ $what_is_it -eq 0 ]; then
+					test_result=$?
+					if [ $test_result -eq 0 ]; then
 						virtio_dev="$device_name"
 						break
 					fi
 				done
 
-				if [ "$virtio_dev" == "" ]; then
+				if [ -z "$virtio_dev" ]; then
 					printf "%sthere seems to be a shortage of VirtIO storage device names for '%s'%s\n" "$yellow" "$candidate" "$regular"
 				else
 					qcow2_name="$candidate"_"$virtio_dev"_"$volume_name"_"$volume_size".qcow2
@@ -510,8 +550,8 @@ checkservice_cmd() {
 	fi
 
 	is_number_valid "$value"
-	what_is_it=$?
-	if [ $what_is_it -eq 0 ]; then
+	test_result=$?
+	if [ $test_result -eq 0 ]; then
 		printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 		exit 1
 	fi
@@ -533,13 +573,13 @@ checkservice_cmd() {
 
 	for candidate; do
 		is_name_valid "$candidate"
-		what_is_it=$?
-		if [ $what_is_it -eq 0 ]; then
+		test_result=$?
+		if [ $test_result -eq 0 ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_active_VMs"
-			what_is_it=$?
-			if [ $what_is_it -eq 0 ]; then
+			test_result=$?
+			if [ $test_result -eq 0 ]; then
 				printf "%s'%s' is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				nc -z -w 1 "$candidate" "$tcp_port" > /dev/null 2>&1
@@ -581,15 +621,15 @@ clone_cmd() {
 					exit 1
 				fi
 				is_name_valid "$value"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%s'%s' is not a valid template name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				all_inactive_VMs=$(virsh list --name --inactive)
 				is_a_member "$value" "$all_inactive_VMs"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%stemplate should be an existing inactive VM%s\n" "$red" "$regular"
 					exit 1
 				fi
@@ -601,15 +641,15 @@ clone_cmd() {
 					exit 1
 				fi
 				is_name_valid "$value"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				all_active_pools=$(virsh pool-list --name)
 				is_a_member "$value" "$all_active_pools"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%scannot seem to find pool '%s'%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -632,8 +672,8 @@ clone_cmd() {
 	template_pool_path=""
 	template_volume_path=$(virsh dumpxml "$template_VM" \
 		| grep "<source file='" \
-		| awk -F "='" '{ print $2 }' \
-		| awk -F "'/>" '{ print $1 }')
+		| awk -F "<source file='" '{ print $2 }' \
+		| awk -F "'" '{ print $1 }')
 
 	for pool in $all_active_pools; do
 		volumes_in_pool=$(virsh vol-list "$pool")
@@ -659,13 +699,13 @@ clone_cmd() {
 
 	for candidate; do
 		is_name_valid "$candidate"
-		what_is_it=$?
-		if [ $what_is_it -eq 0 ]; then
+		test_result=$?
+		if [ $test_result -eq 0 ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_VMs"
-			what_is_it=$?
-			if [ $what_is_it -eq 1 ]; then
+			test_result=$?
+			if [ $test_result -eq 1 ]; then
 				printf "%sthere is already a VM '%s', so I am skipping that one%s\n" "$yellow" "$candidate" "$regular"
 			else
 				clone_volume_name="$candidate".qcow2
@@ -743,6 +783,343 @@ clone_cmd() {
 }
 
 # ---------------------------------------------------------------------------
+# create_network_cmd():
+#   Instantiates a new libvirt network
+# ---------------------------------------------------------------------------
+
+create_network_cmd() {
+	net_name=""
+	domain_name=""
+	router_addr=""
+	netmask_addr=""
+	dhcp_srv=""
+	from_addr=""
+	to_addr=""
+
+	for argument; do
+
+		param=$(echo "$argument" | awk -F= '{print $1}')
+		value=$(echo "$argument" | awk -F= '{print $2}')
+
+		case $param in
+			--name)
+				if [ -z "$value" ]; then
+					printf "%snetwork name not specified%s\n" "$red" "$regular"
+					exit 1
+				fi
+				is_name_valid "$value"
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
+					printf "%s'%s' is not a valid network name%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
+				all_networks=$(virsh net-list --name --all)
+				is_a_member "$value" "$all_networks"
+				test_result=$?
+				if [ $test_result -eq 1 ]; then
+					printf "%snetwork '%s' already exists%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
+				net_name=$value
+			;;
+			--domain)
+				if [ -z "$value" ]; then
+					printf "%sdomain name not specified%s\n" "$red" "$regular"
+					exit 1
+				fi
+				is_name_valid "$value"
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
+					printf "%s'%s' is not a valid domain name%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
+				all_networks=$(virsh net-list --name --all)
+				for each_net in $all_networks; do
+					domain_name=$(virsh net-dumpxml "$each_net" | grep "<domain name='" \
+						| awk -F "<domain name='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+					if [ "$value" == "$domain_name" ]; then
+						printf "%sdomain %s is already used in network %s%s\n" "$red" "$value" "$each_net" "$regular"
+						exit 1
+					fi
+				done
+				domain_name=$value
+			;;
+			--router)
+				if [ -z "$value" ]; then
+					printf "%srouter address not specified%s\n" "$red" "$regular"
+					exit 1
+				fi
+				all_networks=$(virsh net-list --name --all)
+				for each_net in $all_networks; do
+					router_addr=$(virsh net-dumpxml "$each_net" | grep "<ip address='" \
+						| awk -F "<ip address='" '{ print $2 }' | awk -F "' " '{ print $1 }')
+					if [ "$value" == "$router_addr" ]; then
+						printf "%srouter address %s is already used in network %s%s\n" "$red" "$value" "$each_net" "$regular"
+						exit 1
+					fi
+				done
+				router_addr=$value
+			;;
+			--netmask)
+				if [ -z "$value" ]; then
+					printf "%snetmask not specified%s\n" "$red" "$regular"
+					exit 1
+				fi
+				netmask_addr=$value
+			;;
+			--dhcp)
+				if [ "$value" != "on" ] && [ "$value" != "off" ]; then
+					printf "%svalue for --dhcp should be either on or off%s\n" "$red" "$regular"
+					exit 1
+				fi
+				dhcp_srv=$value
+			;;
+			--from)
+				if [ -z "$value" ]; then
+					printf "%slowest value for dynamic IP address allocation not specified%s\n" "$red" "$regular"
+					exit 1
+				fi
+				from_addr=$value
+			;;
+			--to)
+				if [ -z "$value" ]; then
+					printf "%shighest value for dynamic IP address allocation not specified%s\n" "$red" "$regular"
+					exit 1
+				fi
+				to_addr=$value
+			;;
+			help)
+				echo
+				show_usage create_network
+			;;
+			*)
+				printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
+				show_usage create_network
+			;;
+		esac
+	done
+
+	if [ -z "$net_name" ] || [ -z "$domain_name" ] || \
+		[ -z "$router_addr" ] || [ -z "$netmask_addr" ] || [ -z "$dhcp_srv" ]; then
+		printf "\n%sat least one of the required arguments has not been set%s\n\n" "$red" "$regular"
+		show_usage create_network
+	fi
+	
+	if [ "$dhcp_srv" == "on" ] && ([ -z "$from_addr" ] || [ -z "$to_addr" ]); then
+		printf "\n%sIP range for dynamic address allocation has not been defined%s\n\n" "$red" "$regular"
+		show_usage create_network
+	fi
+
+	max_bridge_devs=10
+	all_networks=$(virsh net-list --name --all)
+	how_many=$(echo $all_networks | wc -w)
+
+    if [ $how_many -ge $max_bridge_devs ]; then
+        printf "%sthere are already %d libvirt (in)active networks available, refusing to create another one%s\n" \
+			"$red" $max_bridge_devs "$regular"
+        exit 1
+    fi
+
+	bridge_dev=""
+	names_taken=""
+	default_net_xml="/usr/share/libvirt/networks/default.xml"
+	prefix=$(grep "<bridge name=\"" "$default_net_xml" | \
+		awk -F "<bridge name=" '{print $2}' | awk -F "/" '{print $1}' | tr -d "0-9\"\'")
+
+	for each_net in $all_networks; do
+		bridge_name=$(virsh net-dumpxml "$each_net" | grep "<bridge name='" \
+			| awk -F "<bridge name='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+		names_taken=${names_taken}${bridge_name}" "
+	done
+
+	for ((digit=0 ; digit < max_bridge_devs ; digit++)); do
+		candidate="$prefix""$digit"
+		is_a_member "$candidate" "$names_taken"
+		test_result=$?
+		if [ $test_result -eq 0 ]; then
+			bridge_dev="$candidate"
+			break
+		fi
+	done
+
+	random_alphanum=$(strings /dev/urandom \
+		| grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n')
+	temp_net_xml="$random_alphanum".xml
+
+	cat "$default_net_xml" > ~/"$temp_net_xml"
+
+	if [ "$dhcp_srv" == "on" ]; then
+		new_line="<range start=\""${from_addr}"\" end=\""${to_addr}"\"/>"
+		sed -i "/<range start/c \ \ \ \ \ \ $new_line" ~/"$temp_net_xml"
+	else
+		sed -i /'<dhcp>'/d ~/"$temp_net_xml"
+		sed -i /'<range start='/d ~/"$temp_net_xml"
+		sed -i /'<\/dhcp>'/d ~/"$temp_net_xml"
+	fi
+
+	new_line="<name>"${net_name}"</name>"
+	sed -i "/<name>default/c\ \ $new_line" ~/"$temp_net_xml"
+
+	new_line="<bridge name=\""${bridge_dev}"\"/>"
+	sed -i "/<bridge name=/c\ \ $new_line" ~/"$temp_net_xml"
+
+	new_line="<ip address=\""${router_addr}"\" netmask=\""${netmask_addr}"\">"
+	sed -i "/<ip address=/c\ \ $new_line" ~/"$temp_net_xml"
+
+	new_line="<domain name=\""${domain_name}"\" localOnly=\"yes\"/>"
+	sed -i "/<ip address/i\ \ ${new_line}" ~/"$temp_net_xml"
+
+	virsh -q net-define ~/"$temp_net_xml"
+	virsh_ec=$?
+
+	rm ~/"$temp_net_xml"
+
+	if [ $virsh_ec -ne 0 ]; then
+		printf "%sfailed to define %s, virsh returned error code %d, terminating now%s\n" "$red" "$net_name" $virsh_ec "$regular"
+		exit 2
+	fi
+
+	virsh -q net-start "$net_name"
+	virsh_ec=$?
+	if [ $virsh_ec -ne 0 ]; then
+		printf "%sfailed to start %s, virsh returned error code %d%s\n" "$yellow" "$net_name" $virsh_ec "$regular"
+	fi
+
+	virsh -q net-autostart "$net_name"
+	virsh_ec=$?
+	if [ $virsh_ec -ne 0 ]; then
+		printf "%sfailed to mark %s as 'autostart', virsh returned error code %d%s\n" "$yellow" "$net_name" $virsh_ec "$regular"
+	fi
+
+	printf "%snetwork %s successfully created%s\n" "$green" "$net_name" "$regular"
+}
+
+# ---------------------------------------------------------------------------
+# create_pool_cmd()
+#   Instantiates a new libvirt storage pool
+# ---------------------------------------------------------------------------
+
+create_pool_cmd() {
+	pool_name=""
+	local_path=""
+
+	for argument; do
+
+		param=$(echo "$argument" | awk -F= '{print $1}')
+		value=$(echo "$argument" | awk -F= '{print $2}')
+
+		case $param in
+			--name)
+				if [ -z "$value" ]; then
+					printf "%spool name not specified%s\n" "$red" "$regular"
+					exit 1
+				fi
+				is_name_valid "$value"
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
+					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
+				all_pools=$(virsh pool-list --name --all)
+				is_a_member "$value" "$all_pools"
+				test_result=$?
+				if [ $test_result -eq 1 ]; then
+					printf "%spool '%s' already exists%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
+				pool_name=$value
+			;;
+			--path)
+				if [ -z "$value" ]; then
+					printf "%spool path not specified%s\n" "$red" "$regular"
+					exit 1
+				fi
+				if [ ! -d "$value" ]; then
+					printf "%spath '%s' does not exist%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
+				all_pools=$(virsh pool-list --name --all)
+				for each_pool in $all_pools; do
+					local_path=$(virsh pool-dumpxml "$each_pool" | grep "<path>" \
+						| awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
+					if [ "$value" == "$local_path" ]; then
+						printf "%spool %s is already defined under %s%s\n" "$red" "$each_pool" "$value" "$regular"
+						exit 1
+					fi
+				done
+				local_path=$value
+			;;
+			help)
+				echo
+				show_usage create_pool
+			;;
+			*)
+				printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
+				show_usage create_pool
+			;;
+		esac
+	done
+
+	if [ -z "$pool_name" ] || [ -z "$local_path" ]; then
+		printf "\n%sat least one of the required arguments has not been set%s\n\n" "$red" "$regular"
+		show_usage create_pool
+	fi
+
+	virsh -q pool-define-as "$pool_name" dir - - - - "$local_path"
+	virsh_ec=$?
+	if [ $virsh_ec -ne 0 ]; then
+		printf "%sfailed to define %s, virsh returned error code %d, terminating now%s\n" "$red" "$pool_name" $virsh_ec "$regular"
+		exit 2
+	fi
+
+	virsh -q pool-start "$pool_name"
+	virsh_ec=$?
+	if [ $virsh_ec -ne 0 ]; then
+		printf "%sfailed to start %s, virsh returned error code %d%s\n" "$yellow" "$pool_name" $virsh_ec "$regular"
+	fi
+
+	virsh -q pool-autostart "$pool_name"
+	virsh_ec=$?
+	if [ $virsh_ec -ne 0 ]; then
+		printf "%sfailed to mark %s as 'autostart', virsh returned error code %d%s\n" "$yellow" "$pool_name" $virsh_ec "$regular"
+	fi
+
+	printf "%spool %s successfully created%s\n" "$green" "$pool_name" "$regular"
+}
+
+# ---------------------------------------------------------------------------
+# create_cmd():
+#   Creates a new libvirt network or a new storage pool
+# ---------------------------------------------------------------------------
+
+create_cmd() {
+	entity_type="$1"
+
+	case $entity_type in
+	network)
+		shift
+		create_network_cmd "$@"
+	;;
+	pool)
+		shift
+		create_pool_cmd "$@"
+	;;
+	help)
+		echo
+		show_usage create
+	;;
+	"")
+		printf "\n%sentity type not specified%s\n\n" "$red" "$regular"
+		show_usage create
+	;;
+	*)
+		printf "\n%sinvalid entity type '%s'%s\n\n" "$red" "$entity_type" "$regular"
+		show_usage create
+	;;
+	esac
+}
+
+# ---------------------------------------------------------------------------
 # deactivate_cmd():
 #   Powers down one or more active VMs
 # ---------------------------------------------------------------------------
@@ -763,13 +1140,13 @@ deactivate_cmd() {
 
 	for candidate; do
 		is_name_valid "$candidate"
-		what_is_it=$?
-		if [ $what_is_it -eq 0 ]; then
+		test_result=$?
+		if [ $test_result -eq 0 ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_active_VMs"
-			what_is_it=$?
-			if [ $what_is_it -eq 0 ]; then
+			test_result=$?
+			if [ $test_result -eq 0 ]; then
 				printf "%s'%s' is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%sshutting down %s%s\n" "$green" "$candidate" "$regular"
@@ -817,8 +1194,8 @@ define_cmd() {
 					exit 1
 				fi
 				is_number_valid "$value"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -839,8 +1216,8 @@ define_cmd() {
 					exit 1
 				fi
 				is_number_valid "$value"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -857,8 +1234,8 @@ define_cmd() {
 					exit 1
 				fi
 				is_number_valid "$value"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -879,15 +1256,15 @@ define_cmd() {
 					exit 1
 				fi
 				is_name_valid "$value"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%s'%s' is not a valid network name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				all_active_networks=$(virsh net-list --name)
 				is_a_member "$value" "$all_active_networks"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%sI cannot seem to find network %s%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -899,15 +1276,15 @@ define_cmd() {
 					exit 1
 				fi
 				is_name_valid "$value"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%s'%s' is not a valid OS variant name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				all_os_variants=$(osinfo-query os -f short-id)
 				is_a_member "$value" "$all_os_variants"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%sunknown OS variant '%s'%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -919,15 +1296,15 @@ define_cmd() {
 					exit 1
 				fi
 				is_name_valid "$value"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				all_active_pools=$(virsh pool-list --name)
 				is_a_member "$value" "$all_active_pools"
-				what_is_it=$?
-				if [ $what_is_it -eq 0 ]; then
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
 					printf "%scannot seem to find pool '%s'%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -959,13 +1336,13 @@ define_cmd() {
 
 	for candidate; do
 		is_name_valid "$candidate"
-		what_is_it=$?
-		if [ $what_is_it -eq 0 ]; then
+		test_result=$?
+		if [ $test_result -eq 0 ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_VMs"
-			what_is_it=$?
-			if [ $what_is_it -eq 1 ]; then
+			test_result=$?
+			if [ $test_result -eq 1 ]; then
 				printf "%sthere is already a VM '%s', so I am skipping that one%s\n" "$yellow" "$candidate" "$regular"
 			else
 				random_alphanum=$(strings /dev/urandom \
@@ -1001,7 +1378,7 @@ define_cmd() {
 
 				printf "%sretracting sound card & tablet input devices from XML description%s\n" "$green" "$regular"
 
-				sed -i /"<sound model"/d ~/"$xml_path"
+				sed -i /'<sound model'/d ~/"$xml_path"
 				sed -i /'<input type="tablet'/d ~/"$xml_path"
 
 				printf "%sdefining %s%s\n\n" "$green" "$candidate" "$regular"
@@ -1039,17 +1416,17 @@ getmac_cmd() {
 
 	for candidate; do
 		is_name_valid "$candidate"
-		what_is_it=$?
-		if [ $what_is_it -eq 0 ]; then
+		test_result=$?
+		if [ $test_result -eq 0 ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_VMs"
-			what_is_it=$?
-			if [ $what_is_it -eq 0 ]; then
+			test_result=$?
+			if [ $test_result -eq 0 ]; then
 				printf "%scannot seem to find VM '%s'%s\n" "$yellow" "$candidate" "$regular"
 			else
 				mac_addr=$(virsh --quiet dumpxml "$candidate" | grep "mac address" \
-					| awk -F "<mac address='" '{ print $2 }' | awk -F "'/>" '{ print $1 }')
+					| awk -F "<mac address='" '{ print $2 }' | awk -F "'" '{ print $1 }')
 				printf "%s%s looks like %s in the local network%s\n" "$green" "$candidate" "$mac_addr" "$regular"
 			fi
 		fi
@@ -1058,27 +1435,20 @@ getmac_cmd() {
 
 # ---------------------------------------------------------------------------
 # list_cmd():
-#   Returns all available VMs, libvirt networks, pools, or volumes
+#   Presents all available VMs, libvirt networks, pools, or volumes
 # ---------------------------------------------------------------------------
 
 list_cmd() {
 	num_args=1
 	if [ $# -ne $num_args ]; then
-		printf "\n%sincorrect number of arguments (need exactly %d)%s\n\n" "$red" $num_args "$regular"
+		printf "\n%sincorrect number of entity types (need exactly %d)%s\n\n" "$red" $num_args "$regular"
 		show_usage list
-    fi
-
-	entity="$1"
-	all_entities="vms networks pools volumes"
-	is_a_member "$entity" "$all_entities"
-	what_is_it=$?
-	if [ $what_is_it -eq 0 ]; then
-		printf "%s'%s' is not a valid object type%s\n" "$red" "$entity" "$regular"
-		exit 1
 	fi
 
-	case $entity in
-	vms)
+	entity_type="$1"
+
+	case $entity_type in
+	vm)
 		all_VMs=$(virsh list --name --all)
 		if [ -z "$all_VMs" ]; then
 			printf "\n%scannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
@@ -1087,11 +1457,11 @@ list_cmd() {
 
 		temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
 
-		echo "Name State CPU(s) RAM BLK(s) NIC(s) PrimaryNet" >> ~/"$temp_file_name"
-		echo "---- ----- ------ --- ------ ------ ----------" >> ~/"$temp_file_name"
+		echo "Name State CPU(s) RAM[KiB] BLK(s) NIC(s) PrimaryNet" >> ~/"$temp_file_name"
+		echo "---- ----- ------ -------- ------ ------ ----------" >> ~/"$temp_file_name"
 
 		for name in $all_VMs; do
-			state=$(virsh dominfo $name | grep State \
+			state=$(virsh dominfo "$name" | grep State \
 				| awk -F ":" '{ print $2 }' | sed -e 's/^[ \t]*//')
 			if [ "$state" == "running" ]; then
 				state="active"
@@ -1099,34 +1469,34 @@ list_cmd() {
 				state="inactive"
 			fi
 
-			CPUs=$(virsh dominfo $name | grep CPU\(s\) \
+			CPUs=$(virsh dominfo "$name" | grep CPU\(s\) \
 				| awk -F ":" '{ print $2 }' | sed -e 's/^[ \t]*//')
-			ram_size=$(virsh dominfo $name | grep "Max memory" \
-				| awk -F ":" '{ print $2 }' | sed -e 's/^[ \t]*//' | tr -d " ")
-			block_devices=$(($(virsh domblklist $name | wc -l)-3))
+			ram_size=$(virsh dominfo "$name" | grep "Max memory" \
+				| awk -F ":" '{ print $2 }' | awk -F " " '{ print $1 }')
+			block_devices=$(($(virsh domblklist "$name" | wc -l)-3))
 
 			look_for="<source network='"
 
-			first_adapter_conn=$(virsh dumpxml $name | grep "<source network='" | head -n 1 \
+			first_adapter_conn=$(virsh dumpxml "$name" | grep "<source network='" | head -n 1 \
 				| awk -F "<source network='" '{ print $2 }' | awk -F "'" '{ print $1 }')
 			if [ -z "$first_adapter_conn" ]; then
 				look_for="<interface type='bridge'>"
 				first_adapter_conn="hostBridge"
 			fi
 
-			network_adapters=$(virsh dumpxml $name | grep "$look_for" | wc -l)
+			network_adapters=$(virsh dumpxml "$name" | grep -c "$look_for")
 
-			echo $name $state $CPUs $ram_size $block_devices \
-				$network_adapters $first_adapter_conn >> ~/"$temp_file_name"
+			echo "$name" "$state" "$CPUs" "$ram_size" "$block_devices" \
+				"$network_adapters" "$first_adapter_conn" >> ~/"$temp_file_name"
 		done
 
 		echo
-		cat ~/"$temp_file_name" | column -t
+		column -t ~/"$temp_file_name"
 		echo
 
 		rm -f ~/"$temp_file_name"
 	;;
-	networks)
+	network)
 		all_networks=$(virsh net-list --name --all)
 		if [ -z "$all_networks" ]; then
 			printf "\n%scannot seem to find a single libvirt network on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
@@ -1135,8 +1505,8 @@ list_cmd() {
 
 		temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
 
-		echo "Name State Mode Domain MACaddr IPaddr DHCP IPbegin IPend Clients" >> ~/"$temp_file_name"
-		echo "---- ----- ---- ------ ------- ------ ---- ------- ----- -------" >> ~/"$temp_file_name"
+		echo "Name State Mode Domain MACaddr Router/DNSaddr DHCP fromIPaddr toIPaddr Clients" >> ~/"$temp_file_name"
+		echo "---- ----- ---- ------ ------- -------------- ---- ---------- -------- -------" >> ~/"$temp_file_name"
 
 		all_VMs=$(virsh list --name --all)
 
@@ -1150,7 +1520,7 @@ list_cmd() {
 			fi
 
 			mode=$(virsh net-dumpxml "$name" | grep "mode='" \
-				| awk -F "mode='" '{ print $2 }' | awk -F "'" '{ print $1 }'a)
+				| awk -F "mode='" '{ print $2 }' | awk -F "'" '{ print $1 }')
 			domain_name=$(virsh net-dumpxml "$name" | grep "<domain name='" \
 				| awk -F "<domain name='" '{ print $2 }' | awk -F "'" '{ print $1 }')
 			if [ -z "$domain_name" ]; then
@@ -1177,22 +1547,22 @@ list_cmd() {
 			net_clients=0
 			if [ -n "$all_VMs" ]; then
 				for guest in $all_VMs; do
-					how_many=$(virsh dumpxml "$guest" | grep "$name" | wc -l)
-					(( net_clients += $how_many ))
+					how_many=$(virsh dumpxml "$guest" | grep -c "$name")
+					(( net_clients += how_many ))
 				done
 			fi
 
-			echo $name $state $mode $domain_name $mac_addr $ip_addr \
-				$dhcp_server $ip_begin $ip_end $net_clients >> ~/"$temp_file_name"
+			echo "$name" "$state" "$mode" "$domain_name" "$mac_addr" "$ip_addr" \
+				"$dhcp_server" "$ip_begin" "$ip_end" "$net_clients" >> ~/"$temp_file_name"
 		done
 
 		echo
-		cat ~/"$temp_file_name" | column -t
+		column -t ~/"$temp_file_name"
 		echo
 
 		rm -f ~/"$temp_file_name"
 	;;
-	pools)
+	pool)
 		all_pools=$(virsh pool-list --name --all)
 		if [ -z "$all_pools" ]; then
 			printf "\n%scannot seem to find a single pool on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
@@ -1223,16 +1593,16 @@ list_cmd() {
 				| awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
 			volumes=$(($(virsh vol-list "$name" | wc -l)-3))
 
-			echo $name $state $capacity $allocation $available $path2pool_dir $volumes >> ~/"$temp_file_name"
+			echo "$name" "$state" "$capacity" "$allocation" "$available" "$path2pool_dir" "$volumes" >> ~/"$temp_file_name"
 		done
 
 		echo
-		cat ~/"$temp_file_name" | column -t
+		column -t ~/"$temp_file_name"
 		echo
 
 		rm -f ~/"$temp_file_name"
 	;;
-	volumes)
+	volume)
 		all_pools=$(virsh pool-list --name --all)
 		if [ -z "$all_pools" ]; then
 			printf "\n%scannot seem to find a single pool on this host,\n" "$red"
@@ -1252,15 +1622,23 @@ list_cmd() {
 					| awk -F "Capacity:" '{ print $2 }' | sed -e 's/^[ \t]*//' | tr -d " ")
 				allocation=$(virsh vol-info "$volume" "$pool" | grep "Allocation:" \
 					| awk -F "Allocation:" '{ print $2 }' | sed -e 's/^[ \t]*//' | tr -d " ")
-				echo $volume $capacity $allocation $pool >> ~/"$temp_file_name"
+				echo "$volume" "$capacity" "$allocation" "$pool" >> ~/"$temp_file_name"
 			done
 		done
 
 		echo
-		cat ~/"$temp_file_name" | column -t
+		column -t ~/"$temp_file_name"
 		echo
 
 		rm -f ~/"$temp_file_name"
+	;;
+	help)
+		echo
+		show_usage list
+	;;
+	*)
+		printf "\n%sinvalid entity type '%s'%s\n\n" "$red" "$entity_type" "$regular"
+		show_usage list
 	;;
 	esac
 }
@@ -1291,8 +1669,8 @@ ping_cmd() {
 	fi
 
 	is_number_valid "$value"
-	what_is_it=$?
-	if [ $what_is_it -eq 0 ]; then
+	test_result=$?
+	if [ $test_result -eq 0 ]; then
 		printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 		exit 1
 	fi
@@ -1317,13 +1695,13 @@ ping_cmd() {
 
 	for candidate; do
 		is_name_valid "$candidate"
-		what_is_it=$?
-		if [ $what_is_it -eq 0 ]; then
+		test_result=$?
+		if [ $test_result -eq 0 ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_active_VMs"
-			what_is_it=$?
-			if [ $what_is_it -eq 0 ]; then
+			test_result=$?
+			if [ $test_result -eq 0 ]; then
 				printf "%s%s is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "\n%sattempting to ping %s%s\n" "$green" "$candidate" "$regular"
@@ -1353,13 +1731,13 @@ reboot_cmd() {
 
 	for candidate; do
 		is_name_valid "$candidate"
-		what_is_it=$?
-		if [ $what_is_it -eq 0 ]; then
+		test_result=$?
+		if [ $test_result -eq 0 ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_active_VMs"
-			what_is_it=$?
-			if [ $what_is_it -eq 0 ]; then
+			test_result=$?
+			if [ $test_result -eq 0 ]; then
 				printf "%s'%s' is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%srebooting %s%s\n" "$green" "$candidate" "$regular"
@@ -1401,6 +1779,10 @@ case "$1" in
 		shift
 		clone_cmd "$@"
 		;;
+	create)
+		shift
+		create_cmd "$@"
+		;;
 	deactivate)
 		shift
 		deactivate_cmd "$@"
@@ -1425,7 +1807,15 @@ case "$1" in
 		shift
 		reboot_cmd "$@"
 		;;
-	*)
+	help)
 		show_usage help
 		;;
+	"")
+		printf "\n%scommand not specified%s\n" "$red" "$regular"
+		show_usage
+	;;
+	*)
+		printf "\n%sinvalid command '%s'%s\n" "$red" "$1" "$regular"
+		show_usage help
+	;;
 esac
