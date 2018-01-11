@@ -191,7 +191,7 @@ show_usage() {
 			printf "  activate\t: bring inactive VMs up\n"
 			printf "  annihilate\t: remove any trace of inactive VMs\n"
 			printf "  attach\t: attach new storage volumes to (in)active VMs\n"
-			printf "  check-service\t: attempt to connect to specified TCP port of one or more active VMs\n"
+			printf "  check-service\t: try to connect to specified TCP port of one or more active VMs\n"
 			printf "  clone\t\t: clone a template VM into one or more new VMs\n"
 			printf "  create\t: create a new libvirt network or storage pool\n"
 			printf "  deactivate\t: shutdown active VMs\n"
