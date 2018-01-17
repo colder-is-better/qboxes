@@ -17,7 +17,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * clone VMs with more than one storage volumes
 
 `create`
-* sanitize user input (domain names, IP addresses)
+* sanitize user input (IP addresses)
 
 `deactivate`
 

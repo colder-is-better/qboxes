@@ -213,7 +213,7 @@ show_usage() {
 #   Checks if a given name is valid
 #   A name (string) is valid for qboxes if it begins with
 #   an alphanumeric character and then comprises alphanumerics,
-#   dashes (-), underscores (_) or dots (.) only. 
+#   dashes (-), underscores (_) or dots (.) only 
 # ---------------------------------------------------------------------------
 
 is_name_valid() {
@@ -827,10 +827,10 @@ create_network_cmd() {
 					printf "%sdomain name not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
-				is_name_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
-					printf "%s'%s' is not a valid domain name%s\n" "$red" "$value" "$regular"
+				domain_pattern='(?=^.{5,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_\-]{1,63}\.?)+(?:[a-zA-Z]{2,})$)'
+				test_result=$(echo "$value" | grep -P "$domain_pattern")
+				if [ -z "$test_result" ]; then
+					printf "%s'%s' is not a valid domain name%s\n" "$yellow" "$value" "$regular"
 					exit 1
 				fi
 				all_networks=$(virsh net-list --name --all)
@@ -876,14 +876,14 @@ create_network_cmd() {
 			;;
 			--from)
 				if [ -z "$value" ]; then
-					printf "%slowest value for dynamic IP address allocation not specified%s\n" "$red" "$regular"
+					printf "%slowest bound for dynamic IP address allocation not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
 				from_addr=$value
 			;;
 			--to)
 				if [ -z "$value" ]; then
-					printf "%shighest value for dynamic IP address allocation not specified%s\n" "$red" "$regular"
+					printf "%supper bound for dynamic IP address allocation not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
 				to_addr=$value
