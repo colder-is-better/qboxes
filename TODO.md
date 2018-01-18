@@ -13,11 +13,12 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 `check-service`
 
 `clone`
+* select network of clones
 * handle the cloning of "empty" VMs
 * clone VMs with more than one storage volumes
 
 `create`
-* sanitize user input (IP addresses)
+* facilitate the creation of volumes (QCOW2 sparse files)
 
 `deactivate`
 

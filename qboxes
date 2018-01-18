@@ -249,6 +249,23 @@ is_number_valid() {
 }
 
 # ---------------------------------------------------------------------------
+# is_ipv4_valid():
+#   Checks if given string represents a valid IPv4 address
+# ---------------------------------------------------------------------------
+
+is_ipv4_valid() {
+	the_address="$1"
+	zero_to_255="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
+	valid_ipv4_regex="$zero_to_255"\."$zero_to_255"\."$zero_to_255"\."$zero_to_255"
+	valid_ipv4_test=$(echo "$the_address" | grep -x -E "$valid_ipv4_regex")
+	if [ -z "$valid_ipv4_test" ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+# ---------------------------------------------------------------------------
 # is_a_member():
 #   Checks if a string can be found in a sequence of strings
 # ---------------------------------------------------------------------------
@@ -827,10 +844,15 @@ create_network_cmd() {
 					printf "%sdomain name not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
+				first_char_test=$(echo "${value:0:1}" | tr -d "[:alnum:]")
+				if [ -n "$first_char_test" ]; then
+					printf "%s'%s' is not a valid domain name%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
 				domain_pattern='(?=^.{5,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_\-]{1,63}\.?)+(?:[a-zA-Z]{2,})$)'
 				test_result=$(echo "$value" | grep -P "$domain_pattern")
 				if [ -z "$test_result" ]; then
-					printf "%s'%s' is not a valid domain name%s\n" "$yellow" "$value" "$regular"
+					printf "%s'%s' is not a valid domain name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				all_networks=$(virsh net-list --name --all)
@@ -849,6 +871,12 @@ create_network_cmd() {
 					printf "%srouter address not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
+				is_ipv4_valid "$value"
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
+					printf "%s'%s' is not a valid IPv4 address%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
 				all_networks=$(virsh net-list --name --all)
 				for each_net in $all_networks; do
 					router_addr=$(virsh net-dumpxml "$each_net" | grep "<ip address='" \
@@ -865,6 +893,12 @@ create_network_cmd() {
 					printf "%snetmask not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
+				is_ipv4_valid "$value"
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
+					printf "%s'%s' is not a valid IPv4 address%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
 				netmask_addr=$value
 			;;
 			--dhcp)
@@ -879,11 +913,23 @@ create_network_cmd() {
 					printf "%slowest bound for dynamic IP address allocation not specified%s\n" "$red" "$regular"
 					exit 1
 				fi
+				is_ipv4_valid "$value"
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
+					printf "%s'%s' is not a valid IPv4 address%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
 				from_addr=$value
 			;;
 			--to)
 				if [ -z "$value" ]; then
 					printf "%supper bound for dynamic IP address allocation not specified%s\n" "$red" "$regular"
+					exit 1
+				fi
+				is_ipv4_valid "$value"
+				test_result=$?
+				if [ $test_result -eq 0 ]; then
+					printf "%s'%s' is not a valid IPv4 address%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				to_addr=$value
