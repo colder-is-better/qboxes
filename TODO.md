@@ -3,7 +3,6 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 `activate`
 
 `annihilate`
-* remove stale entries from .ssh/known_hosts
 
 `attach`
 

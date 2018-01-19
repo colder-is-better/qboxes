@@ -355,11 +355,30 @@ annihilate_cmd() {
 			if [ $test_result -eq 0 ]; then
 				printf "%s'%s' does not look like an inactive VM%s\n" "$yellow" "$candidate" "$regular"
 			else
+				user_known_hosts=~/.ssh/known_hosts
+				if [ -e "$user_known_hosts" ]; then
+					printf "%slooking for and removing entries related to " "$green"
+					printf "%s from %s file%s\n" "$candidate" "$user_known_hosts" "$regular"
+					random_alphanum=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 30 | tr -d '\n')
+					mkdir ~/"$random_alphanum"
+					sudo virt-copy-out -d "$candidate" /etc/ssh/ssh_host_*_key.pub ~/"$random_alphanum"/
+					virt_copy_out_ec=$?
+					if [ $virt_copy_out_ec -ne 0 ]; then
+						printf "%scannot read host keys from %s, virt-copy-out " "$yellow" "$candidate"
+						printf "returned error code %d, so I am skipping that one%s\n" $virt_copy_out_ec "$regular"
+					else
+						for each_file in ~/"$random_alphanum"/*.pub; do
+							host_key=$(cat "$each_file" | awk -F " " '{ print $2 }' | awk -F " " '{ print $1 }')
+							sed -i "/${host_key//\//\\/}/d" "$user_known_hosts"
+						done
+					fi
+					rm -fr ~/"$random_alphanum"
+				fi
 				printf "%sannihilating %s (this may take a while)%s\n" "$green" "$candidate" "$regular"
 				all_snapshots=$(virsh snapshot-list --name "$candidate")
 				if [ -n "$all_snapshots" ]; then
 					for each_one in $all_snapshots; do
-						printf "  %sdeleting snapshot '%s'%s\n" "$green" "$each_one" "$regular"
+						printf "%sdeleting snapshot '%s'%s\n" "$green" "$each_one" "$regular"
 						virsh --quiet snapshot-delete --domain "$candidate" --snapshotname "$each_one"
 						virsh_ec=$?
 						if [ $virsh_ec -ne 0 ]; then
