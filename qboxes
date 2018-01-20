@@ -211,24 +211,23 @@ show_usage() {
 # ---------------------------------------------------------------------------
 # is_name_valid():
 #   Checks if a given name is valid
-#   A name (string) is valid for qboxes if it begins with
-#   an alphanumeric character and then comprises alphanumerics,
-#   dashes (-), underscores (_) or dots (.) only 
+#   A name is valid for qboxes if it comprises alphanumerics, hyphens,
+#   underscores and dots only, and is between 1 and 63 characters long
 # ---------------------------------------------------------------------------
 
 is_name_valid() {
-	the_name="$1"
-	first_char_test=$(echo "${the_name:0:1}" | tr -d "[:alnum:]")
-	if [ -n "$first_char_test" ]; then
-		return 0
-	else
-		valid_name_test=$(echo "$the_name" | tr -d "[:alnum:]-_.")
-		if [ -n "$valid_name_test" ]; then
-			return 0
-		else
-			return 1
-		fi
-	fi
+    the_name="$1"
+    length=${#the_name}
+    if [ $length -eq 0 ] || [ $length -gt 63 ]; then
+        return 0
+    else
+        valid_name_test=$(echo "$the_name" | tr -d "[:alnum:]-_.")
+        if [ -n "$valid_name_test" ]; then
+            return 0
+        else
+            return 1
+        fi
+    fi
 }
 
 # ---------------------------------------------------------------------------
