@@ -758,7 +758,7 @@ clone_cmd() {
 					printf "%smoving %s between pools (%s ==> %s)%s\n" \
 						"$green" "$clone_volume_name" "$template_pool_name" "$clone_pool_name" "$regular"
 
-					mv "$template_pool_path"/"$clone_volume_name" "$clone_pool_path"/
+					sudo mv "$template_pool_path"/"$clone_volume_name" "$clone_pool_path"/
 					move_ec=$?
 					if [ $move_ec -ne 0 ]; then
 						printf "%soperation failed, mv returned error code %d, terminating now%s\n" "$red" $move_ec "$regular"
@@ -784,7 +784,7 @@ clone_cmd() {
 				printf "%ssetting hostname for %s (this may take a while)%s\n" \
 					"$green" "$candidate" "$regular"
 
-				virt-customize --quiet -d "$candidate" --hostname "$candidate"
+				sudo virt-customize --quiet -d "$candidate" --hostname "$candidate"
 				virt_customize_ec=$?
 				if [ $virt_customize_ec -ne 0 ]; then
 					printf "%soperation failed, virt-customize returned error code %d, terminating now%s\n" \
@@ -794,7 +794,7 @@ clone_cmd() {
 
 				printf "%sdeleting SSH host keys from %s (this may take a while)%s\n\n" "$green" "$candidate" "$regular"
 
-				virt-customize --quiet -d "$candidate" \
+				sudo virt-customize --quiet -d "$candidate" \
 					--delete /etc/ssh/ssh_host_dsa_key \
 					--delete /etc/ssh/ssh_host_dsa_key.pub \
 					--delete /etc/ssh/ssh_host_ecdsa_key \
