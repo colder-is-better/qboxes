@@ -12,7 +12,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 `check-service`
 
 `clone`
-* select network of clones
+* select network for clones
 * handle the cloning of "empty" VMs
 * clone VMs with more than one storage volumes
 
@@ -26,7 +26,11 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 `getmac`
 * handle VMs with more than one virtual Ethernet adapters
 
+`info`
+* return detailed information on VMs, networks, pools, volumes
+
 `list`
+* show MAC address of primary network adapter and IP address (if applicable)
 
 `ping`
 
