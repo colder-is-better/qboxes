@@ -210,7 +210,7 @@ show_usage() {
 
 # ---------------------------------------------------------------------------
 # is_name_valid():
-#   Checks if a given name is valid
+#   Checks if given name is valid
 #   A name is valid for qboxes if it comprises alphanumerics, hyphens,
 #   underscores and dots only, and is between 1 and 63 characters long
 # ---------------------------------------------------------------------------
@@ -232,19 +232,23 @@ is_name_valid() {
 
 # ---------------------------------------------------------------------------
 # is_number_valid():
-#   Checks if a given number is valid
+#   Checks if given number is valid
 #   A number is valid for qboxes if it comprises numeric
 #   characters only (no signs, commas, dots, units, or any other character) 
 # ---------------------------------------------------------------------------
 
 is_number_valid() {
 	the_number="$1"
-	valid_number_test=$(echo "$the_number" | tr -d "[:digit:]")
-	if [ -n "$valid_number_test" ]; then
-		return 0
-	else
-		return 1
-	fi
+    if [ -z "$the_number" ]; then
+        return 0
+    else
+	    valid_number_test=$(echo "$the_number" | tr -d "[:digit:]")
+	    if [ -n "$valid_number_test" ]; then
+		    return 0
+	    else
+		    return 1
+	    fi
+    fi
 }
 
 # ---------------------------------------------------------------------------
@@ -266,7 +270,7 @@ is_ipv4_valid() {
 
 # ---------------------------------------------------------------------------
 # is_a_member():
-#   Checks if a string can be found in a sequence of strings
+#   Checks if given string matches a member of a sequence of strings
 # ---------------------------------------------------------------------------
 
 is_a_member() {
@@ -423,10 +427,6 @@ attach_cmd() {
 
 		case $param in
 			--name)
-				if [ -z "$value" ]; then
-					printf "%svolume name not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_name_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
@@ -436,10 +436,6 @@ attach_cmd() {
 				volume_name=$value
 			;;
 			--size)
-				if [ -z "$value" ]; then
-					printf "%svolume size not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_number_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
@@ -458,10 +454,6 @@ attach_cmd() {
 				volume_size=$value
 			;;
 			--pool)
-				if [ -z "$value" ]; then
-					printf "%spool name not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_name_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
@@ -579,11 +571,6 @@ checkservice_cmd() {
 		show_usage check-service
 	fi
 
-	if [ -z "$value" ]; then
-		printf "%sTCP port not specified%s\n" "$red" "$regular"
-		exit 1
-	fi
-
 	is_number_valid "$value"
 	test_result=$?
 	if [ $test_result -eq 0 ]; then
@@ -651,10 +638,6 @@ clone_cmd() {
 
 		case $param in
 			--template)
-				if [ -z "$value" ]; then
-					printf "%stemplate name not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_name_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
@@ -671,10 +654,6 @@ clone_cmd() {
 				template_VM=$value
 			;;
 			--target-pool)
-				if [ -z "$value" ]; then
-					printf "%starget pool not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_name_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
@@ -838,10 +817,6 @@ create_network_cmd() {
 
 		case $param in
 			--name)
-				if [ -z "$value" ]; then
-					printf "%snetwork name not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_name_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
@@ -858,10 +833,6 @@ create_network_cmd() {
 				net_name=$value
 			;;
 			--domain)
-				if [ -z "$value" ]; then
-					printf "%sdomain name not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				first_char_test=$(echo "${value:0:1}" | tr -d "[:alnum:]")
 				if [ -n "$first_char_test" ]; then
 					printf "%s'%s' is not a valid domain name%s\n" "$red" "$value" "$regular"
@@ -885,14 +856,10 @@ create_network_cmd() {
 				domain_name=$value
 			;;
 			--router)
-				if [ -z "$value" ]; then
-					printf "%srouter address not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_ipv4_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
-					printf "%s'%s' is not a valid IPv4 address%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not a valid router IPv4 address%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				all_networks=$(virsh net-list --name --all)
@@ -907,14 +874,10 @@ create_network_cmd() {
 				router_addr=$value
 			;;
 			--netmask)
-				if [ -z "$value" ]; then
-					printf "%snetmask not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_ipv4_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
-					printf "%s'%s' is not a valid IPv4 address%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not a valid netmask IPv4 address%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				netmask_addr=$value
@@ -927,27 +890,19 @@ create_network_cmd() {
 				dhcp_srv=$value
 			;;
 			--from)
-				if [ -z "$value" ]; then
-					printf "%slowest bound for dynamic IP address allocation not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_ipv4_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
-					printf "%s'%s' is not a valid IPv4 address%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not a valid IPv4 address for the '--from' parameter%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				from_addr=$value
 			;;
 			--to)
-				if [ -z "$value" ]; then
-					printf "%supper bound for dynamic IP address allocation not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_ipv4_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
-					printf "%s'%s' is not a valid IPv4 address%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not a valid IPv4 address for the '--to' parameter%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				to_addr=$value
@@ -974,7 +929,7 @@ create_network_cmd() {
 		show_usage create_network
 	fi
 
-	max_bridge_devs=10
+	max_bridge_devs=15
 	all_networks=$(virsh net-list --name --all)
 	how_many=$(echo $all_networks | wc -w)
 
@@ -1074,10 +1029,6 @@ create_pool_cmd() {
 
 		case $param in
 			--name)
-				if [ -z "$value" ]; then
-					printf "%spool name not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_name_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
@@ -1253,10 +1204,6 @@ define_cmd() {
 
 		case $param in
 			--ram)
-				if [ -z "$value" ]; then
-					printf "%smemory size not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_number_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
@@ -1275,10 +1222,6 @@ define_cmd() {
 				memory_size=$value
 			;;
 			--cores)
-				if [ -z "$value" ]; then
-					printf "%snumber of CPU cores not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_number_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
@@ -1293,10 +1236,6 @@ define_cmd() {
 				cpu_cores=$value
 			;;
 			--volume-size)
-				if [ -z "$value" ]; then
-					printf "%svolume size not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_number_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
@@ -1315,10 +1254,6 @@ define_cmd() {
 				volume_size=$value
 			;;
 			--network)
-				if [ -z "$value" ]; then
-					printf "%snetwork name not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_name_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
@@ -1335,10 +1270,6 @@ define_cmd() {
 				libvirt_network=$value
 			;;
 			--guest-os)
-				if [ -z "$value" ]; then
-					printf "%sOS variant not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_name_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
@@ -1355,10 +1286,6 @@ define_cmd() {
 				os_variant=$value
 			;;
 			--pool)
-				if [ -z "$value" ]; then
-					printf "%spool name not specified%s\n" "$red" "$regular"
-					exit 1
-				fi
 				is_name_valid "$value"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
@@ -1725,11 +1652,6 @@ ping_cmd() {
 	if [ "$param" != "--count" ]; then
 		printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
 		show_usage ping
-	fi
-
-	if [ -z "$value" ]; then
-		printf "%snumber of packets not specified%s\n" "$red" "$regular"
-		exit 1
 	fi
 
 	is_number_valid "$value"
