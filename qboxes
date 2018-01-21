@@ -763,7 +763,9 @@ clone_cmd() {
 				printf "%ssetting hostname for %s (this may take a while)%s\n" \
 					"$green" "$candidate" "$regular"
 
-				sudo virt-customize --quiet -d "$candidate" --hostname "$candidate"
+                valid_hostname=$(echo "$candidate" | tr "[:upper:]._-" "[:lower:]000")
+
+                sudo virt-customize --quiet -d "$candidate" --hostname "$valid_hostname"
 				virt_customize_ec=$?
 				if [ $virt_customize_ec -ne 0 ]; then
 					printf "%soperation failed, virt-customize returned error code %d, terminating now%s\n" \
