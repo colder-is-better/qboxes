@@ -218,7 +218,7 @@ show_usage() {
 is_name_valid() {
     the_name="$1"
     length=${#the_name}
-    if [ $length -eq 0 ] || [ $length -gt 63 ]; then
+    if [ "$length" -eq 0 ] || [ "$length" -gt 63 ]; then
         return 0
     else
         valid_name_test=$(echo "$the_name" | tr -d "[:alnum:]-_.")
@@ -278,7 +278,7 @@ is_a_member() {
 	the_set="$2"
 	included=0
 	for each_one in $the_set; do
-		if [ $item == $each_one ]; then
+		if [ "$item" == "$each_one" ]; then
 			included=1
 			break
 		fi
@@ -361,17 +361,17 @@ annihilate_cmd() {
 				user_known_hosts=~/.ssh/known_hosts
 				if [ -e "$user_known_hosts" ]; then
 					printf "%slooking for and removing entries related to " "$green"
-					printf "%s from %s file%s\n" "$candidate" "$user_known_hosts" "$regular"
+					printf "%s from %s%s\n" "$candidate" "$user_known_hosts" "$regular"
 					random_alphanum=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 30 | tr -d '\n')
 					mkdir ~/"$random_alphanum"
-					sudo virt-copy-out -d "$candidate" /etc/ssh/ssh_host_*_key.pub ~/"$random_alphanum"/
+					sudo virt-copy-out -d "$candidate" /etc/ssh/ssh_host_*_key.pub ~/"$random_alphanum"/ &>/dev/null 
 					virt_copy_out_ec=$?
 					if [ $virt_copy_out_ec -ne 0 ]; then
 						printf "%scannot read host keys from %s, virt-copy-out " "$yellow" "$candidate"
-						printf "returned error code %d, so I am skipping that one%s\n" $virt_copy_out_ec "$regular"
+						printf "returned error code %d%s\n" $virt_copy_out_ec "$regular"
 					else
 						for each_file in ~/"$random_alphanum"/*.pub; do
-							host_key=$(cat "$each_file" | awk -F " " '{ print $2 }' | awk -F " " '{ print $1 }')
+							host_key=$(awk -F " " '{ print $2 }' "$each_file" | awk -F " " '{ print $1 }')
 							sed -i "/${host_key//\//\\/}/d" "$user_known_hosts"
 						done
 					fi
@@ -444,8 +444,8 @@ attach_cmd() {
 				fi
 				volume_size_min=128
 				volume_size_max=8192
-				if [ $value -lt $volume_size_min ] \
-					|| [ $value -gt $volume_size_max ] \
+				if [ "$value" -lt "$volume_size_min" ] \
+					|| [ "$value" -gt "$volume_size_max" ] \
 					|| [ $((value % volume_size_min)) -gt 0 ]; then
 					printf "%svolume size must be between %d and %d GiB inclusive, and an integer multiple of %d%s\n" \
 						"$red" $volume_size_min $volume_size_max $volume_size_min "$regular"
@@ -578,7 +578,7 @@ checkservice_cmd() {
 		exit 1
 	fi
 
-	if [ $value -lt 1 ] || [ $value -gt 65535 ]; then
+	if [ "$value" -lt 1 ] || [ "$value" -gt 65535 ]; then
 		printf "%sTCP port number must be between 1 and 65535 inclusive%s\n" "$red" "$regular"
 		exit 1
 	fi
@@ -932,11 +932,11 @@ create_network_cmd() {
 
 	max_bridge_devs=15
 	all_networks=$(virsh net-list --name --all)
-	how_many=$(echo $all_networks | wc -w)
+	how_many=$(echo "$all_networks" | wc -w)
 
-    if [ $how_many -ge $max_bridge_devs ]; then
-        printf "%sthere are already %d libvirt (in)active networks available, refusing to create another one%s\n" \
-			"$red" $max_bridge_devs "$regular"
+    if [ "$how_many" -ge "$max_bridge_devs" ]; then
+		printf "%sthere are already %d libvirt (in)active " "$red" $max_bridge_devs
+		printf "networks available, refusing to create another one%s\n" "$regular"
         exit 1
     fi
 
@@ -1213,8 +1213,8 @@ define_cmd() {
 				fi
 				memory_size_min=32
 				memory_size_max=16384
-				if [ $value -lt $memory_size_min ] \
-					|| [ $value -gt $memory_size_max ] \
+				if [ "$value" -lt "$memory_size_min" ] \
+					|| [ "$value" -gt "$memory_size_max" ] \
 					|| [ $((value % memory_size_min)) -gt 0 ]; then
 					printf "%smemory size must be between %d and %d MiB inclusive, and an integer multiple of %d%s\n" \
 					"$red" $memory_size_min $memory_size_max $memory_size_min "$regular"
@@ -1230,7 +1230,7 @@ define_cmd() {
 					exit 1
 				fi
 				cpu_cores_max=$(virsh nodeinfo | grep "CPU(s):" | awk -F ":" '{ print $2 }')
-				if [ $value -lt 1 ] || [ $value -gt $cpu_cores_max ]; then
+				if [ "$value" -lt 1 ] || [ "$value" -gt "$cpu_cores_max" ]; then
 					printf "%snumber of CPU cores should be between 1 and %d inclusive%s\n" "$red" "$cpu_cores_max" "$regular"
 					exit 1
 				fi
@@ -1245,8 +1245,8 @@ define_cmd() {
 				fi
 				volume_size_min=16
 				volume_size_max=512
-				if [ $value -lt $volume_size_min ] \
-					|| [ $value -gt $volume_size_max ] \
+				if [ "$value" -lt "$volume_size_min" ] \
+					|| [ "$value" -gt "$volume_size_max" ] \
 					|| [ $((value % volume_size_min)) -gt 0 ]; then
 					printf "%svolume size must be between %d and %d GiB inclusive, and an integer multiple of %d%s\n" \
 						"$red" $volume_size_min $volume_size_max $volume_size_min "$regular"
@@ -1665,7 +1665,7 @@ ping_cmd() {
 	count_min=1
 	count_max=64
 
-	if [ $value -lt $count_min ] || [ $value -gt $count_max ]; then
+	if [ "$value" -lt "$count_min" ] || [ "$value" -gt "$count_max" ]; then
 		printf "%spacket count should be between %d and %d inclusive%s\n" "$red" $count_min $count_max "$regular"
 		exit 1
 	fi
