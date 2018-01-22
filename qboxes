@@ -377,7 +377,7 @@ annihilate_cmd() {
 					fi
 					rm -fr ~/"$random_alphanum"
 				fi
-				printf "%sannihilating %s (this may take a while)%s\n" "$green" "$candidate" "$regular"
+				printf "%sannihilating %s%s\n" "$green" "$candidate" "$regular"
 				all_snapshots=$(virsh snapshot-list --name "$candidate")
 				if [ -n "$all_snapshots" ]; then
 					for each_one in $all_snapshots; do
@@ -760,10 +760,9 @@ clone_cmd() {
 					exit 2
 				fi
 
-				printf "%ssetting hostname for %s (this may take a while)%s\n" \
-					"$green" "$candidate" "$regular"
-
                 valid_hostname=$(echo "$candidate" | tr "[:upper:]._-" "[:lower:]000")
+
+				printf "%ssetting '%s' as a hostname for %s%s\n" "$green" "$valid_hostname" "$candidate" "$regular"
 
                 sudo virt-customize --quiet -d "$candidate" --hostname "$valid_hostname"
 				virt_customize_ec=$?
@@ -773,7 +772,7 @@ clone_cmd() {
 					exit 2
 				fi
 
-				printf "%sdeleting SSH host keys from %s (this may take a while)%s\n\n" "$green" "$candidate" "$regular"
+				printf "%sdeleting SSH host keys from %s%s\n\n" "$green" "$candidate" "$regular"
 
 				sudo virt-customize --quiet -d "$candidate" \
 					--delete /etc/ssh/ssh_host_dsa_key \
