@@ -7,14 +7,13 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * facilitate the deletion of networks, pools, volumes
 
 `attach`
-* new volumes should be instantiated by `create volume` command
+* new volumes should be existing ones or instantiated by the `create volume` command
 * support the addition of network adapters
-
-`build`
-* create a new VM starting with one or more existing storage volumes
+* this command should act on a single VM (for many VMs we have the `clone` command)
 
 `check-service`
-* __all_done__
+* do not assume VM name equals hostname
+* act upon IPs (can be extracted from libvirt DHCP leases or ARP tables)
 
 `clone`
 * indicate network for clones
@@ -28,7 +27,8 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * __all_done__
 
 `define`
-* __all_done__
+* volumes should be existing ones or instantiated by the `create volume` command
+* this command should act on a single VM (for many VMs we have the `clone` command)
 
 `getmac`
 * handle VMs with more than one virtual Ethernet adapters
@@ -37,7 +37,6 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * return detailed information on VMs, networks, pools, volumes
 
 `list`
-* show VM hostnames
 * show MAC address of primary network adapter and IP address (if applicable)
 
 `modify`
@@ -51,7 +50,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * __all_done__
 
 `power-cycle`
-* forcibly restart VMs
+* force-restart VMs
 
 `power-down`
-* forcibly power-off VMs
+* force-power-off VMs
