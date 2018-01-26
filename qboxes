@@ -219,7 +219,7 @@ show_usage() {
 is_name_valid() {
     the_name="$1"
     length=${#the_name}
-    if [ "$length" -eq 0 ] || [ "$length" -gt 63 ] || [ ${the_name:0:1} == "-" ]; then
+    if [ "$length" -eq 0 ] || [ "$length" -gt 63 ] || [ "${the_name:0:1}" == "-" ]; then
         return 0
     else
         valid_name_test=$(echo "$the_name" | tr -d "[:alnum:]-_.")
@@ -365,7 +365,7 @@ annihilate_cmd() {
 					printf "%s from %s%s\n" "$candidate" "$user_known_hosts" "$regular"
 					random_alphanum=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 30 | tr -d '\n')
 					mkdir ~/"$random_alphanum"
-					sudo virt-copy-out -d "$candidate" /etc/ssh/ssh_host_*_key.pub ~/"$random_alphanum"/ &>/dev/null 
+					sudo virt-copy-out -d "$candidate" /etc/ssh/ssh_host_*_key.pub ~/"$random_alphanum"/ &>/dev/null
 					virt_copy_out_ec=$?
 					if [ $virt_copy_out_ec -ne 0 ]; then
 						printf "%scannot read host keys from %s, virt-copy-out " "$yellow" "$candidate"
@@ -971,7 +971,7 @@ create_network_cmd() {
 	cat "$default_net_xml" > ~/"$temp_net_xml"
 
 	if [ "$dhcp_srv" == "on" ]; then
-		new_line="<range start=\""${from_addr}"\" end=\""${to_addr}"\"/>"
+		new_line='<range start="'${from_addr}'" end="'${to_addr}'"/>'
 		sed -i "/<range start/c \ \ \ \ \ \ $new_line" ~/"$temp_net_xml"
 	else
 		sed -i /'<dhcp>'/d ~/"$temp_net_xml"
@@ -979,16 +979,16 @@ create_network_cmd() {
 		sed -i /'<\/dhcp>'/d ~/"$temp_net_xml"
 	fi
 
-	new_line="<name>"${net_name}"</name>"
+	new_line='<name>'${net_name}'</name>'
 	sed -i "/<name>default/c\ \ $new_line" ~/"$temp_net_xml"
 
-	new_line="<bridge name=\""${bridge_dev}"\"/>"
+	new_line='<bridge name="'${bridge_dev}'"/>'
 	sed -i "/<bridge name=/c\ \ $new_line" ~/"$temp_net_xml"
 
-	new_line="<ip address=\""${router_addr}"\" netmask=\""${netmask_addr}"\">"
+	new_line='<ip address="'${router_addr}'" netmask="'${netmask_addr}'">'
 	sed -i "/<ip address=/c\ \ $new_line" ~/"$temp_net_xml"
 
-	new_line="<domain name=\""${domain_name}"\" localOnly=\"yes\"/>"
+	new_line='<domain name="'${domain_name}'" localOnly="yes"/>'
 	sed -i "/<ip address/i\ \ ${new_line}" ~/"$temp_net_xml"
 
 	virsh -q net-define ~/"$temp_net_xml"
