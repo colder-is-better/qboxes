@@ -44,7 +44,8 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * support the addition/removal of static mappings (networks)
 
 `ping`
-* __all_done__
+* do not assume VM name equals hostname
+* act upon IPs (can be extracted from libvirt DHCP leases or ARP tables)
 
 `reboot`
 * __all_done__
@@ -54,3 +55,6 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 
 `power-down`
 * force-power-off VMs
+
+`snapshot`
+* facilitate the creation, removal and listing of VM snapshots
