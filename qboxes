@@ -154,12 +154,12 @@ show_usage() {
 			printf "COMMAND NAME\n"
 			printf "  list - present all available entities of given type\n\n"
 			printf "SYNOPSIS\n"
-			printf "  list <vm|network|pool|volume>\n\n"
+			printf "  list <vm(s)|network(s)|pool(s)|volume(s)>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Present all available entities of given type, where \"type\""
 			printf " may be any one of these: vm, network, pool, volume\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes list network%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes list networks%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		ping)
@@ -764,7 +764,7 @@ clone_cmd() {
 				valid_hostname=$(echo "$candidate" | tr "[:upper:]._" "[:lower:]00")
 				valid_hostname=${valid_hostname/%-/0}
 
-				printf "%ssetting '%s' as a hostname for %s%s\n" "$green" "$valid_hostname" "$candidate" "$regular"
+				printf "%ssetting '%s' as the hostname for %s%s\n" "$green" "$valid_hostname" "$candidate" "$regular"
 
                 sudo virt-customize --quiet -d "$candidate" --hostname "$valid_hostname"
 				virt_customize_ec=$?
@@ -1442,7 +1442,7 @@ list_cmd() {
 	entity_type="$1"
 
 	case $entity_type in
-	vm)
+	vm|vms)
 		all_VMs=$(virsh list --name --all)
 		if [ -z "$all_VMs" ]; then
 			printf "\n%scannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
@@ -1490,7 +1490,7 @@ list_cmd() {
 
 		rm -f ~/"$temp_file_name"
 	;;
-	network)
+	network|networks)
 		all_networks=$(virsh net-list --name --all)
 		if [ -z "$all_networks" ]; then
 			printf "\n%scannot seem to find a single libvirt network on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
@@ -1556,7 +1556,7 @@ list_cmd() {
 
 		rm -f ~/"$temp_file_name"
 	;;
-	pool)
+	pool|pools)
 		all_pools=$(virsh pool-list --name --all)
 		if [ -z "$all_pools" ]; then
 			printf "\n%scannot seem to find a single pool on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
@@ -1596,7 +1596,7 @@ list_cmd() {
 
 		rm -f ~/"$temp_file_name"
 	;;
-	volume)
+	volume|volumes)
 		all_pools=$(virsh pool-list --name --all)
 		if [ -z "$all_pools" ]; then
 			printf "\n%scannot seem to find a single pool on this host,\n" "$red"
