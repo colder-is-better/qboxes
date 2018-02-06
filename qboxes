@@ -1480,16 +1480,22 @@ list_cmd() {
 				| awk -F ":" '{ print $2 }' | awk -F " " '{ print $1 }')
 			block_devices=$(($(virsh domblklist "$name" | wc -l)-3))
 
-			look_for="<source network='"
+			nated_net="<source network='"
+			bridged_net="<interface type='bridge'"
 
-			first_adapter_conn=$(virsh dumpxml "$name" | grep "<source network='" | head -n 1 \
-				| awk -F "<source network='" '{ print $2 }' | awk -F "'" '{ print $1 }')
-			if [ -z "$first_adapter_conn" ]; then
-				look_for="<interface type='bridge'>"
-				first_adapter_conn="hostBridge"
+			network_adapters=$(virsh dumpxml "$name" | grep -e "$nated_net" -e "$bridged_net" -c)
+
+			if [ "$network_adapters" -eq 0 ]; then
+				first_adapter_conn="n/a"
+			else
+				first_adapter_type=$(virsh dumpxml "$name" | grep -e "$nated_net" -e "$bridged_net" | head -n 1)
+				first_adapter_test=$(echo "$first_adapter_type" | grep "$nated_net")
+				if [ -n "$first_adapter_test" ]; then
+					first_adapter_conn=$(echo "$first_adapter_type" | awk -F "$nated_net" '{ print $2 }' | awk -F "'" '{ print $1 }')
+				else
+					first_adapter_conn="hostBridge"
+				fi
 			fi
-
-			network_adapters=$(virsh dumpxml "$name" | grep -c "$look_for")
 
 			echo "$name" "$state" "$CPUs" "$ram_size" "$block_devices" \
 				"$network_adapters" "$first_adapter_conn" >> ~/"$temp_file_name"
