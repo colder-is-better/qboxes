@@ -288,6 +288,18 @@ is_a_member() {
 }
 
 # ---------------------------------------------------------------------------
+# get_mac_addr():
+#   Returns the MAC address of a VM's first Ethernet adapter
+# ---------------------------------------------------------------------------
+
+get_mac_addr() {
+	the_vm="$1"
+	the_mac_addr=$(virsh --quiet dumpxml "$the_vm" | grep "mac address" \
+		| awk -F "<mac address='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+	echo "$the_mac_addr"
+}
+
+# ---------------------------------------------------------------------------
 # activate_cmd():
 #   Powers up one or more inactive VMs
 # ---------------------------------------------------------------------------
@@ -1419,8 +1431,7 @@ getmac_cmd() {
 			if [ $test_result -eq 0 ]; then
 				printf "%scannot seem to find VM '%s'%s\n" "$yellow" "$candidate" "$regular"
 			else
-				mac_addr=$(virsh --quiet dumpxml "$candidate" | grep "mac address" \
-					| awk -F "<mac address='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+				mac_addr=$(get_mac_addr "$candidate")
 				printf "%s%s looks like %s in the local network%s\n" "$green" "$candidate" "$mac_addr" "$regular"
 			fi
 		fi
