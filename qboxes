@@ -1532,6 +1532,14 @@ list_cmd() {
 
 			mode=$(virsh net-dumpxml "$name" | grep "mode='" \
 				| awk -F "mode='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+			if [ -z "$mode" ]; then
+				mode="isolated"
+				ip_addr="n/a"
+			else
+				ip_addr=$(virsh net-dumpxml "$name" | grep "<ip address='" \
+					| awk -F "<ip address='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+			fi
+
 			domain_name=$(virsh net-dumpxml "$name" | grep "<domain name='" \
 				| awk -F "<domain name='" '{ print $2 }' | awk -F "'" '{ print $1 }')
 			if [ -z "$domain_name" ]; then
@@ -1540,8 +1548,7 @@ list_cmd() {
 
 			mac_addr=$(virsh net-dumpxml "$name" | grep "<mac address='" \
 				| awk -F "<mac address='" '{ print $2 }' | awk -F "'" '{ print $1 }')
-			ip_addr=$(virsh net-dumpxml "$name" | grep "<ip address='" \
-				| awk -F "<ip address='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+
 			dhcp_server=$(virsh net-dumpxml "$name" | grep '<dhcp>')
 			if [ -z "$dhcp_server" ]; then
 				dhcp_server="off"
@@ -1559,7 +1566,9 @@ list_cmd() {
 			if [ -n "$all_VMs" ]; then
 				for guest in $all_VMs; do
 					how_many=$(virsh dumpxml "$guest" | grep -c "$name")
-					(( net_clients += how_many ))
+					if [ "$how_many" -gt 0 ]; then
+						(( net_clients += 1 ))
+					fi
 				done
 			fi
 
