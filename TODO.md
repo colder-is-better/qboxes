@@ -16,7 +16,8 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * act upon IPs (can be extracted from libvirt DHCP leases or ARP tables)
 
 `clone`
-* indicate network for clones
+* optional: indicate network for clones
+* optional: indicate storage pool for clones (it is currently mandatory)
 * handle the cloning of "empty" VMs
 * clone VMs with more than one storage volumes
 
