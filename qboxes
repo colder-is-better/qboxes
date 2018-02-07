@@ -1530,14 +1530,28 @@ list_cmd() {
 				state="inactive"
 			fi
 
+			ip_addr="n/a"
+			ip_begin="n/a"
+			ip_end="n/a"
+			dhcp_server="n/a"
+
 			mode=$(virsh net-dumpxml "$name" | grep "mode='" \
 				| awk -F "mode='" '{ print $2 }' | awk -F "'" '{ print $1 }')
 			if [ -z "$mode" ]; then
 				mode="isolated"
-				ip_addr="n/a"
 			else
 				ip_addr=$(virsh net-dumpxml "$name" | grep "<ip address='" \
 					| awk -F "<ip address='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+				dhcp_server=$(virsh net-dumpxml "$name" | grep '<dhcp>')
+				if [ -z "$dhcp_server" ]; then
+					dhcp_server="off"
+				else
+					dhcp_server="on"
+					ip_begin=$(virsh net-dumpxml "$name" | grep "<range start='" \
+						| awk -F "<range start='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+					ip_end=$(virsh net-dumpxml "$name" | grep "<range start='" \
+						| awk -F "' end='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+				fi
 			fi
 
 			domain_name=$(virsh net-dumpxml "$name" | grep "<domain name='" \
@@ -1548,19 +1562,6 @@ list_cmd() {
 
 			mac_addr=$(virsh net-dumpxml "$name" | grep "<mac address='" \
 				| awk -F "<mac address='" '{ print $2 }' | awk -F "'" '{ print $1 }')
-
-			dhcp_server=$(virsh net-dumpxml "$name" | grep '<dhcp>')
-			if [ -z "$dhcp_server" ]; then
-				dhcp_server="off"
-				ip_begin="n/a"
-				ip_end="n/a"
-			else
-				dhcp_server="on"
-				ip_begin=$(virsh net-dumpxml "$name" | grep "<range start='" \
-					| awk -F "<range start='" '{ print $2 }' | awk -F "'" '{ print $1 }')
-				ip_end=$(virsh net-dumpxml "$name" | grep "<range start='" \
-					| awk -F "' end='" '{ print $2 }' | awk -F "'" '{ print $1 }')
-			fi
 
 			net_clients=0
 			if [ -n "$all_VMs" ]; then
