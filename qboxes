@@ -288,14 +288,52 @@ is_a_member() {
 }
 
 # ---------------------------------------------------------------------------
+# left_part_of():
+#   Returns the left part of a string, in relation to a given substring
+# ---------------------------------------------------------------------------
+
+left_part_of() {
+	input_string="$1"
+	the_mark="$2"
+	left_part="$(echo "$input_string" | awk -F "$the_mark" '{ print $1 }')"
+	echo "$left_part"
+}
+
+# ---------------------------------------------------------------------------
+# right_part_of():
+#   Returns the right part of a string, in relation to a given substring
+# ---------------------------------------------------------------------------
+
+right_part_of() {
+	input_string="$1"
+	the_mark="$2"
+	right_part="$(echo "$input_string" | awk -F "$the_mark" '{ print $2 }')"
+	echo "$right_part"
+}
+
+# ---------------------------------------------------------------------------
+# in_between():
+#   Returns the part of a string which is between two given substrings
+# ---------------------------------------------------------------------------
+
+in_between() {
+	input_string="$1"
+	left_mark="$2"
+	right_mark="$3"
+	right_part=$(right_part_of "$input_string" "$left_mark")
+	middle_part=$(left_part_of "$right_part" "$right_mark")
+	echo "$middle_part"
+}
+
+# ---------------------------------------------------------------------------
 # get_mac_addr():
 #   Returns the MAC address of a VM's first Ethernet adapter
 # ---------------------------------------------------------------------------
 
 get_mac_addr() {
 	the_vm="$1"
-	the_mac_addr=$(virsh --quiet dumpxml "$the_vm" | grep "mac address" \
-		| awk -F "<mac address='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+	line_in_XML=$(virsh --quiet dumpxml "$the_vm" | grep "mac address")
+	the_mac_addr=$(in_between "$line_in_XML" "<mac address='" "'")
 	echo "$the_mac_addr"
 }
 
