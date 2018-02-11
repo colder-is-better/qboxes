@@ -39,6 +39,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * return detailed information on VMs, networks, pools, volumes
 
 `list`
+* check if network mentioned in XML of VM really exists (it may as well not) and report accordingly
 * show MAC address of primary network adapter and IP address (if applicable)
 
 `modify`
