@@ -219,16 +219,14 @@ show_usage() {
 is_name_valid() {
     the_name="$1"
     length=${#the_name}
-    if [ "$length" -eq 0 ] || [ "$length" -gt 63 ] || [ "${the_name:0:1}" == "-" ]; then
-        return 0
-    else
+	answer="no"
+    if [ "$length" -gt 0 ] && [ "$length" -le 63 ] && [ "${the_name:0:1}" != "-" ]; then
         valid_name_test=$(echo "$the_name" | tr -d "[:alnum:]-_.")
-        if [ -n "$valid_name_test" ]; then
-            return 0
-        else
-            return 1
-        fi
+        if [ -z "$valid_name_test" ]; then
+			answer="yes"
+		fi
     fi
+	echo "$answer"
 }
 
 # ---------------------------------------------------------------------------
@@ -356,9 +354,8 @@ activate_cmd() {
 	fi
 
 	for candidate; do
-		is_name_valid "$candidate"
-		test_result=$?
-		if [ $test_result -eq 0 ]; then
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_inactive_VMs"
@@ -399,9 +396,8 @@ annihilate_cmd() {
 	fi
 
 	for candidate; do
-		is_name_valid "$candidate"
-		test_result=$?
-		if [ $test_result -eq 0 ]; then
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_inactive_VMs"
@@ -478,9 +474,8 @@ attach_cmd() {
 
 		case $param in
 			--name)
-				is_name_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_name_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid volume name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -505,9 +500,8 @@ attach_cmd() {
 				volume_size=$value
 			;;
 			--pool)
-				is_name_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_name_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -547,9 +541,8 @@ attach_cmd() {
 		| awk -F "</path>" '{ print $1 }')
 
 	for candidate; do
-		is_name_valid "$candidate"
-		test_result=$?
-		if [ $test_result -eq 0 ]; then
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_VMs"
@@ -645,9 +638,8 @@ checkservice_cmd() {
 	shift
 
 	for candidate; do
-		is_name_valid "$candidate"
-		test_result=$?
-		if [ $test_result -eq 0 ]; then
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_active_VMs"
@@ -689,9 +681,8 @@ clone_cmd() {
 
 		case $param in
 			--template)
-				is_name_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_name_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid template name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -705,9 +696,8 @@ clone_cmd() {
 				template_VM=$value
 			;;
 			--target-pool)
-				is_name_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_name_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -763,9 +753,8 @@ clone_cmd() {
 		| awk -F "</path>" '{ print $1 }')
 
 	for candidate; do
-		is_name_valid "$candidate"
-		test_result=$?
-		if [ $test_result -eq 0 ]; then
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_VMs"
@@ -870,9 +859,8 @@ create_network_cmd() {
 
 		case $param in
 			--name)
-				is_name_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_name_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid network name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -1082,9 +1070,8 @@ create_pool_cmd() {
 
 		case $param in
 			--name)
-				is_name_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_name_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -1207,9 +1194,8 @@ deactivate_cmd() {
 	fi
 
 	for candidate; do
-		is_name_valid "$candidate"
-		test_result=$?
-		if [ $test_result -eq 0 ]; then
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_active_VMs"
@@ -1307,9 +1293,8 @@ define_cmd() {
 				volume_size=$value
 			;;
 			--network)
-				is_name_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_name_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid network name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -1317,15 +1302,14 @@ define_cmd() {
 				is_a_member "$value" "$all_active_networks"
 				test_result=$?
 				if [ $test_result -eq 0 ]; then
-					printf "%sI cannot seem to find network %s%s\n" "$red" "$value" "$regular"
+					printf "%sI cannot seem to find network '%s'%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				libvirt_network=$value
 			;;
 			--guest-os)
-				is_name_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_name_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid OS variant name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -1339,9 +1323,8 @@ define_cmd() {
 				os_variant=$value
 			;;
 			--pool)
-				is_name_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_name_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -1379,9 +1362,8 @@ define_cmd() {
 		| awk -F "</path>" '{ print $1 }')
 
 	for candidate; do
-		is_name_valid "$candidate"
-		test_result=$?
-		if [ $test_result -eq 0 ]; then
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_VMs"
@@ -1459,9 +1441,8 @@ getmac_cmd() {
 	fi
 
 	for candidate; do
-		is_name_valid "$candidate"
-		test_result=$?
-		if [ $test_result -eq 0 ]; then
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_VMs"
@@ -1748,9 +1729,8 @@ ping_cmd() {
 	shift
 
 	for candidate; do
-		is_name_valid "$candidate"
-		test_result=$?
-		if [ $test_result -eq 0 ]; then
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_active_VMs"
@@ -1784,9 +1764,8 @@ reboot_cmd() {
 	fi
 
 	for candidate; do
-		is_name_valid "$candidate"
-		test_result=$?
-		if [ $test_result -eq 0 ]; then
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
 			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
 		else
 			is_a_member "$candidate" "$all_active_VMs"
