@@ -254,15 +254,15 @@ is_number_valid() {
 # ---------------------------------------------------------------------------
 
 is_ipv4_valid() {
+	answer="no"
 	the_address="$1"
 	zero_to_255="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
 	valid_ipv4_regex="$zero_to_255"\."$zero_to_255"\."$zero_to_255"\."$zero_to_255"
 	valid_ipv4_test=$(echo "$the_address" | grep -x -E "$valid_ipv4_regex")
-	if [ -z "$valid_ipv4_test" ]; then
-		return 0
-	else
-		return 1
+	if [ -n "$valid_ipv4_test" ]; then
+		answer="yes"
 	fi
+	echo "$answer"
 }
 
 # ---------------------------------------------------------------------------
@@ -893,9 +893,8 @@ create_network_cmd() {
 				domain_name=$value
 			;;
 			--router)
-				is_ipv4_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_ipv4_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid router IPv4 address%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -911,9 +910,8 @@ create_network_cmd() {
 				router_addr=$value
 			;;
 			--netmask)
-				is_ipv4_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_ipv4_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid netmask IPv4 address%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -927,18 +925,16 @@ create_network_cmd() {
 				dhcp_srv=$value
 			;;
 			--from)
-				is_ipv4_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_ipv4_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid IPv4 address for the '--from' parameter%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				from_addr=$value
 			;;
 			--to)
-				is_ipv4_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_ipv4_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid IPv4 address for the '--to' parameter%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
