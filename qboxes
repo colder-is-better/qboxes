@@ -237,17 +237,15 @@ is_name_valid() {
 # ---------------------------------------------------------------------------
 
 is_number_valid() {
+	answer="no"
 	the_number="$1"
-    if [ -z "$the_number" ]; then
-        return 0
-    else
+    if [ -n "$the_number" ]; then
 	    valid_number_test=$(echo "$the_number" | tr -d "[:digit:]")
-	    if [ -n "$valid_number_test" ]; then
-		    return 0
-	    else
-		    return 1
+	    if [ -z "$valid_number_test" ]; then
+			answer="yes"
 	    fi
     fi
+	echo "$answer"
 }
 
 # ---------------------------------------------------------------------------
@@ -482,9 +480,8 @@ attach_cmd() {
 				volume_name=$value
 			;;
 			--size)
-				is_number_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_number_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -615,9 +612,8 @@ checkservice_cmd() {
 		show_usage check-service
 	fi
 
-	is_number_valid "$value"
-	test_result=$?
-	if [ $test_result -eq 0 ]; then
+	answer=$(is_number_valid "$value")
+	if [ "$answer" == "no" ]; then
 		printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 		exit 1
 	fi
@@ -1243,9 +1239,8 @@ define_cmd() {
 
 		case $param in
 			--ram)
-				is_number_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_number_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -1261,9 +1256,8 @@ define_cmd() {
 				memory_size=$value
 			;;
 			--cores)
-				is_number_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_number_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -1275,9 +1269,8 @@ define_cmd() {
 				cpu_cores=$value
 			;;
 			--volume-size)
-				is_number_valid "$value"
-				test_result=$?
-				if [ $test_result -eq 0 ]; then
+				answer=$(is_number_valid "$value")
+				if [ "$answer" == "no" ]; then
 					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
@@ -1703,9 +1696,8 @@ ping_cmd() {
 		show_usage ping
 	fi
 
-	is_number_valid "$value"
-	test_result=$?
-	if [ $test_result -eq 0 ]; then
+	answer=$(is_number_valid "$value")
+	if [ "$answer" == "no" ]; then
 		printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 		exit 1
 	fi
