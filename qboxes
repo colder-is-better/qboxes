@@ -465,8 +465,8 @@ attach_cmd() {
 
 	for ((argument=1 ; argument <= $((lowest_num_args - 1)) ; argument++)); do
 
-		param=$(echo "$1" | awk -F= '{print $1}')
-		value=$(echo "$1" | awk -F= '{print $2}')
+		param=$(left_part_of "$1" "=")
+		value=$(right_part_of "$1" "=")
 
 		case $param in
 			--name)
@@ -599,8 +599,8 @@ checkservice_cmd() {
 		show_usage check-service
 	fi
 
-	param=$(echo "$1" | awk -F= '{print $1}')
-	value=$(echo "$1" | awk -F= '{print $2}')
+	param=$(left_part_of "$1" "=")
+	value=$(right_part_of "$1" "=")
 
 	if [ "$param" != "--port" ]; then
 		printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
@@ -666,8 +666,8 @@ clone_cmd() {
 
 	for ((argument=1 ; argument <= $((lowest_num_args - 1)) ; argument++)); do
 
-		param=$(echo "$1" | awk -F= '{print $1}')
-		value=$(echo "$1" | awk -F= '{print $2}')
+		param=$(left_part_of "$1" "=")
+		value=$(right_part_of "$1" "=")
 
 		case $param in
 			--template)
@@ -841,8 +841,8 @@ create_network_cmd() {
 
 	for argument; do
 
-		param=$(echo "$argument" | awk -F= '{print $1}')
-		value=$(echo "$argument" | awk -F= '{print $2}')
+		param=$(left_part_of "$argument" "=")
+		value=$(right_part_of "$argument" "=")
 
 		case $param in
 			--name)
@@ -1046,8 +1046,8 @@ create_pool_cmd() {
 
 	for argument; do
 
-		param=$(echo "$argument" | awk -F= '{print $1}')
-		value=$(echo "$argument" | awk -F= '{print $2}')
+		param=$(left_part_of "$argument" "=")
+		value=$(right_part_of "$argument" "=")
 
 		case $param in
 			--name)
@@ -1217,8 +1217,8 @@ define_cmd() {
 
 	for ((argument=1 ; argument <= $((lowest_num_args - 1)) ; argument++)); do
 
-		param=$(echo "$1" | awk -F= '{print $1}')
-		value=$(echo "$1" | awk -F= '{print $2}')
+		param=$(left_part_of "$1" "=")
+		value=$(right_part_of "$1" "=")
 
 		case $param in
 			--ram)
@@ -1666,8 +1666,8 @@ ping_cmd() {
 		show_usage ping
 	fi
 
-	param=$(echo "$1" | awk -F= '{print $1}')
-	value=$(echo "$1" | awk -F= '{print $2}')
+	param=$(left_part_of "$1" "=")
+	value=$(right_part_of "$1" "=")
 
 	if [ "$param" != "--count" ]; then
 		printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
