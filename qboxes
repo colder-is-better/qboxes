@@ -529,10 +529,7 @@ attach_cmd() {
 		show_usage attach
 	fi
 
-	pool_path=$(virsh pool-dumpxml "$pool_name" \
-		| grep "<path>" \
-		| awk -F "<path>" '{ print $2 }' \
-		| awk -F "</path>" '{ print $1 }')
+	pool_path=$(in_between "$(virsh pool-dumpxml "$pool_name" | grep "<path>")" "<path>" "</path>")
 
 	for candidate; do
 		answer=$(is_name_valid "$candidate")
@@ -544,9 +541,7 @@ attach_cmd() {
 				printf "%s'%s' does not look like a VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				virtio_dev=""
-				devices_taken=$(virsh dumpxml "$candidate" | grep "<target dev='" \
-					| awk -F "<target dev='" '{ print $2 }'  | awk -F "' bus='" '{ print $1 }')
-
+				devices_taken=$(in_between "$(virsh dumpxml "$candidate" | grep "<target dev='")" "<target dev='" "' bus='")
 				for letter in {a..z}; do
 					device_name=vd"$letter"
 					answer=$(is_a_member "$device_name" "$devices_taken")
@@ -640,9 +635,9 @@ checkservice_cmd() {
 				nc -z -w 1 "$candidate" "$tcp_port" > /dev/null 2>&1
 				netcat_ec=$?
 				if [ $netcat_ec -eq 0 ]; then
-					printf "%s%s is accepting packets on port %d/TCP%s\n" "$green" "$candidate" "$tcp_port" "$regular"
+					printf "%s%s is accepting packets on port %s/TCP%s\n" "$green" "$candidate" "$tcp_port" "$regular"
 				else
-					printf "%s%s is not accepting packets on port %d/TCP%s\n" "$red" "$candidate" "$tcp_port" "$regular"
+					printf "%s%s is not accepting packets on port %s/TCP%s\n" "$red" "$candidate" "$tcp_port" "$regular"
 				fi
 			fi
 		fi
@@ -713,32 +708,22 @@ clone_cmd() {
 
 	template_pool_name=""
 	template_pool_path=""
-	template_volume_path=$(virsh dumpxml "$template_VM" \
-		| grep "<source file='" \
-		| awk -F "<source file='" '{ print $2 }' \
-		| awk -F "'" '{ print $1 }')
+	template_volume_path=$(in_between "$(virsh dumpxml "$template_VM" | grep "<source file='")" "<source file='" "'")
 
 	for pool in $all_active_pools; do
 		volumes_in_pool=$(virsh vol-list "$pool")
 		template_volume_in_list=$(echo "$volumes_in_pool" | grep "$template_volume_path")
 		if [ -n "$template_volume_in_list" ]; then
 			template_pool_name=$pool
-			template_pool_path=$(virsh pool-dumpxml "$pool" \
-				| grep "<path>" \
-				| awk -F "<path>" '{ print $2 }' \
-				| awk -F "</path>" '{ print $1 }')
+			template_pool_path=$(in_between "$(virsh pool-dumpxml "$pool" | grep "<path>")" "<path>" "</path>")
 			all_active_pools=""
 		fi
 	done
 
 	all_VMs=$(virsh list --name --all)
 
-	template_volume_name=$(echo "$template_volume_path" \
-		| awk -F "${template_pool_path}/" '{ print $2 }')
-	clone_pool_path=$(virsh pool-dumpxml "$clone_pool_name" \
-		| grep "<path>" \
-		| awk -F "<path>" '{ print $2 }' \
-		| awk -F "</path>" '{ print $1 }')
+	template_volume_name=$(right_part_of "$template_volume_path" "${template_pool_path}/")
+	clone_pool_path=$(in_between "$(virsh pool-dumpxml "$clone_pool_name" | grep "<path>")" "<path>" "</path>")
 
 	for candidate; do
 		answer=$(is_name_valid "$candidate")
@@ -873,8 +858,7 @@ create_network_cmd() {
 				fi
 				all_networks=$(virsh net-list --name --all)
 				for each_net in $all_networks; do
-					domain_name=$(virsh net-dumpxml "$each_net" | grep "<domain name='" \
-						| awk -F "<domain name='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+					domain_name=$(in_between "$(virsh net-dumpxml "$each_net" | grep "<domain name='")" "<domain name='" "'")
 					if [ "$value" == "$domain_name" ]; then
 						printf "%sdomain %s is already used in network %s%s\n" "$red" "$value" "$each_net" "$regular"
 						exit 1
@@ -890,8 +874,7 @@ create_network_cmd() {
 				fi
 				all_networks=$(virsh net-list --name --all)
 				for each_net in $all_networks; do
-					router_addr=$(virsh net-dumpxml "$each_net" | grep "<ip address='" \
-						| awk -F "<ip address='" '{ print $2 }' | awk -F "' " '{ print $1 }')
+					router_addr=$(in_between "$(virsh net-dumpxml "$each_net" | grep "<ip address='")" "<ip address='" "'")
 					if [ "$value" == "$router_addr" ]; then
 						printf "%srouter address %s is already used in network %s%s\n" "$red" "$value" "$each_net" "$regular"
 						exit 1
@@ -965,12 +948,9 @@ create_network_cmd() {
 	bridge_dev=""
 	names_taken=""
 	default_net_xml="/usr/share/libvirt/networks/default.xml"
-	prefix=$(grep "<bridge name=\"" "$default_net_xml" | \
-		awk -F "<bridge name=" '{print $2}' | awk -F "/" '{print $1}' | tr -d "0-9\"\'")
-
+	prefix=$(echo "$(in_between "$(grep "<bridge name=\"" "$default_net_xml")" "<bridge name=" "/")" | tr -d "0-9\"\'")
 	for each_net in $all_networks; do
-		bridge_name=$(virsh net-dumpxml "$each_net" | grep "<bridge name='" \
-			| awk -F "<bridge name='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+		bridge_name=$(in_between "$(virsh net-dumpxml "$each_net" | grep "<bridge name='")" "<bridge name='" "'")
 		names_taken=${names_taken}${bridge_name}" "
 	done
 
@@ -1075,8 +1055,7 @@ create_pool_cmd() {
 				fi
 				all_pools=$(virsh pool-list --name --all)
 				for each_pool in $all_pools; do
-					local_path=$(virsh pool-dumpxml "$each_pool" | grep "<path>" \
-						| awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
+					local_path=$(in_between "$(virsh pool-dumpxml "$each_pool" | grep "<path>")" "<path>" "</path>")
 					if [ "$value" == "$local_path" ]; then
 						printf "%spool %s is already defined under %s%s\n" "$red" "$each_pool" "$value" "$regular"
 						exit 1
@@ -1244,9 +1223,9 @@ define_cmd() {
 					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				cpu_cores_max=$(virsh nodeinfo | grep "CPU(s):" | awk -F ":" '{ print $2 }')
+				cpu_cores_max=$(right_part_of "$(virsh nodeinfo | grep "CPU(s):")" ":")
 				if [ "$value" -lt 1 ] || [ "$value" -gt "$cpu_cores_max" ]; then
-					printf "%snumber of CPU cores should be between 1 and %d inclusive%s\n" "$red" "$cpu_cores_max" "$regular"
+					printf "%snumber of CPU cores should be between 1 and %s inclusive%s\n" "$red" "$cpu_cores_max" "$regular"
 					exit 1
 				fi
 				cpu_cores=$value
@@ -1329,11 +1308,7 @@ define_cmd() {
 	fi
 
 	all_VMs=$(virsh list --name --all)
-	pool_path=$(virsh pool-dumpxml "$pool_name" \
-		| grep "<path>" \
-		| awk -F "<path>" '{ print $2 }' \
-		| awk -F "</path>" '{ print $1 }')
-
+	pool_path=$(in_between "$(virsh pool-dumpxml "$pool_name" | grep "<path>")" "<path>" "</path>")
 	for candidate; do
 		answer=$(is_name_valid "$candidate")
 		if [ "$answer" == "no" ]; then
@@ -1456,18 +1431,17 @@ list_cmd() {
 		echo "---- ----- ------ -------- ------ ------ ----------" >> ~/"$temp_file_name"
 
 		for name in $all_VMs; do
-			state=$(virsh dominfo "$name" | grep State \
-				| awk -F ":" '{ print $2 }' | sed -e 's/^[ \t]*//')
+			state_ws=$(right_part_of "$(virsh dominfo "$name" | grep State)" ":")
+			state=$(echo "$state_ws" | sed -e 's/^[ \t]*//')
 			if [ "$state" == "running" ]; then
 				state="active"
 			else
 				state="inactive"
 			fi
 
-			CPUs=$(virsh dominfo "$name" | grep CPU\(s\) \
-				| awk -F ":" '{ print $2 }' | sed -e 's/^[ \t]*//')
-			ram_size=$(virsh dominfo "$name" | grep "Max memory" \
-				| awk -F ":" '{ print $2 }' | awk -F " " '{ print $1 }')
+			CPUs_ws=$(right_part_of "$(virsh dominfo "$name" | grep CPU\(s\))" ":")
+			CPUs=$(echo "$CPUs_ws" | sed -e 's/^[ \t]*//')
+			ram_size=$(in_between "$(virsh dominfo "$name" | grep "Max memory")" ":" " ")
 			block_devices=$(($(virsh domblklist "$name" | wc -l)-3))
 
 			nated_net="<source network='"
@@ -1481,7 +1455,7 @@ list_cmd() {
 				first_adapter_type=$(virsh dumpxml "$name" | grep -e "$nated_net" -e "$bridged_net" | head -n 1)
 				first_adapter_test=$(echo "$first_adapter_type" | grep "$nated_net")
 				if [ -n "$first_adapter_test" ]; then
-					first_adapter_conn=$(echo "$first_adapter_type" | awk -F "$nated_net" '{ print $2 }' | awk -F "'" '{ print $1 }')
+					first_adapter_conn=$(in_between "$first_adapter_type" "$nated_net" "'")
 				else
 					first_adapter_conn="hostBridge"
 				fi
@@ -1512,8 +1486,8 @@ list_cmd() {
 		all_VMs=$(virsh list --name --all)
 
 		for name in $all_networks; do
-			state=$(virsh net-info "$name" | grep Active \
-				| awk -F ":" ' {print $2} ' | sed -e 's/^[ \t]*//')
+			state_ws=$(right_part_of "$(virsh net-info "$name" | grep Active)" ":")
+			state=$(echo "$state_ws" | sed -e 's/^[ \t]*//')
 			if [ "$state" == "yes" ]; then
 				state="active"
 			else
@@ -1525,34 +1499,27 @@ list_cmd() {
 			ip_end="n/a"
 			dhcp_server="n/a"
 
-			mode=$(virsh net-dumpxml "$name" | grep "mode='" \
-				| awk -F "mode='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+			mode=$(in_between "$(virsh net-dumpxml "$name" | grep "mode='")" "mode='" "'")
 			if [ -z "$mode" ]; then
 				mode="isolated"
 			else
-				ip_addr=$(virsh net-dumpxml "$name" | grep "<ip address='" \
-					| awk -F "<ip address='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+				ip_addr=$(in_between "$(virsh net-dumpxml "$name" | grep "<ip address='")" "<ip address='" "'")
 				dhcp_server=$(virsh net-dumpxml "$name" | grep '<dhcp>')
 				if [ -z "$dhcp_server" ]; then
 					dhcp_server="off"
 				else
 					dhcp_server="on"
-					ip_begin=$(virsh net-dumpxml "$name" | grep "<range start='" \
-						| awk -F "<range start='" '{ print $2 }' | awk -F "'" '{ print $1 }')
-					ip_end=$(virsh net-dumpxml "$name" | grep "<range start='" \
-						| awk -F "' end='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+					ip_begin=$(in_between "$(virsh net-dumpxml "$name" | grep "<range start='")" "<range start='" "'")
+					ip_end=$(in_between "$(virsh net-dumpxml "$name" | grep "<range start='")" "' end='" "'")
 				fi
 			fi
 
-			domain_name=$(virsh net-dumpxml "$name" | grep "<domain name='" \
-				| awk -F "<domain name='" '{ print $2 }' | awk -F "'" '{ print $1 }')
+			domain_name=$(in_between "$(virsh net-dumpxml "$name" | grep "<domain name='")" "<domain name='" "'")
 			if [ -z "$domain_name" ]; then
 				domain_name="n/a"
 			fi
 
-			mac_addr=$(virsh net-dumpxml "$name" | grep "<mac address='" \
-				| awk -F "<mac address='" '{ print $2 }' | awk -F "'" '{ print $1 }')
-
+			mac_addr=$(in_between "$(virsh net-dumpxml "$name" | grep "<mac address='")" "<mac address='" "'")
 			net_clients=0
 			if [ -n "$all_VMs" ]; then
 				for guest in $all_VMs; do
@@ -1586,22 +1553,22 @@ list_cmd() {
 		echo "---- ----- -------- ---------- --------- ----------- -------" >> ~/"$temp_file_name"
 
 		for name in $all_pools; do
-			state=$(virsh pool-info "$name" | grep "State:" \
-				| awk -F "State:" '{ print $2 }' | sed -e 's/^[ \t]*//')
+			state_ws=$(right_part_of "$(virsh pool-info "$name" | grep "State:")" "State:")
+			state=$(echo "$state_ws" | sed -e 's/^[ \t]*//')
 			if [ "$state" == "running" ]; then
 				state="active"
 			else
 				state="inactive"
 			fi
 
-			capacity=$(virsh pool-info "$name" | grep "Capacity:" \
-				| awk -F "Capacity:" '{ print $2 }' | sed -e 's/^[ \t]*//' | tr -d " ")
-			allocation=$(virsh pool-info "$name" | grep "Allocation:" \
-				| awk -F "Allocation:" '{ print $2 }' | sed -e 's/^[ \t]*//' | tr -d " ")
-			available=$(virsh pool-info "$name" | grep "Available:" \
-				| awk -F "Available:" '{ print $2 }' | sed -e 's/^[ \t]*//' | tr -d " ")
-			path2pool_dir=$(virsh pool-dumpxml "$name" | grep "<path>" \
-				| awk -F "<path>" '{ print $2 }' | awk -F "</path>" '{ print $1 }')
+			capacity_ws=$(right_part_of "$(virsh pool-info "$name" | grep "Capacity:")" "Capacity:")
+			capacity=$(echo "$capacity_ws" | sed -e 's/^[ \t]*//' | tr -d " ")
+			allocation_ws=$(right_part_of "$(virsh pool-info "$name" | grep "Allocation:")" "Allocation:")
+			allocation=$(echo "$allocation_ws" | sed -e 's/^[ \t]*//' | tr -d " ")
+			available_ws=$(right_part_of "$(virsh pool-info "$name" | grep "Available:")" "Available:")
+			available=$(echo "$available_ws" | sed -e 's/^[ \t]*//' | tr -d " ")
+			path2pool_dir=$(in_between "$(virsh pool-dumpxml "$name" | grep "<path>")" "<path>" "</path>")
+
 			volumes=$(($(virsh vol-list "$name" | wc -l)-3))
 
 			echo "$name" "$state" "$capacity" "$allocation" "$available" "$path2pool_dir" "$volumes" >> ~/"$temp_file_name"
@@ -1627,12 +1594,12 @@ list_cmd() {
 		echo "------ -------- ---------- ----" >> ~/"$temp_file_name"
 
 		for pool in $all_pools; do
-			volumes_in_pool=$(virsh vol-list "$pool" | grep " /" | awk -F " /" '{ print $1 }')
+			volumes_in_pool=$(left_part_of "$(virsh vol-list "$pool" | grep " /")" " /")
 			for volume in $volumes_in_pool; do
-				capacity=$(virsh vol-info "$volume" "$pool" | grep "Capacity:" \
-					| awk -F "Capacity:" '{ print $2 }' | sed -e 's/^[ \t]*//' | tr -d " ")
-				allocation=$(virsh vol-info "$volume" "$pool" | grep "Allocation:" \
-					| awk -F "Allocation:" '{ print $2 }' | sed -e 's/^[ \t]*//' | tr -d " ")
+				capacity_ws=$(right_part_of "$(virsh vol-info "$volume" "$pool" | grep "Capacity:")" "Capacity:")
+				capacity=$(echo "$capacity_ws" | sed -e 's/^[ \t]*//' | tr -d " ")
+				allocation_ws=$(right_part_of "$(virsh vol-info "$volume" "$pool" | grep "Allocation:")" "Allocation:")
+				allocation=$(echo "$allocation_ws" | sed -e 's/^[ \t]*//' | tr -d " ")
 				echo "$volume" "$capacity" "$allocation" "$pool" >> ~/"$temp_file_name"
 			done
 		done
