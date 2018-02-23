@@ -50,7 +50,7 @@ show_usage() {
 			printf "  ~> %sqboxes attach --name=data --size=4096 --pool=lab osd_node_{1,2,3}%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
-		check-service)
+		check_service)
 			printf "COMMAND NAME\n"
 			printf "  check-service - attempt to connect to specified TCP port of one or more active VMs\n\n"
 			printf "SYNOPSIS\n";
@@ -115,7 +115,7 @@ show_usage() {
 		;;
 		deactivate)
 			printf "COMMAND NAME\n"
-			printf "  deactivate - shutdown active VMs\n\n"
+			printf "  deactivate - gracefully shutdown active VMs\n\n"
 			printf "SYNOPSIS\n"
 			printf "  deactivate <active_VM_1> ... <active_VM_k>\n\n"
 			printf "DESCRIPTION\n"
@@ -175,13 +175,24 @@ show_usage() {
 		;;
 		reboot)
 			printf "COMMAND NAME\n";
-			printf "  reboot - restart active VMs\n\n";
+			printf "  reboot - gracefully restart active VMs\n\n";
 			printf "SYNOPSIS\n";
 			printf "  reboot <active_VM_1> ... <active_VM_k>\n\n";
 			printf "DESCRIPTION\n";
 			printf "  Try to gracefully restart one or more active VMs\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes reboot sles12sp3%s\n\n" "$bold" "$regular"
+			exit 1
+		;;
+		unplug)
+			printf "COMMAND NAME\n"
+			printf "  unplug - force-shutdown active VMs\n\n"
+			printf "SYNOPSIS\n"
+			printf "  unplug <active_VM_1> ... <active_VM_k>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Force-power-off one or more active VMs\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~> %sqboxes unplug guest{1..3}\n\n" "$bold" "$regular"
 			exit 1
 		;;
 		*)
@@ -194,12 +205,13 @@ show_usage() {
 			printf "  check-service\t: try to connect to specified TCP port of one or more active VMs\n"
 			printf "  clone\t\t: clone a template VM into one or more new VMs\n"
 			printf "  create\t: create a new libvirt network or storage pool\n"
-			printf "  deactivate\t: shutdown active VMs\n"
+			printf "  deactivate\t: gracefully shutdown active VMs\n"
 			printf "  define\t: define one or more new VMs\n"
 			printf "  getmac\t: reveal MAC addresses\n"
 			printf "  list\t\t: present all available VMs, libvirt networks, pools, or volumes\n"
 			printf "  ping\t\t: send ICMP packets to active VMs\n"
-			printf "  reboot\t: restart active VMs\n\n"
+			printf "  reboot\t: gracefully restart active VMs\n"
+			printf "  unplug\t: force-power-off active VMs\n\n"
 			printf "  help\t\t: display this summary of commands\n\n"
 			printf "Type %sqboxes command-name%s for the syntax" "$green" "$regular"
 			printf " and a usage example of a specific command.\n\n"
@@ -591,7 +603,7 @@ checkservice_cmd() {
 	lowest_num_args=2
 	if [ $# -lt $lowest_num_args ]; then
 		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" "$lowest_num_args" "$regular"
-		show_usage check-service
+		show_usage check_service
 	fi
 
 	param=$(left_part_of "$1" "=")
@@ -599,7 +611,7 @@ checkservice_cmd() {
 
 	if [ "$param" != "--port" ]; then
 		printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
-		show_usage check-service
+		show_usage check_service
 	fi
 
 	answer=$(is_number_valid "$value")
@@ -618,7 +630,7 @@ checkservice_cmd() {
 	all_active_VMs=$(virsh list --name)
 	if [ -z "$all_active_VMs" ]; then
 		printf "\n%scannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
-		show_usage check-service
+		show_usage check_service
 	fi
 
 	shift
@@ -1166,8 +1178,7 @@ deactivate_cmd() {
 				virsh --quiet shutdown $candidate
 				virsh_ec=$?
 				if [ $virsh_ec -ne 0 ]; then
-					printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
-					exit 2
+					printf "%soperation failed, virsh returned error code %d%s\n" "$yellow" $virsh_ec "$regular"
 				fi
 				sleep 1
 			fi
@@ -1723,6 +1734,46 @@ reboot_cmd() {
 }
 
 # ---------------------------------------------------------------------------
+# unplug_cmd():
+#   Forciblly powers off one or more active VMs
+# ---------------------------------------------------------------------------
+
+unplug_cmd() {
+	lowest_num_args=1
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" \
+			"$red" $lowest_num_args "$regular"
+		show_usage unplug
+	fi
+
+	all_active_VMs=$(virsh list --name)
+	if [ -z "$all_active_VMs" ]; then
+		printf "\n%scannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		show_usage unplug
+	fi
+
+	for candidate; do
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
+			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
+		else
+			answer=$(is_a_member "$candidate" "$all_active_VMs")
+			if [ "$answer" == "no" ]; then
+				printf "%s'%s' is not an active VM%s\n" "$yellow" "$candidate" "$regular"
+			else
+				printf "%sunplugging %s%s\n" "$green" "$candidate" "$regular"
+
+				virsh --quiet destroy $candidate
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d%s\n" "$yellow" $virsh_ec "$regular"
+				fi
+			fi
+		fi
+	done
+}
+
+# ---------------------------------------------------------------------------
 # Main script body starts here
 # ---------------------------------------------------------------------------
 
@@ -1730,54 +1781,58 @@ case "$1" in
 	activate)
 		shift
 		activate_cmd "$@"
-		;;
+	;;
 	annihilate)
 		shift
 		annihilate_cmd "$@"
-		;;
+	;;
 	attach)
 		shift
 		attach_cmd "$@"
-		;;
+	;;
 	check-service)
 		shift
 		checkservice_cmd "$@"
-		;;
+	;;
 	clone)
 		shift
 		clone_cmd "$@"
-		;;
+	;;
 	create)
 		shift
 		create_cmd "$@"
-		;;
+	;;
 	deactivate)
 		shift
 		deactivate_cmd "$@"
-		;;
+	;;
 	define)
 		shift
 		define_cmd "$@"
-		;;
+	;;
 	getmac)
 		shift
 		getmac_cmd "$@"
-		;;
+	;;
 	list)
 		shift
 		list_cmd "$@"
-		;;
+	;;
 	ping)
 		shift
 		ping_cmd "$@"
-		;;
+	;;
 	reboot)
 		shift
 		reboot_cmd "$@"
-		;;
+	;;
+	unplug)
+		shift
+		unplug_cmd "$@"
+	;;
 	help)
 		show_usage help
-		;;
+	;;
 	"")
 		printf "\n%scommand not specified%s\n" "$red" "$regular"
 		show_usage
