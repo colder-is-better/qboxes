@@ -56,8 +56,9 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 `power-cycle`
 * force-restart VMs
 
-`power-down`
-* force-power-off VMs
-
 `snapshot`
 * facilitate the creation, removal and listing of VM snapshots
+
+`unplug`
+* __all_done__
+
