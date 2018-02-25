@@ -37,6 +37,6 @@ Currently the following commands are implemented:
 Type qboxes command-name for the syntax and a usage example of a specific command.
 ```
 
-The script requires a working installation of libvirt and the presence of tools like `virsh`, `virt-clone`, `virt-install`, `virt-customize`, and `virt-copy-out`. The user running `qboxes` should be in the `libvirt` group and have password-less sudo privileges. Last but not least, the `LIBVIRT_DEFAULT_URI` environment variable should be properly set for the local system (`export LIBVIRT_DEFAULT_URI=qemu:///system` should be enough).
+The script requires a working installation of libvirt and the presence of tools like `virsh`, `virt-clone`, `virt-install`, `virt-customize`, `virt-copy-out`, and `strings` (from package `binutils`). The user running `qboxes` should be in the `libvirt` group and have password-less sudo privileges. Last but not least, the `LIBVIRT_DEFAULT_URI` environment variable should be properly set for the local system (`export LIBVIRT_DEFAULT_URI=qemu:///system` should be enough).
 
 There are still many commands (functions) that we would like to implement in `qboxes`. See `TODO.md` for our (near) future plans.
