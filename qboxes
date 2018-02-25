@@ -957,9 +957,19 @@ create_network_cmd() {
         exit 1
     fi
 
+	default_net_xml="/usr/share/libvirt/networks/default.xml"
+	dir_default_net_xml=$(dirname "$default_net_xml")
+	name_default_net_xml=$(basename "$default_net_xml")
+
+	if [ ! -f "$default_net_xml" ]; then
+		printf "%seither %s does not exist or %s is not in said directory " "$red" "$dir_default_net_xml" "$name_default_net_xml"
+		printf "(%s comes with libvirt-daemon-config-network or a similarly named package)%s\n" "$default_net_xml" "$regular"
+		exit 1
+	fi
+
 	bridge_dev=""
 	names_taken=""
-	default_net_xml="/usr/share/libvirt/networks/default.xml"
+
 	prefix=$(echo "$(in_between "$(grep "<bridge name=\"" "$default_net_xml")" "<bridge name=" "/")" | tr -d "0-9\"\'")
 	for each_net in $all_networks; do
 		bridge_name=$(in_between "$(virsh net-dumpxml "$each_net" | grep "<bridge name='")" "<bridge name='" "'")
