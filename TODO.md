@@ -53,8 +53,8 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 `reboot`
 * __all_done__
 
-`power-cycle`
-* force-restart VMs
+`powcycle`
+* __all_done__
 
 `snapshot`
 * facilitate the creation, removal and listing of VM snapshots
