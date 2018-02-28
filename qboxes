@@ -173,6 +173,17 @@ show_usage() {
 			printf "  ~> %sqboxes ping --count=3 sles12sp2 sles12sp3%s\n\n" "$bold" "$regular"
 			exit 1
 		;;
+		powcycle)
+			printf "COMMAND NAME\n"
+			printf "  powcycle - cold-restart active VMs\n\n"
+			printf "SYNOPSIS\n"
+			printf "  powcycle <active_VM_1> ... <active_VM_k>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Cold-restart one or more active VMs\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~> %sqboxes powcycle srv1 srv2%s\n\n" "$bold" "$regular"
+			exit 1
+		;;
 		reboot)
 			printf "COMMAND NAME\n";
 			printf "  reboot - gracefully restart active VMs\n\n";
@@ -210,6 +221,7 @@ show_usage() {
 			printf "  getmac\t: reveal MAC addresses\n"
 			printf "  list\t\t: present all available VMs, libvirt networks, pools, or volumes\n"
 			printf "  ping\t\t: send ICMP packets to active VMs\n"
+			printf "  powcycle\t: cold-restart active VMs\n"
 			printf "  reboot\t: gracefully restart active VMs\n"
 			printf "  unplug\t: force-power-off active VMs\n\n"
 			printf "  help\t\t: display this summary of commands\n\n"
@@ -1703,6 +1715,49 @@ ping_cmd() {
 }
 
 # ---------------------------------------------------------------------------
+# powcycle_cmd():
+#   Cold-restarts one or more active VMs
+# ---------------------------------------------------------------------------
+
+powcycle_cmd() {
+	lowest_num_args=1
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" \
+			"$red" $lowest_num_args "$regular"
+		show_usage powcycle
+	fi
+
+	all_active_VMs=$(virsh list --name)
+	if [ -z "$all_active_VMs" ]; then
+		printf "\n%scannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		show_usage powcycle
+	fi
+
+	for candidate; do
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
+			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
+		else
+			answer=$(is_a_member "$candidate" "$all_active_VMs")
+			if [ "$answer" == "no" ]; then
+				printf "%s'%s' is not an active VM%s\n" "$yellow" "$candidate" "$regular"
+			else
+				printf "%scold-restarting %s%s\n" "$green" "$candidate" "$regular"
+
+				virsh --quiet reset $candidate
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d%s\n" "$yellow" $virsh_ec "$regular"
+				else
+					sleep 1
+				fi
+			fi
+		fi
+	done
+}
+
+
+# ---------------------------------------------------------------------------
 # reboot_cmd():
 #   Reboots one or more active VMs
 # ---------------------------------------------------------------------------
@@ -1832,6 +1887,10 @@ case "$1" in
 		shift
 		ping_cmd "$@"
 	;;
+	powcycle)
+		shift
+		powcycle_cmd "$@"
+	;;
 	reboot)
 		shift
 		reboot_cmd "$@"
@@ -1841,7 +1900,7 @@ case "$1" in
 		unplug_cmd "$@"
 	;;
 	help)
-		show_usage help
+		show_usage "help"
 	;;
 	"")
 		printf "\n%scommand not specified%s\n" "$red" "$regular"
