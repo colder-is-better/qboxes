@@ -22,6 +22,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * clone VMs with more than one storage volumes
 
 `create`
+* create network: look for default.xml in more than one locations
 * facilitate the creation of isolated libvirt networks
 * facilitate the creation of volumes (QCOW2 sparse files)
 
