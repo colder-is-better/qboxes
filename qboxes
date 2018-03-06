@@ -226,7 +226,8 @@ show_usage() {
 			printf "  powcycle\t: cold-restart active VMs\n"
 			printf "  reboot\t: gracefully restart active VMs\n"
 			printf "  unplug\t: force-power-off active VMs\n\n"
-			printf "  help\t\t: display this summary of commands\n\n"
+			printf "  help\t\t: display this summary of commands\n"
+			printf "  command help\t: get help on specific command\n\n"
 			printf "Type %sqboxes command-name%s for the syntax" "$green" "$regular"
 			printf " and a usage example of a specific command.\n\n"
 			exit "$error_code"
@@ -735,20 +736,20 @@ clone_cmd() {
 	template_pool_name=""
 	template_pool_path=""
 	template_volume_path=$(in_between "$(virsh dumpxml "$template_VM" | grep "<source file='")" "<source file='" "'")
+	template_volume_name=$(basename "$template_volume_path")
 
 	for pool in $all_active_pools; do
 		volumes_in_pool=$(virsh vol-list "$pool")
 		template_volume_in_list=$(echo "$volumes_in_pool" | grep "$template_volume_path")
 		if [ -n "$template_volume_in_list" ]; then
+			template_pool_path=$(dirname "$template_volume_path")
 			template_pool_name=$pool
-			template_pool_path=$(in_between "$(virsh pool-dumpxml "$pool" | grep "<path>")" "<path>" "</path>")
 			all_active_pools=""
 		fi
 	done
 
 	all_VMs=$(virsh list --name --all)
 
-	template_volume_name=$(right_part_of "$template_volume_path" "${template_pool_path}/")
 	clone_pool_path=$(in_between "$(virsh pool-dumpxml "$clone_pool_name" | grep "<path>")" "<path>" "</path>")
 
 	for candidate; do
@@ -999,8 +1000,7 @@ create_network_cmd() {
 		fi
 	done
 
-	random_alphanum=$(strings /dev/urandom \
-		| grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n')
+	random_alphanum=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n')
 	temp_net_xml="$random_alphanum".xml
 
 	cat "$default_net_xml" > ~/"$temp_net_xml"
@@ -1750,7 +1750,6 @@ powcycle_cmd() {
 	done
 }
 
-
 # ---------------------------------------------------------------------------
 # reboot_cmd():
 #   Reboots one or more active VMs
@@ -1838,69 +1837,61 @@ unplug_cmd() {
 
 arg_one="$1"
 
+if [ -z "$arg_one" ]; then
+	printf "\n%scommand not specified%s\n" "$red" "$regular"
+	show_usage "" 1
+fi
+
+if [ "$arg_one" == "help" ]; then
+	show_usage "help" 0
+fi
+
 accepted_commands="activate annihilate attach check-service clone \
 create deactivate define getmac list ping powcycle reboot unplug"
 
 answer=$(is_a_member "$arg_one" "$accepted_commands")
 
-if [ "$answer" == "yes" ]; then
-	arg_two="$2"
-	if [ "$arg_two" == "help" ]; then
-		echo
-		show_usage "$arg_one" 0
-	else
-		shift
-		case $arg_one in
-			activate)
-				activate_cmd "$@"
-			;;
-			annihilate)
-				annihilate_cmd "$@"
-			;;
-			attach)
-				attach_cmd "$@"
-			;;
-			check-service)
-				checkservice_cmd "$@"
-			;;
-			clone)
-				clone_cmd "$@"
-			;;
-			create)
-				create_cmd "$@"
-			;;
-			deactivate)
-				deactivate_cmd "$@"
-			;;
-			define)
-				define_cmd "$@"
-			;;
-			getmac)
-				getmac_cmd "$@"
-			;;
-			list)
-				list_cmd "$@"
-			;;
-			ping)
-				ping_cmd "$@"
-			;;
-			powcycle)
-				powcycle_cmd "$@"
-			;;
-			reboot)
-				reboot_cmd "$@"
-			;;
-			unplug)
-				unplug_cmd "$@"
-			;;
-		esac
-	fi
-elif [ -z "$arg_one" ]; then
-	printf "\n%scommand not specified%s\n" "$red" "$regular"
-	show_usage "" 1
-elif [ "$arg_one" == "help" ]; then
-	show_usage "help" 0
-else
+if [ "$answer" == "no" ]; then
 	printf "\n%sinvalid command '%s'%s\n" "$red" "$1" "$regular"
 	show_usage "help" 1
 fi
+
+arg_two="$2"
+
+if [ "$arg_two" == "help" ]; then
+	show_usage "$arg_one" 0
+fi
+
+shift
+case $arg_one in
+	activate)
+		activate_cmd "$@" ;;
+	annihilate)
+		annihilate_cmd "$@" ;;
+	attach)
+		attach_cmd "$@" ;;
+	check-service)
+		checkservice_cmd "$@" ;;
+	clone)
+		clone_cmd "$@" ;;
+	create)
+		create_cmd "$@" ;;
+	deactivate)
+		deactivate_cmd "$@" ;;
+	define)
+		define_cmd "$@" ;;
+	getmac)
+		getmac_cmd "$@" ;;
+	list)
+		list_cmd "$@" ;;
+	ping)
+		ping_cmd "$@" ;;
+	powcycle)
+		powcycle_cmd "$@" ;;
+	reboot)
+		reboot_cmd "$@" ;;
+	unplug)
+		unplug_cmd "$@" ;;
+esac
+
+exit 0
