@@ -34,6 +34,7 @@ Currently the following commands are implemented:
   unplug	: force-power-off active VMs
 
   help		: display this summary of commands
+  command help	: get help on specific command
 
 Type qboxes command-name for the syntax and a usage example of a specific command.
 ```
