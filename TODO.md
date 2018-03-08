@@ -8,7 +8,6 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 
 `attach`
 * new volumes should be existing ones or instantiated by the `create volume` command
-* support the addition of network adapters
 * this command should act on a single VM (for many VMs we have the `clone` command)
 
 `check-service`
@@ -45,7 +44,6 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 
 `modify`
 * support the changing of RAM & number of cores (VMs)
-* support the addition/removal of static mappings (networks)
 
 `ping`
 * do not assume VM name equals hostname
