@@ -228,7 +228,7 @@ show_usage() {
 			printf "  unplug\t: force-power-off active VMs\n\n"
 			printf "  help\t\t: display this summary of commands\n"
 			printf "  command help\t: get help on specific command\n\n"
-			printf "Type %sqboxes command-name%s for the syntax" "$green" "$regular"
+			printf "Type %sqboxes command help%s for the syntax" "$green" "$regular"
 			printf " and a usage example of a specific command.\n\n"
 			exit "$error_code"
 		;;
@@ -1588,19 +1588,22 @@ list_cmd() {
 			state=$(echo "$state_ws" | sed -e 's/^[ \t]*//')
 			if [ "$state" == "running" ]; then
 				state="active"
+				capacity_ws=$(right_part_of "$(virsh pool-info "$name" | grep "Capacity:")" "Capacity:")
+				capacity=$(echo "$capacity_ws" | sed -e 's/^[ \t]*//' | tr -d " ")
+				allocation_ws=$(right_part_of "$(virsh pool-info "$name" | grep "Allocation:")" "Allocation:")
+				allocation=$(echo "$allocation_ws" | sed -e 's/^[ \t]*//' | tr -d " ")
+				available_ws=$(right_part_of "$(virsh pool-info "$name" | grep "Available:")" "Available:")
+				available=$(echo "$available_ws" | sed -e 's/^[ \t]*//' | tr -d " ")
+				volumes=$(($(virsh vol-list "$name" | wc -l)-3))
 			else
 				state="inactive"
+				capacity="n/a"
+				allocation="n/a"
+				available="n/a"
+				volumes="n/a"
 			fi
 
-			capacity_ws=$(right_part_of "$(virsh pool-info "$name" | grep "Capacity:")" "Capacity:")
-			capacity=$(echo "$capacity_ws" | sed -e 's/^[ \t]*//' | tr -d " ")
-			allocation_ws=$(right_part_of "$(virsh pool-info "$name" | grep "Allocation:")" "Allocation:")
-			allocation=$(echo "$allocation_ws" | sed -e 's/^[ \t]*//' | tr -d " ")
-			available_ws=$(right_part_of "$(virsh pool-info "$name" | grep "Available:")" "Available:")
-			available=$(echo "$available_ws" | sed -e 's/^[ \t]*//' | tr -d " ")
 			path2pool_dir=$(in_between "$(virsh pool-dumpxml "$name" | grep "<path>")" "<path>" "</path>")
-
-			volumes=$(($(virsh vol-list "$name" | wc -l)-3))
 
 			echo "$name" "$state" "$capacity" "$allocation" "$available" "$path2pool_dir" "$volumes" >> ~/"$temp_file_name"
 		done
