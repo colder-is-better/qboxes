@@ -343,8 +343,8 @@ in_between() {
 	input_string="$1"
 	left_mark="$2"
 	right_mark="$3"
-	right_part=$(right_part_of "$input_string" "$left_mark")
-	middle_part=$(left_part_of "$right_part" "$right_mark")
+	right_part="$(right_part_of "$input_string" "$left_mark")"
+	middle_part="$(left_part_of "$right_part" "$right_mark")"
 	echo "$middle_part"
 }
 
@@ -355,9 +355,29 @@ in_between() {
 
 get_mac_addr() {
 	the_vm="$1"
-	line_in_XML=$(virsh --quiet dumpxml "$the_vm" | grep "mac address")
-	the_mac_addr=$(in_between "$line_in_XML" "<mac address='" "'")
+	line_in_xml="$(virsh --quiet dumpxml "$the_vm" | grep "mac address")"
+	the_mac_addr="$(in_between "$line_in_xml" "<mac address='" "'")"
 	echo "$the_mac_addr"
+}
+
+# ---------------------------------------------------------------------------
+# get_first_net():
+#   Returns the name or the connection type of given VM's first net adapter
+# ---------------------------------------------------------------------------
+
+get_first_net() {
+	the_vm="$1"
+	first_net="n/a"
+	line_in_xml="$(virsh dumpxml "$the_vm" | grep "<source bridge='" | head -n 1)"
+	if [ -n "$line_in_xml" ]; then
+		first_net="hostBridge"
+	else
+		line_in_xml="$(virsh dumpxml "$the_vm" | grep "<source network='" | head -n 1)"
+		if [ -n "$line_in_xml" ]; then
+			first_net="$(in_between "$line_in_xml" "<source network='" "'/>")"
+		fi
+	fi
+	echo "$first_net"
 }
 
 # ---------------------------------------------------------------------------
@@ -1477,20 +1497,8 @@ list_cmd() {
 
 			nated_net="<source network='"
 			bridged_net="<interface type='bridge'"
-
 			network_adapters=$(virsh dumpxml "$name" | grep -e "$nated_net" -e "$bridged_net" -c)
-
-			if [ "$network_adapters" -eq 0 ]; then
-				first_adapter_conn="n/a"
-			else
-				first_adapter_type=$(virsh dumpxml "$name" | grep -e "$nated_net" -e "$bridged_net" | head -n 1)
-				first_adapter_test=$(echo "$first_adapter_type" | grep "$nated_net")
-				if [ -n "$first_adapter_test" ]; then
-					first_adapter_conn=$(in_between "$first_adapter_type" "$nated_net" "'")
-				else
-					first_adapter_conn="hostBridge"
-				fi
-			fi
+			first_adapter_conn="$(get_first_net "$name")"
 
 			echo "$name" "$state" "$CPUs" "$ram_size" "$block_devices" \
 				"$network_adapters" "$first_adapter_conn" >> ~/"$temp_file_name"
