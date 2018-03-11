@@ -368,16 +368,41 @@ get_mac_addr() {
 get_first_net() {
 	the_vm="$1"
 	first_net="n/a"
-	line_in_xml="$(virsh dumpxml "$the_vm" | grep "<source bridge='" | head -n 1)"
+	line_in_xml="$(virsh --quiet dumpxml "$the_vm" | grep "<source bridge='" | head -n 1)"
 	if [ -n "$line_in_xml" ]; then
 		first_net="hostBridge"
 	else
-		line_in_xml="$(virsh dumpxml "$the_vm" | grep "<source network='" | head -n 1)"
+		line_in_xml="$(virsh --quiet dumpxml "$the_vm" | grep "<source network='" | head -n 1)"
 		if [ -n "$line_in_xml" ]; then
-			first_net="$(in_between "$line_in_xml" "<source network='" "'/>")"
+			first_net="$(in_between "$line_in_xml" "<source network='" "'")"
 		fi
 	fi
 	echo "$first_net"
+}
+
+# ---------------------------------------------------------------------------
+# get_first_net_adapt_ip():
+#   Returns the IPv4 address of a VM's first network adapter
+# ---------------------------------------------------------------------------
+
+get_first_net_adapt_ip() {
+	the_vm="$1"
+	first_net_adapt_ip="n/a"
+	first_net="$(get_first_net "$the_vm")"
+	if [ "$first_net" != "n/a" ]; then
+		first_net_adapt_ip="unknown"
+		mac_addr="$(get_mac_addr "$the_vm")"
+		via_guest_agent="$(virsh domifaddr --source agent "$the_vm" 2> /dev/null | grep "$mac_addr" | awk '{ print $4 }')"
+		if [ -n "$via_guest_agent" ]; then
+			first_net_adapt_ip="$via_guest_agent"
+		elif [ "$first_net" != "hostBridge" ]; then
+			via_local_dhcp="$(virsh domifaddr --source lease "$the_vm" 2> /dev/null | grep "$mac_addr" | awk '{ print $4 }')"
+			if [ -n "$via_local_dhcp" ]; then
+				first_net_adapt_ip="$via_local_dhcp"
+			fi
+		fi
+	fi
+	echo "$first_net_adapt_ip"
 }
 
 # ---------------------------------------------------------------------------
@@ -1478,8 +1503,8 @@ list_cmd() {
 
 		temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
 
-		echo "Name State CPU(s) RAM[KiB] BLK(s) NIC(s) PrimaryNet" >> ~/"$temp_file_name"
-		echo "---- ----- ------ -------- ------ ------ ----------" >> ~/"$temp_file_name"
+		echo "Name State CPU(s) RAM[KiB] BLK(s) NIC(s) PrimNet PrimAdaptIP" >> ~/"$temp_file_name"
+		echo "---- ----- ------ -------- ------ ------ ------- -----------" >> ~/"$temp_file_name"
 
 		for name in $all_VMs; do
 			state_ws=$(right_part_of "$(virsh dominfo "$name" | grep State)" ":")
@@ -1498,10 +1523,16 @@ list_cmd() {
 			nated_net="<source network='"
 			bridged_net="<interface type='bridge'"
 			network_adapters=$(virsh dumpxml "$name" | grep -e "$nated_net" -e "$bridged_net" -c)
-			first_adapter_conn="$(get_first_net "$name")"
+
+			first_net_adapt_conn="$(get_first_net "$name")"
+			if [ "$state" != "active" ]; then
+				first_net_adapt_ip="n/a"
+			else
+				first_net_adapt_ip="$(get_first_net_adapt_ip "$name")"
+			fi
 
 			echo "$name" "$state" "$CPUs" "$ram_size" "$block_devices" \
-				"$network_adapters" "$first_adapter_conn" >> ~/"$temp_file_name"
+				"$network_adapters" "$first_net_adapt_conn" "$first_net_adapt_ip" >> ~/"$temp_file_name"
 		done
 
 		echo
