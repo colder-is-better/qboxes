@@ -406,6 +406,32 @@ get_first_net_adapt_ip() {
 }
 
 # ---------------------------------------------------------------------------
+# get_pools():
+#   Returns active, inactive or all libvirt pools
+#   Implemented for compatibility reasons (old versions
+#   of virsh do not understand the --name option)
+# ---------------------------------------------------------------------------
+
+get_pools() {
+	state="$1"
+	case $state in
+		all)
+			the_pools="$(virsh pool-list --all | grep "active" | awk '{ print $1 }')"
+		;;
+		active)
+			the_pools="$(virsh pool-list --all | grep -w "active" | awk '{ print $1 }')"
+		;;
+		inactive)
+			the_pools="$(virsh pool-list --all | grep "inactive" | awk '{ print $1 }')"
+		;;
+		*)
+			the_pools=""
+		;;
+	esac
+	echo "$the_pools"
+}
+
+# ---------------------------------------------------------------------------
 # activate_cmd():
 #   Powers up one or more inactive VMs
 # ---------------------------------------------------------------------------
@@ -572,7 +598,7 @@ attach_cmd() {
 					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				all_active_pools=$(virsh pool-list --name)
+				all_active_pools=$(get_pools "active")
 				answer=$(is_a_member "$value" "$all_active_pools")
 				if [ "$answer" == "no" ]; then
 					printf "%scannot seem to find pool '%s'%s\n" "$red" "$value" "$regular"
@@ -757,7 +783,7 @@ clone_cmd() {
 					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				all_active_pools=$(virsh pool-list --name)
+				all_active_pools=$(get_pools "active")
 				answer=$(is_a_member "$value" "$all_active_pools")
 				if [ "$answer" == "no" ]; then
 					printf "%scannot seem to find pool '%s'%s\n" "$red" "$value" "$regular"
@@ -1117,7 +1143,7 @@ create_pool_cmd() {
 					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				all_pools=$(virsh pool-list --name --all)
+				all_pools=$(get_pools "all")
 				answer=$(is_a_member "$value" "$all_pools")
 				if [ "$answer" == "yes" ]; then
 					printf "%spool '%s' already exists%s\n" "$red" "$value" "$regular"
@@ -1134,7 +1160,7 @@ create_pool_cmd() {
 					printf "%spath '%s' does not exist%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				all_pools=$(virsh pool-list --name --all)
+				all_pools=$(get_pools "all")
 				for each_pool in $all_pools; do
 					local_path=$(in_between "$(virsh pool-dumpxml "$each_pool" | grep "<path>")" "<path>" "</path>")
 					if [ "$value" == "$local_path" ]; then
@@ -1160,20 +1186,20 @@ create_pool_cmd() {
 		show_usage create-pool 1
 	fi
 
-	virsh -q pool-define-as "$pool_name" dir - - - - "$local_path"
+	virsh -q pool-define-as "$pool_name" dir - - - - "$local_path" > /dev/null 2>&1
 	virsh_ec=$?
 	if [ $virsh_ec -ne 0 ]; then
 		printf "%sfailed to define %s, virsh returned error code %d, terminating now%s\n" "$red" "$pool_name" $virsh_ec "$regular"
 		exit 2
 	fi
 
-	virsh -q pool-start "$pool_name"
+	virsh -q pool-start "$pool_name" > /dev/null 2>&1
 	virsh_ec=$?
 	if [ $virsh_ec -ne 0 ]; then
 		printf "%sfailed to start %s, virsh returned error code %d%s\n" "$yellow" "$pool_name" $virsh_ec "$regular"
 	fi
 
-	virsh -q pool-autostart "$pool_name"
+	virsh -q pool-autostart "$pool_name" > /dev/null 2>&1
 	virsh_ec=$?
 	if [ $virsh_ec -ne 0 ]; then
 		printf "%sfailed to mark %s as 'autostart', virsh returned error code %d%s\n" "$yellow" "$pool_name" $virsh_ec "$regular"
@@ -1357,7 +1383,7 @@ define_cmd() {
 					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				all_active_pools=$(virsh pool-list --name)
+				all_active_pools=$(get_pools "active")
 				answer=$(is_a_member "$value" "$all_active_pools")
 				if [ "$answer" == "no" ]; then
 					printf "%scannot seem to find pool '%s'%s\n" "$red" "$value" "$regular"
@@ -1611,7 +1637,7 @@ list_cmd() {
 		rm -f ~/"$temp_file_name"
 	;;
 	pool|pools)
-		all_pools=$(virsh pool-list --name --all)
+		all_pools=$(get_pools "all")
 		if [ -z "$all_pools" ]; then
 			printf "\n%scannot seem to find a single pool on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
 			exit 0
@@ -1654,10 +1680,10 @@ list_cmd() {
 		rm -f ~/"$temp_file_name"
 	;;
 	volume|volumes)
-		all_pools=$(virsh pool-list --name --all)
+		all_pools=$(get_pools "all")
 		if [ -z "$all_pools" ]; then
-			printf "\n%scannot seem to find a single pool on this host,\n" "$red"
-			printf " so I am assuming there are no volumes either (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$regular"
+			printf "\n%scannot seem to find a single pool on this host, " "$red"
+			printf "so I am assuming there are no volumes either (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$regular"
 			exit 0
 		fi
 
