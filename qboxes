@@ -1529,7 +1529,7 @@ list_cmd() {
 
 		temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
 
-		echo "Name State CPU(s) RAM[KiB] BLK(s) NIC(s) PrimNet PrimAdaptIP" >> ~/"$temp_file_name"
+		echo "Name State CPU(s) RAM[MiB] BLK(s) NIC(s) PrimNet PrimAdaptIP" >> ~/"$temp_file_name"
 		echo "---- ----- ------ -------- ------ ------ ------- -----------" >> ~/"$temp_file_name"
 
 		for name in $all_VMs; do
@@ -1544,6 +1544,7 @@ list_cmd() {
 			CPUs_ws=$(right_part_of "$(virsh dominfo "$name" | grep CPU\(s\))" ":")
 			CPUs=$(echo "$CPUs_ws" | sed -e 's/^[ \t]*//')
 			ram_size=$(in_between "$(virsh dominfo "$name" | grep "Max memory")" ":" " ")
+			ram_size_mb=$(( ram_size / 1024 ))
 			block_devices=$(($(virsh domblklist "$name" | wc -l)-3))
 
 			nated_net="<source network='"
@@ -1557,7 +1558,7 @@ list_cmd() {
 				first_net_adapt_ip="$(get_first_net_adapt_ip "$name")"
 			fi
 
-			echo "$name" "$state" "$CPUs" "$ram_size" "$block_devices" \
+			echo "$name" "$state" "$CPUs" "$ram_size_mb" "$block_devices" \
 				"$network_adapters" "$first_net_adapt_conn" "$first_net_adapt_ip" >> ~/"$temp_file_name"
 		done
 
