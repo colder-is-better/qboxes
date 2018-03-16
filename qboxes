@@ -394,11 +394,11 @@ get_first_net_adapt_ip() {
 		mac_addr="$(get_mac_addr "$the_vm")"
 		via_guest_agent="$(virsh domifaddr --source agent "$the_vm" 2> /dev/null | grep "$mac_addr" | awk '{ print $4 }')"
 		if [ -n "$via_guest_agent" ]; then
-			first_net_adapt_ip="$via_guest_agent"
+			first_net_adapt_ip=$(left_part_of "$via_guest_agent" "/")
 		elif [ "$first_net" != "hostBridge" ]; then
 			via_local_dhcp="$(virsh domifaddr --source lease "$the_vm" 2> /dev/null | grep "$mac_addr" | awk '{ print $4 }')"
 			if [ -n "$via_local_dhcp" ]; then
-				first_net_adapt_ip="$via_local_dhcp"
+				first_net_adapt_ip=$(left_part_of "$via_local_dhcp" "/")
 			fi
 		fi
 	fi
@@ -728,14 +728,21 @@ checkservice_cmd() {
 		else
 			answer=$(is_a_member "$candidate" "$all_active_VMs")
 			if [ "$answer" == "no" ]; then
-				printf "%s'%s' is not an active VM%s\n" "$yellow" "$candidate" "$regular"
+				printf "%s%s is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
-				nc -z -w 1 "$candidate" "$tcp_port" > /dev/null 2>&1
-				netcat_ec=$?
-				if [ $netcat_ec -eq 0 ]; then
-					printf "%s%s is accepting packets on port %s/TCP%s\n" "$green" "$candidate" "$tcp_port" "$regular"
+				guest_ip=$(get_first_net_adapt_ip "$candidate")
+				if [ "$guest_ip" == "n/a" ]; then
+					printf "%s%s does not seem to have any network adapter connected to it%s\n" "$yellow" "$candidate" "$regular"
+				elif [ "$guest_ip" == "unknown" ]; then
+					printf "%scannot get the IP address of %s%s\n" "$yellow" "$candidate" "$regular"
 				else
-					printf "%s%s is not accepting packets on port %s/TCP%s\n" "$red" "$candidate" "$tcp_port" "$regular"
+					nc -z -w 1 "$guest_ip" "$tcp_port" > /dev/null 2>&1
+					netcat_ec=$?
+					if [ $netcat_ec -eq 0 ]; then
+						printf "%s%s is accepting packets on port %s/TCP%s\n" "$green" "$candidate" "$tcp_port" "$regular"
+					else
+						printf "%s%s is not accepting packets on port %s/TCP%s\n" "$red" "$candidate" "$tcp_port" "$regular"
+					fi
 				fi
 			fi
 		fi
@@ -1262,7 +1269,7 @@ deactivate_cmd() {
 		else
 			answer=$(is_a_member "$candidate" "$all_active_VMs")
 			if [ "$answer" == "no" ]; then
-				printf "%s'%s' is not an active VM%s\n" "$yellow" "$candidate" "$regular"
+				printf "%s%s is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%sshutting down %s%s\n" "$green" "$candidate" "$regular"
 
@@ -1803,7 +1810,7 @@ powcycle_cmd() {
 		else
 			answer=$(is_a_member "$candidate" "$all_active_VMs")
 			if [ "$answer" == "no" ]; then
-				printf "%s'%s' is not an active VM%s\n" "$yellow" "$candidate" "$regular"
+				printf "%s%s is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%scold-restarting %s%s\n" "$green" "$candidate" "$regular"
 
@@ -1844,7 +1851,7 @@ reboot_cmd() {
 		else
 			answer=$(is_a_member "$candidate" "$all_active_VMs")
 			if [ "$answer" == "no" ]; then
-				printf "%s'%s' is not an active VM%s\n" "$yellow" "$candidate" "$regular"
+				printf "%s%s is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%srebooting %s%s\n" "$green" "$candidate" "$regular"
 
@@ -1886,7 +1893,7 @@ unplug_cmd() {
 		else
 			answer=$(is_a_member "$candidate" "$all_active_VMs")
 			if [ "$answer" == "no" ]; then
-				printf "%s'%s' is not an active VM%s\n" "$yellow" "$candidate" "$regular"
+				printf "%s%s is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%sunplugging %s%s\n" "$green" "$candidate" "$regular"
 
