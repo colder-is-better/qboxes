@@ -459,7 +459,7 @@ activate_cmd() {
 				printf "%s'%s' does not look like an inactive VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%spowering up %s%s\n" "$green" "$candidate" "$regular"
-				virsh --quiet start "$candidate"
+				virsh start "$candidate" > /dev/null 2>&1
 				virsh_ec=$?
 				if [ $virsh_ec -ne 0 ]; then
 					printf "%soperation failed, virsh returned error code %d%s\n" "$yellow" $virsh_ec "$regular"
@@ -505,7 +505,7 @@ annihilate_cmd() {
 					printf "%s from %s%s\n" "$candidate" "$user_known_hosts" "$regular"
 					random_alphanum=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 30 | tr -d '\n')
 					mkdir ~/"$random_alphanum"
-					sudo virt-copy-out -d "$candidate" /etc/ssh/ssh_host_*_key.pub ~/"$random_alphanum"/ &>/dev/null
+					sudo virt-copy-out -d "$candidate" /etc/ssh/ssh_host_*_key.pub ~/"$random_alphanum"/ > /dev/null 2>&1
 					virt_copy_out_ec=$?
 					if [ $virt_copy_out_ec -ne 0 ]; then
 						printf "%scannot read host keys from %s, virt-copy-out " "$yellow" "$candidate"
@@ -523,7 +523,7 @@ annihilate_cmd() {
 				if [ -n "$all_snapshots" ]; then
 					for each_one in $all_snapshots; do
 						printf "%sdeleting snapshot '%s'%s\n" "$green" "$each_one" "$regular"
-						virsh --quiet snapshot-delete --domain "$candidate" --snapshotname "$each_one"
+						virsh snapshot-delete --domain "$candidate" --snapshotname "$each_one" > /dev/null 2>&1
 						virsh_ec=$?
 						if [ $virsh_ec -ne 0 ]; then
 							printf \
@@ -533,7 +533,7 @@ annihilate_cmd() {
 						fi
 					done
 				fi
-				virsh --quiet undefine "$candidate" --remove-all-storage --wipe-storage
+				virsh undefine "$candidate" --remove-all-storage --wipe-storage > /dev/null 2>&1
 				virsh_ec=$?
 				if [ $virsh_ec -ne 0 ]; then
 					printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
@@ -657,8 +657,8 @@ attach_cmd() {
 
 					printf "%screating QCOW2 image %s for %s%s\n" "$green" "$qcow2_name" "$candidate" "$regular"
 
-					virsh --quiet vol-create-as "$pool_name" --name "$qcow2_name" \
-						--capacity "$volume_size"G --format qcow2
+					virsh vol-create-as "$pool_name" --name "$qcow2_name" \
+						--capacity "$volume_size"G --format qcow2 > /dev/null 2>&1
 					virsh_ec=$?
 					if [ $virsh_ec -ne 0 ]; then
 						printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
@@ -667,8 +667,8 @@ attach_cmd() {
 
 					printf "%sattaching %s to %s%s\n\n" "$green" "$qcow2_name" "$candidate" "$regular"
 
-					virsh --quiet attach-disk "$candidate" "$qcow2_path" "$virtio_dev" \
-						--driver qemu --subdriver qcow2 --targetbus virtio --persistent
+					virsh attach-disk "$candidate" "$qcow2_path" "$virtio_dev" \
+						--driver qemu --subdriver qcow2 --targetbus virtio --persistent > /dev/null 2>&1
 					virsh_ec=$?
 					if [ $virsh_ec -ne 0 ]; then
 						printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
@@ -843,7 +843,7 @@ clone_cmd() {
 
 				printf "%scloning %s into %s%s\n" "$green" "$template_volume_name" "$clone_volume_name" "$regular"
 
-				virsh --quiet vol-clone --pool "$template_pool_name" "$template_volume_name" "$clone_volume_name"
+				virsh vol-clone --pool "$template_pool_name" "$template_volume_name" "$clone_volume_name" > /dev/null 2>&1
 				virsh_ec=$?
 				if [ $virsh_ec -ne 0 ]; then
 					printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
@@ -861,15 +861,15 @@ clone_cmd() {
 						exit 2
 					fi
 
-					virsh --quiet pool-refresh "$template_pool_name"
-					virsh --quiet pool-refresh "$clone_pool_name"
+					virsh pool-refresh "$template_pool_name" > /dev/null 2>&1
+					virsh pool-refresh "$clone_pool_name" > /dev/null 2>&1
 				fi
 
 				printf "%scloning %s into %s and attaching %s to it%s\n" \
 					"$green" "$template_VM" "$candidate" "$clone_volume_name" "$regular"
 
-				virt-clone --quiet -o "$template_VM" -n "$candidate" \
-					--preserve-data -f "$clone_pool_path"/"$clone_volume_name"
+				virt-clone -o "$template_VM" -n "$candidate" \
+					--preserve-data -f "$clone_pool_path"/"$clone_volume_name" > /dev/null 2>&1
 				virt_clone_ec=$?
 				if [ $virt_clone_ec -ne 0 ]; then
 					printf "%soperation failed, virt-clone returned error code %d, terminating now%s\n" \
@@ -882,7 +882,7 @@ clone_cmd() {
 
 				printf "%ssetting '%s' as the hostname for %s%s\n" "$green" "$valid_hostname" "$candidate" "$regular"
 
-                sudo virt-customize --quiet -d "$candidate" --hostname "$valid_hostname"
+                sudo virt-customize -d "$candidate" --hostname "$valid_hostname" > /dev/null 2>&1
 				virt_customize_ec=$?
 				if [ $virt_customize_ec -ne 0 ]; then
 					printf "%soperation failed, virt-customize returned error code %d, terminating now%s\n" \
@@ -892,7 +892,7 @@ clone_cmd() {
 
 				printf "%sdeleting SSH host keys from %s%s\n\n" "$green" "$candidate" "$regular"
 
-				sudo virt-customize --quiet -d "$candidate" \
+				sudo virt-customize -d "$candidate" \
 					--delete /etc/ssh/ssh_host_dsa_key \
 					--delete /etc/ssh/ssh_host_dsa_key.pub \
 					--delete /etc/ssh/ssh_host_ecdsa_key \
@@ -902,7 +902,8 @@ clone_cmd() {
 					--delete /etc/ssh/ssh_host_key \
 					--delete /etc/ssh/ssh_host_key.pub \
 					--delete /etc/ssh/ssh_host_rsa_key \
-					--delete /etc/ssh/ssh_host_rsa_key.pub
+					--delete /etc/ssh/ssh_host_rsa_key.pub \
+					> /dev/null 2>&1
 
 				virt_customize_ec=$?
 				if [ $virt_customize_ec -ne 0 ]; then
@@ -1104,7 +1105,7 @@ create_network_cmd() {
 	new_line='<domain name="'${domain_name}'" localOnly="yes"/>'
 	sed -i "/<ip address/i\ \ ${new_line}" ~/"$temp_net_xml"
 
-	virsh -q net-define ~/"$temp_net_xml"
+	virsh -q net-define ~/"$temp_net_xml" > /dev/null 2>&1
 	virsh_ec=$?
 
 	rm ~/"$temp_net_xml"
@@ -1114,13 +1115,13 @@ create_network_cmd() {
 		exit 2
 	fi
 
-	virsh -q net-start "$net_name"
+	virsh -q net-start "$net_name" > /dev/null 2>&1
 	virsh_ec=$?
 	if [ $virsh_ec -ne 0 ]; then
 		printf "%sfailed to start %s, virsh returned error code %d%s\n" "$yellow" "$net_name" $virsh_ec "$regular"
 	fi
 
-	virsh -q net-autostart "$net_name"
+	virsh -q net-autostart "$net_name" > /dev/null 2>&1
 	virsh_ec=$?
 	if [ $virsh_ec -ne 0 ]; then
 		printf "%sfailed to mark %s as 'autostart', virsh returned error code %d%s\n" "$yellow" "$net_name" $virsh_ec "$regular"
@@ -1272,8 +1273,7 @@ deactivate_cmd() {
 				printf "%s%s is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%sshutting down %s%s\n" "$green" "$candidate" "$regular"
-
-				virsh --quiet shutdown $candidate
+				virsh shutdown $candidate > /dev/null 2>&1
 				virsh_ec=$?
 				if [ $virsh_ec -ne 0 ]; then
 					printf "%soperation failed, virsh returned error code %d%s\n" "$yellow" $virsh_ec "$regular"
@@ -1436,7 +1436,7 @@ define_cmd() {
 				printf "%screating volume %s for %s%s\n" \
 					"$green" "$qcow2_name" "$candidate" "$regular"
 
-				virsh --quiet vol-create-as "$pool_name" --name "$qcow2_name" --capacity "$volume_size"G --format qcow2
+				virsh vol-create-as "$pool_name" --name "$qcow2_name" --capacity "$volume_size"G --format qcow2 > /dev/null 2>&1
 				virsh_ec=$?
 				if [ $virsh_ec -ne 0 ]; then
 					printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
@@ -1445,7 +1445,7 @@ define_cmd() {
 
 				printf "%scoming up with a detailed XML description of %s%s\n" "$green" "$candidate" "$regular"
 
-				virt-install --quiet --name "$candidate" --os-variant "$os_variant" \
+				virt-install --name "$candidate" --os-variant "$os_variant" \
 					--memory "$memory_size" --cpu host --vcpus="$cpu_cores" \
 					--network network="$libvirt_network",model=virtio \
 					--disk "$qcow2_path",bus=virtio --boot network,hd \
@@ -1465,7 +1465,7 @@ define_cmd() {
 
 				printf "%sdefining %s%s\n\n" "$green" "$candidate" "$regular"
 
-				virsh --quiet define ~/"$xml_path" --validate
+				virsh define ~/"$xml_path" --validate > /dev/null 2>&1
 				virsh_ec=$?
 				if [ $virsh_ec -ne 0 ]; then
 					printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
@@ -1814,7 +1814,7 @@ powcycle_cmd() {
 			else
 				printf "%scold-restarting %s%s\n" "$green" "$candidate" "$regular"
 
-				virsh --quiet reset $candidate
+				virsh reset $candidate > /dev/null 2>&1
 				virsh_ec=$?
 				if [ $virsh_ec -ne 0 ]; then
 					printf "%soperation failed, virsh returned error code %d%s\n" "$yellow" $virsh_ec "$regular"
@@ -1855,7 +1855,7 @@ reboot_cmd() {
 			else
 				printf "%srebooting %s%s\n" "$green" "$candidate" "$regular"
 
-				virsh --quiet reboot "$candidate";
+				virsh reboot "$candidate" > /dev/null 2>&1
 				virsh_ec=$?
 				if [ $virsh_ec -ne 0 ]; then
 					printf "%soperation failed, virsh returned error code %d%s\n" "$red" $virsh_ec "$regular"
@@ -1897,7 +1897,7 @@ unplug_cmd() {
 			else
 				printf "%sunplugging %s%s\n" "$green" "$candidate" "$regular"
 
-				virsh --quiet destroy $candidate
+				virsh destroy $candidate > /dev/null 2>&1
 				virsh_ec=$?
 				if [ $virsh_ec -ne 0 ]; then
 					printf "%soperation failed, virsh returned error code %d%s\n" "$yellow" $virsh_ec "$regular"
