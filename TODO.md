@@ -11,8 +11,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * this command should act on a single VM (for many VMs we have the `clone` command)
 
 `check-service`
-* do not assume VM name equals hostname
-* act upon IPs (can be extracted from libvirt DHCP leases or ARP tables)
+* __all_done__
 
 `clone`
 * optional: indicate network for clones
