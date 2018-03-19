@@ -32,7 +32,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * this command should act on a single VM (for many VMs we have the `clone` command)
 
 `getmac`
-* handle VMs with more than one virtual Ethernet adapters
+* __all_done__
 
 `info`
 * return detailed information on VMs, networks, pools, volumes
