@@ -45,8 +45,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * support the changing of RAM & number of cores (VMs)
 
 `ping`
-* do not assume VM name equals hostname
-* act upon IPs (can be extracted from libvirt DHCP leases or ARP tables)
+* __all_done__
 
 `reboot`
 * __all_done__
@@ -59,4 +58,3 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 
 `unplug`
 * __all_done__
-
