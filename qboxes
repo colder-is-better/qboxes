@@ -730,13 +730,13 @@ checkservice_cmd() {
 			if [ "$answer" == "no" ]; then
 				printf "%s%s is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
-				guest_ip=$(get_first_net_adapt_ip "$candidate")
-				if [ "$guest_ip" == "n/a" ]; then
+				candidate_ip=$(get_first_net_adapt_ip "$candidate")
+				if [ "$candidate_ip" == "n/a" ]; then
 					printf "%s%s does not seem to have any network adapter connected to it%s\n" "$yellow" "$candidate" "$regular"
-				elif [ "$guest_ip" == "unknown" ]; then
+				elif [ "$candidate_ip" == "unknown" ]; then
 					printf "%scannot get the IP address of %s%s\n" "$yellow" "$candidate" "$regular"
 				else
-					nc -z -w 1 "$guest_ip" "$tcp_port" > /dev/null 2>&1
+					nc -z -w 1 "$candidate_ip" "$tcp_port" > /dev/null 2>&1
 					netcat_ec=$?
 					if [ $netcat_ec -eq 0 ]; then
 						printf "%s%s is accepting packets on port %s/TCP%s\n" "$green" "$candidate" "$tcp_port" "$regular"
@@ -1777,8 +1777,15 @@ ping_cmd() {
 			if [ "$answer" == "no" ]; then
 				printf "%s%s is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
-				printf "\n%sattempting to ping %s%s\n" "$green" "$candidate" "$regular"
-				/usr/bin/ping -c "$n_packets" "$candidate"
+				candidate_ip=$(get_first_net_adapt_ip "$candidate")
+				if [ "$candidate_ip" == "n/a" ]; then
+					printf "%s%s does not seem to have any network adapter connected to it%s\n" "$yellow" "$candidate" "$regular"	
+				elif [ "$candidate_ip" == "unknown" ]; then
+					printf "%scannot get the IP address of %s%s\n" "$yellow" "$candidate" "$regular"
+				else
+					printf "\n%sattempting to ping %s%s\n" "$green" "$candidate" "$regular"
+					/bin/ping -c "$n_packets" "$candidate_ip"
+				fi
 			fi
 		fi
 	done
