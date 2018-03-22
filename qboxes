@@ -1041,7 +1041,7 @@ create_network_cmd() {
 		show_usage create-network 1
 	fi
 
-	max_bridge_devs=15
+	max_bridge_devs=25
 	all_networks=$(virsh net-list --name --all)
 	how_many=$(echo "$all_networks" | wc -w)
 
@@ -1051,20 +1051,28 @@ create_network_cmd() {
         exit 1
     fi
 
+	# in openSUSE, default.xml is included in package libvirt-daemon-config-network
 	default_net_xml="/usr/share/libvirt/networks/default.xml"
-	dir_default_net_xml=$(dirname "$default_net_xml")
-	name_default_net_xml=$(basename "$default_net_xml")
 
 	if [ ! -f "$default_net_xml" ]; then
-		printf "%seither %s does not exist or %s is not in said directory " "$red" "$dir_default_net_xml" "$name_default_net_xml"
-		printf "(%s comes with libvirt-daemon-config-network or a similarly named package)%s\n" "$default_net_xml" "$regular"
+		default_net_xml="/tmp/default.xml.for.NATed.libvirt.networks-qboxes"
+		virsh net-dumpxml default > "$default_net_xml" 2> /dev/null
+		virsh_ec=$?
+		if [ $virsh_ec -ne 0 ]; then
+			default_net_xml=""
+		fi
+	fi
+
+	if [ -z "$default_net_xml" ]; then
+		printf "%scannot find template file default.xml, nor libvirt network 'default'%s\n" "$red" "$regular"
 		exit 1
 	fi
 
 	bridge_dev=""
 	names_taken=""
 
-	prefix=$(echo "$(in_between "$(grep "<bridge name=\"" "$default_net_xml")" "<bridge name=" "/")" | tr -d "0-9\"\'")
+	prefix=$(echo "$(in_between "$(grep "<bridge name=" "$default_net_xml")" "<bridge name=" "/")" | awk '{ print $1 }' | tr -d "0-9\"\'")
+
 	for each_net in $all_networks; do
 		bridge_name=$(in_between "$(virsh net-dumpxml "$each_net" | grep "<bridge name='")" "<bridge name='" "'")
 		names_taken=${names_taken}${bridge_name}" "
@@ -1083,6 +1091,9 @@ create_network_cmd() {
 	temp_net_xml="$random_alphanum".xml
 
 	cat "$default_net_xml" > ~/"$temp_net_xml"
+
+	sed -i /'<uuid>'/d ~/"$temp_net_xml"
+	sed -i /'<mac address='/d ~/"$temp_net_xml"
 
 	if [ "$dhcp_srv" == "on" ]; then
 		new_line='<range start="'${from_addr}'" end="'${to_addr}'"/>'
@@ -1105,7 +1116,7 @@ create_network_cmd() {
 	new_line='<domain name="'${domain_name}'" localOnly="yes"/>'
 	sed -i "/<ip address/i\ \ ${new_line}" ~/"$temp_net_xml"
 
-	virsh -q net-define ~/"$temp_net_xml" > /dev/null 2>&1
+	virsh net-define ~/"$temp_net_xml" > /dev/null 2>&1
 	virsh_ec=$?
 
 	rm ~/"$temp_net_xml"
@@ -1115,13 +1126,13 @@ create_network_cmd() {
 		exit 2
 	fi
 
-	virsh -q net-start "$net_name" > /dev/null 2>&1
+	virsh net-start "$net_name" > /dev/null 2>&1
 	virsh_ec=$?
 	if [ $virsh_ec -ne 0 ]; then
 		printf "%sfailed to start %s, virsh returned error code %d%s\n" "$yellow" "$net_name" $virsh_ec "$regular"
 	fi
 
-	virsh -q net-autostart "$net_name" > /dev/null 2>&1
+	virsh net-autostart "$net_name" > /dev/null 2>&1
 	virsh_ec=$?
 	if [ $virsh_ec -ne 0 ]; then
 		printf "%sfailed to mark %s as 'autostart', virsh returned error code %d%s\n" "$yellow" "$net_name" $virsh_ec "$regular"
@@ -1194,20 +1205,20 @@ create_pool_cmd() {
 		show_usage create-pool 1
 	fi
 
-	virsh -q pool-define-as "$pool_name" dir - - - - "$local_path" > /dev/null 2>&1
+	virsh pool-define-as "$pool_name" dir - - - - "$local_path" > /dev/null 2>&1
 	virsh_ec=$?
 	if [ $virsh_ec -ne 0 ]; then
 		printf "%sfailed to define %s, virsh returned error code %d, terminating now%s\n" "$red" "$pool_name" $virsh_ec "$regular"
 		exit 2
 	fi
 
-	virsh -q pool-start "$pool_name" > /dev/null 2>&1
+	virsh pool-start "$pool_name" > /dev/null 2>&1
 	virsh_ec=$?
 	if [ $virsh_ec -ne 0 ]; then
 		printf "%sfailed to start %s, virsh returned error code %d%s\n" "$yellow" "$pool_name" $virsh_ec "$regular"
 	fi
 
-	virsh -q pool-autostart "$pool_name" > /dev/null 2>&1
+	virsh pool-autostart "$pool_name" > /dev/null 2>&1
 	virsh_ec=$?
 	if [ $virsh_ec -ne 0 ]; then
 		printf "%sfailed to mark %s as 'autostart', virsh returned error code %d%s\n" "$yellow" "$pool_name" $virsh_ec "$regular"
@@ -1273,7 +1284,7 @@ deactivate_cmd() {
 				printf "%s%s is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%sshutting down %s%s\n" "$green" "$candidate" "$regular"
-				virsh shutdown $candidate > /dev/null 2>&1
+				virsh shutdown "$candidate" > /dev/null 2>&1
 				virsh_ec=$?
 				if [ $virsh_ec -ne 0 ]; then
 					printf "%soperation failed, virsh returned error code %d%s\n" "$yellow" $virsh_ec "$regular"
@@ -1821,7 +1832,7 @@ powcycle_cmd() {
 			else
 				printf "%scold-restarting %s%s\n" "$green" "$candidate" "$regular"
 
-				virsh reset $candidate > /dev/null 2>&1
+				virsh reset "$candidate" > /dev/null 2>&1
 				virsh_ec=$?
 				if [ $virsh_ec -ne 0 ]; then
 					printf "%soperation failed, virsh returned error code %d%s\n" "$yellow" $virsh_ec "$regular"
@@ -1904,7 +1915,7 @@ unplug_cmd() {
 			else
 				printf "%sunplugging %s%s\n" "$green" "$candidate" "$regular"
 
-				virsh destroy $candidate > /dev/null 2>&1
+				virsh destroy "$candidate" > /dev/null 2>&1
 				virsh_ec=$?
 				if [ $virsh_ec -ne 0 ]; then
 					printf "%soperation failed, virsh returned error code %d%s\n" "$yellow" $virsh_ec "$regular"
