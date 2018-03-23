@@ -432,6 +432,32 @@ get_pools() {
 }
 
 # ---------------------------------------------------------------------------
+# get_networks():
+#   Returns active, inactive or all libvirt networks
+#   Implemented for compatibility reasons (old versions
+#   of virsh do not understand the --name option)
+# ---------------------------------------------------------------------------
+
+get_networks() {
+	state="$1"
+	case $state in
+		all)
+			the_networks="$(virsh net-list --all | grep "active" | awk '{ print $1 }')"
+		;;
+		active)
+			the_networks="$(virsh net-list --all | grep -w "active" | awk '{ print $1 }')"
+		;;
+		inactive)
+			the_networks="$(virsh net-list --all | grep "inactive" | awk '{ print $1 }')"
+		;;
+		*)
+			the_networks=""
+		;;
+	esac
+	echo "$the_networks"
+}
+
+# ---------------------------------------------------------------------------
 # activate_cmd():
 #   Powers up one or more inactive VMs
 # ---------------------------------------------------------------------------
@@ -942,7 +968,7 @@ create_network_cmd() {
 					printf "%s'%s' is not a valid network name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				all_networks=$(virsh net-list --name --all)
+				all_networks=$(get_networks "all")
 				answer=$(is_a_member "$value" "$all_networks")
 				if [ "$answer" == "yes" ]; then
 					printf "%snetwork '%s' already exists%s\n" "$red" "$value" "$regular"
@@ -962,7 +988,7 @@ create_network_cmd() {
 					printf "%s'%s' is not a valid domain name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				all_networks=$(virsh net-list --name --all)
+				all_networks=$(get_networks "all")
 				for each_net in $all_networks; do
 					domain_name=$(in_between "$(virsh net-dumpxml "$each_net" | grep "<domain name='")" "<domain name='" "'")
 					if [ "$value" == "$domain_name" ]; then
@@ -978,7 +1004,7 @@ create_network_cmd() {
 					printf "%s'%s' is not a valid router IPv4 address%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				all_networks=$(virsh net-list --name --all)
+				all_networks=$(get_networks "all")
 				for each_net in $all_networks; do
 					router_addr=$(in_between "$(virsh net-dumpxml "$each_net" | grep "<ip address='")" "<ip address='" "'")
 					if [ "$value" == "$router_addr" ]; then
@@ -1042,7 +1068,7 @@ create_network_cmd() {
 	fi
 
 	max_bridge_devs=25
-	all_networks=$(virsh net-list --name --all)
+	all_networks=$(get_networks "all")
 	how_many=$(echo "$all_networks" | wc -w)
 
     if [ "$how_many" -ge "$max_bridge_devs" ]; then
@@ -1373,7 +1399,7 @@ define_cmd() {
 					printf "%s'%s' is not a valid network name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				all_active_networks=$(virsh net-list --name)
+				all_active_networks=$(get_networks "active")
 				answer=$(is_a_member "$value" "$all_active_networks")
 				if [ "$answer" == "no" ]; then
 					printf "%sI cannot seem to find network '%s'%s\n" "$red" "$value" "$regular"
@@ -1587,7 +1613,7 @@ list_cmd() {
 		rm -f ~/"$temp_file_name"
 	;;
 	network|networks)
-		all_networks=$(virsh net-list --name --all)
+		all_networks=$(get_networks "all")
 		if [ -z "$all_networks" ]; then
 			printf "\n%scannot seem to find a single libvirt network on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
 			exit 0
