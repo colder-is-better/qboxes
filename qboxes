@@ -1661,6 +1661,10 @@ list_cmd() {
 			fi
 
 			mac_addr=$(in_between "$(virsh net-dumpxml "$name" | grep "<mac address='")" "<mac address='" "'")
+			if [ -z "$mac_addr" ]; then
+				mac_addr="n/a"
+			fi
+
 			net_clients=0
 			if [ -n "$all_VMs" ]; then
 				for guest in $all_VMs; do
