@@ -1413,7 +1413,7 @@ define_cmd() {
 					printf "%s'%s' is not a valid OS variant name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				all_os_variants=$(osinfo-query os -f short-id)
+				all_os_variants=$(osinfo-query os -f short-id 2> /dev/null)
 				answer=$(is_a_member "$value" "$all_os_variants")
 				if [ "$answer" == "no" ]; then
 					printf "%sunknown OS variant '%s'%s\n" "$red" "$value" "$regular"
@@ -1486,7 +1486,7 @@ define_cmd() {
 					--memory "$memory_size" --cpu host --vcpus="$cpu_cores" \
 					--network network="$libvirt_network",model=virtio \
 					--disk "$qcow2_path",bus=virtio --boot network,hd \
-					--print-xml 1 > ~/"$xml_path"
+					--print-xml 1 > ~/"$xml_path" 2> /dev/null
 				virt_install_ec=$?
 				if [ $virt_install_ec -ne 0 ]; then
 					printf "%soperation failed, virt-install returned error code %d, terminating now%s\n" \
