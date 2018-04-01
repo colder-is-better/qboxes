@@ -80,14 +80,15 @@ show_usage() {
 			printf "COMMAND NAME\n"
 			printf "  create - create a new libvirt entity\n\n"
 			printf "SYNOPSIS\n"
-			printf "  create <network|pool>\n\n"
+			printf "  create <network|pool|volume>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Create a new libvirt entity, where \"entity\" may"
-			printf " be any of these two strings: network, pool\n\n"
+			printf " be a network, a pool, or a volume\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes create network --name=lvirtnet --domain=local.qbx --router=10.20.30.254" "$bold"
 			printf " --netmask=255.255.255.0 --dhcp=on --from=10.20.30.100 --to=10.20.30.253%s\n\n" "$regular"
 			printf "  ~> %sqboxes create pool --name=ceph --path=/usr/local/testing/storage-clusters%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes create volume --name=data_disk --size=1024 --pool=tank%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		create-network)
@@ -113,6 +114,17 @@ show_usage() {
 			printf "  Create a new storage pool with given name, under existing local path\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes create pool --name=ceph --path=/usr/local/testing/storage-clusters%s\n\n" "$bold" "$regular"
+			exit "$error_code"
+		;;
+		create-volume)
+			printf "COMMAND NAME & OBJECT\n"
+			printf "  create volume - create a new storage volume\n\n"
+			printf "SYNOPSIS\n"
+			printf "  create volume --name=<volume_name> --size=<size_in_GiB> --pool=<parent_pool>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Create a new storage volume with given name and size, under existing storage pool\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~> %sqboxes create volume --name=data_disk --size=1024 --pool=tank%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		deactivate)
@@ -217,7 +229,7 @@ show_usage() {
 			printf "  attach\t: attach new storage volumes to (in)active VMs\n"
 			printf "  check-service\t: try to connect to specified TCP port of one or more active VMs\n"
 			printf "  clone\t\t: clone a template VM into one or more new VMs\n"
-			printf "  create\t: create a new libvirt network or storage pool\n"
+			printf "  create\t: create a new libvirt network, storage pool, or volume\n"
 			printf "  deactivate\t: gracefully shutdown active VMs\n"
 			printf "  define\t: define one or more new VMs\n"
 			printf "  getmac\t: reveal MAC addresses\n"
@@ -233,6 +245,26 @@ show_usage() {
 			exit "$error_code"
 		;;
 	esac
+}
+
+# ---------------------------------------------------------------------------
+# is_size_valid():
+#   Checks if given size (of either RAM or volume) is valid
+#   Given size is valid if it's between size_min and size_max
+#   inclusive, and is also an integer multiple of size_min
+# ---------------------------------------------------------------------------
+
+is_size_valid() {
+	answer="yes"
+	the_value="$1"
+	size_min="$2"
+	size_max="$3"
+	if [ "$the_value" -lt "$size_min" ] \
+	|| [ "$the_value" -gt "$size_max" ] \
+	|| [ $((the_value % size_min)) -gt 0 ]; then
+		answer="no"
+	fi
+	echo "$answer"
 }
 
 # ---------------------------------------------------------------------------
@@ -406,6 +438,17 @@ get_first_net_adapt_ip() {
 }
 
 # ---------------------------------------------------------------------------
+# get_volumes():
+#   Returns all volumes in given pool
+# ---------------------------------------------------------------------------
+
+get_volumes() {
+	the_pool="$1"
+	the_volumes=$(virsh vol-list "$the_pool" | grep " /" | awk '{ print $1 }')
+	echo "$the_volumes"
+}
+
+# ---------------------------------------------------------------------------
 # get_pools():
 #   Returns active, inactive or all libvirt pools
 #   Implemented for compatibility reasons (old versions
@@ -455,6 +498,16 @@ get_networks() {
 		;;
 	esac
 	echo "$the_networks"
+}
+
+# ---------------------------------------------------------------------------
+# get_pool_path():
+#   Returns the full path of given storage pool
+# ---------------------------------------------------------------------------
+
+get_pool_path() {
+	the_pool="$1"
+	echo "$(in_between "$(virsh pool-dumpxml "$the_pool" | grep "<path>")" "<path>" "</path>")"
 }
 
 # ---------------------------------------------------------------------------
@@ -609,9 +662,8 @@ attach_cmd() {
 				fi
 				volume_size_min=128
 				volume_size_max=8192
-				if [ "$value" -lt "$volume_size_min" ] \
-					|| [ "$value" -gt "$volume_size_max" ] \
-					|| [ $((value % volume_size_min)) -gt 0 ]; then
+				answer=$(is_size_valid "$value" "$volume_size_min" "$volume_size_max")
+				if [ "$answer" == "no" ]; then
 					printf "%svolume size must be between %d and %d GiB inclusive, and an integer multiple of %d%s\n" \
 						"$red" $volume_size_min $volume_size_max $volume_size_min "$regular"
 					exit 1
@@ -653,7 +705,7 @@ attach_cmd() {
 		exit 0
 	fi
 
-	pool_path=$(in_between "$(virsh pool-dumpxml "$pool_name" | grep "<path>")" "<path>" "</path>")
+	pool_path=$(get_pool_path "$pool_name")
 
 	for candidate; do
 		answer=$(is_name_valid "$candidate")
@@ -854,7 +906,7 @@ clone_cmd() {
 
 	all_VMs=$(virsh list --name --all)
 
-	clone_pool_path=$(in_between "$(virsh pool-dumpxml "$clone_pool_name" | grep "<path>")" "<path>" "</path>")
+	clone_pool_path=$(get_pool_path "$clone_pool_name")
 
 	for candidate; do
 		answer=$(is_name_valid "$candidate")
@@ -1207,7 +1259,7 @@ create_pool_cmd() {
 				fi
 				all_pools=$(get_pools "all")
 				for each_pool in $all_pools; do
-					local_path=$(in_between "$(virsh pool-dumpxml "$each_pool" | grep "<path>")" "<path>" "</path>")
+					local_path=$(get_pool_path "$each_pool")
 					if [ "$value" == "$local_path" ]; then
 						printf "%spool %s is already defined under %s%s\n" "$red" "$each_pool" "$value" "$regular"
 						exit 1
@@ -1254,8 +1306,95 @@ create_pool_cmd() {
 }
 
 # ---------------------------------------------------------------------------
+# create_volume_cmd()
+#   Creates a new libvirt storage volume
+# ---------------------------------------------------------------------------
+
+create_volume_cmd() {
+	volume_name=""
+	volume_size=""
+	pool_name=""
+
+	for argument; do
+
+		param=$(left_part_of "$argument" "=")
+		value=$(right_part_of "$argument" "=")
+
+		case $param in
+			--name)
+				answer=$(is_name_valid "$value")
+				if [ "$answer" == "no" ]; then
+					printf "%s'%s' is not a valid volume name%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
+				volume_name="$value".qcow2
+			;;
+			--pool)
+				answer=$(is_name_valid "$value")
+				if [ "$answer" == "no" ]; then
+					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
+				all_pools=$(get_pools "all")
+				answer=$(is_a_member "$value" "$all_pools")
+				if [ "$answer" == "no" ]; then
+					printf "%scannot seem to find pool '%s'%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
+				all_pool_volumes=$(get_volumes "$value")
+				answer=$(is_a_member "$volume_name" "$all_pool_volumes")
+				if [ "$answer" == "yes" ]; then
+					printf "%svolume %s already exists in pool %s%s\n" "$red" "$volume_name" "$value" "$regular"
+					exit 1
+				fi
+				pool_name=$value
+			;;
+			--size)
+				answer=$(is_number_valid "$value")
+				if [ "$answer" == "no" ]; then
+					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
+				volume_size_min=32
+				volume_size_max=8192
+				answer=$(is_size_valid "$value" "$volume_size_min" "$volume_size_max")
+				if [ "$answer" == "no" ]; then
+					printf "%svolume size must be between %d and %d GiB inclusive, and an integer multiple of %d%s\n" \
+						"$red" $volume_size_min $volume_size_max $volume_size_min "$regular"
+					exit 1
+				fi
+				volume_size=$value
+			;;
+			help)
+				echo
+				show_usage create-volume 0
+			;;
+			*)
+				printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
+				show_usage create-volume 1
+			;;
+		esac
+		shift
+	done
+
+	if [ -z "$volume_name" ] || [ -z "$volume_size" ] || [ -z "$pool_name" ]; then
+		printf "\n%sat least one of the required arguments has not been set%s\n\n" "$red" "$regular"
+		show_usage create-volume 1
+	fi
+
+	printf "%screating sparse file %s with maximum size %sGiB, in pool %s%s\n" "$green" "$volume_name" "$volume_size" "$pool_name" "$regular"
+
+	virsh vol-create-as "$pool_name" --name "$volume_name" --capacity "$volume_size"G --format qcow2 > /dev/null 2>&1
+	virsh_ec=$?
+	if [ $virsh_ec -ne 0 ]; then
+		printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
+		exit 2
+	fi
+}
+
+# ---------------------------------------------------------------------------
 # create_cmd():
-#   Creates a new libvirt network or a new storage pool
+#   Creates a new libvirt network, a new storage pool, or a new volume
 # ---------------------------------------------------------------------------
 
 create_cmd() {
@@ -1269,6 +1408,10 @@ create_cmd() {
 	pool)
 		shift
 		create_pool_cmd "$@"
+	;;
+	volume)
+		shift
+		create_volume_cmd "$@"
 	;;
 	"")
 		printf "\n%sentity type not specified%s\n\n" "$red" "$regular"
@@ -1354,11 +1497,10 @@ define_cmd() {
 				fi
 				memory_size_min=32
 				memory_size_max=16384
-				if [ "$value" -lt "$memory_size_min" ] \
-					|| [ "$value" -gt "$memory_size_max" ] \
-					|| [ $((value % memory_size_min)) -gt 0 ]; then
+				answer=$(is_size_valid "$value" "$memory_size_min" "$memory_size_max")	
+				if [ "$answer" == "no" ]; then
 					printf "%smemory size must be between %d and %d MiB inclusive, and an integer multiple of %d%s\n" \
-					"$red" $memory_size_min $memory_size_max $memory_size_min "$regular"
+						"$red" $memory_size_min $memory_size_max $memory_size_min "$regular"
 					exit 1
 				fi
 				memory_size=$value
@@ -1384,9 +1526,8 @@ define_cmd() {
 				fi
 				volume_size_min=16
 				volume_size_max=512
-				if [ "$value" -lt "$volume_size_min" ] \
-					|| [ "$value" -gt "$volume_size_max" ] \
-					|| [ $((value % volume_size_min)) -gt 0 ]; then
+				answer=$(is_size_valid "$value" "$volume_size_min" "$volume_size_max")
+				if [ "$answer" == "no" ]; then
 					printf "%svolume size must be between %d and %d GiB inclusive, and an integer multiple of %d%s\n" \
 						"$red" $volume_size_min $volume_size_max $volume_size_min "$regular"
 					exit 1
@@ -1454,7 +1595,7 @@ define_cmd() {
 	fi
 
 	all_VMs=$(virsh list --name --all)
-	pool_path=$(in_between "$(virsh pool-dumpxml "$pool_name" | grep "<path>")" "<path>" "</path>")
+	pool_path=$(get_pool_path "$pool_name")
 	for candidate; do
 		answer=$(is_name_valid "$candidate")
 		if [ "$answer" == "no" ]; then
@@ -1577,16 +1718,14 @@ list_cmd() {
 		echo "---- ----- ------ -------- ------ ------ ------- -----------" >> ~/"$temp_file_name"
 
 		for name in $all_VMs; do
-			state_ws=$(right_part_of "$(virsh dominfo "$name" | grep State)" ":")
-			state=$(echo "$state_ws" | sed -e 's/^[ \t]*//')
+			state=$(echo "$(right_part_of "$(virsh dominfo "$name" | grep State)" ":")" | awk '{ print $1 }')
 			if [ "$state" == "running" ]; then
 				state="active"
 			else
 				state="inactive"
 			fi
 
-			CPUs_ws=$(right_part_of "$(virsh dominfo "$name" | grep CPU\(s\))" ":")
-			CPUs=$(echo "$CPUs_ws" | sed -e 's/^[ \t]*//')
+			CPUs=$(echo "$(right_part_of "$(virsh dominfo "$name" | grep CPU\(s\))" ":")" | awk '{ print $1 }')
 			ram_size=$(in_between "$(virsh dominfo "$name" | grep "Max memory")" ":" " ")
 			ram_size_mb=$(( ram_size / 1024 ))
 			block_devices=$(($(virsh domblklist "$name" | wc -l)-3))
@@ -1627,8 +1766,7 @@ list_cmd() {
 		all_VMs=$(virsh list --name --all)
 
 		for name in $all_networks; do
-			state_ws=$(right_part_of "$(virsh net-info "$name" | grep Active)" ":")
-			state=$(echo "$state_ws" | sed -e 's/^[ \t]*//')
+			state=$(echo "$(right_part_of "$(virsh net-info "$name" | grep Active)" ":")" | awk '{ print $1 }')
 			if [ "$state" == "yes" ]; then
 				state="active"
 			else
@@ -1698,17 +1836,13 @@ list_cmd() {
 		echo "---- ----- -------- ---------- --------- ----------- -------" >> ~/"$temp_file_name"
 
 		for name in $all_pools; do
-			state_ws=$(right_part_of "$(virsh pool-info "$name" | grep "State:")" "State:")
-			state=$(echo "$state_ws" | sed -e 's/^[ \t]*//')
+			state=$(echo "$(right_part_of "$(virsh pool-info "$name" | grep "State:")" "State:")" | awk '{ print $1 }')
 			if [ "$state" == "running" ]; then
 				state="active"
-				capacity_ws=$(right_part_of "$(virsh pool-info "$name" | grep "Capacity:")" "Capacity:")
-				capacity=$(echo "$capacity_ws" | sed -e 's/^[ \t]*//' | tr -d " ")
-				allocation_ws=$(right_part_of "$(virsh pool-info "$name" | grep "Allocation:")" "Allocation:")
-				allocation=$(echo "$allocation_ws" | sed -e 's/^[ \t]*//' | tr -d " ")
-				available_ws=$(right_part_of "$(virsh pool-info "$name" | grep "Available:")" "Available:")
-				available=$(echo "$available_ws" | sed -e 's/^[ \t]*//' | tr -d " ")
-				volumes=$(($(virsh vol-list "$name" | wc -l)-3))
+				capacity=$(echo "$(right_part_of "$(virsh pool-info "$name" | grep "Capacity")" "Capacity:")" | tr -d " ") 
+				allocation=$(echo "$(right_part_of "$(virsh pool-info "$name" | grep "Allocation")" "Allocation:")" | tr -d " ")
+				available=$(echo "$(right_part_of "$(virsh pool-info "$name" | grep "Available")" "Available:")" | tr -d " ")
+				volumes=$(echo "$(get_volumes "$name")" | wc -l)
 			else
 				state="inactive"
 				capacity="n/a"
@@ -1717,7 +1851,7 @@ list_cmd() {
 				volumes="n/a"
 			fi
 
-			path2pool_dir=$(in_between "$(virsh pool-dumpxml "$name" | grep "<path>")" "<path>" "</path>")
+			path2pool_dir=$(get_pool_path "$name")
 
 			echo "$name" "$state" "$capacity" "$allocation" "$available" "$path2pool_dir" "$volumes" >> ~/"$temp_file_name"
 		done
@@ -1742,12 +1876,10 @@ list_cmd() {
 		echo "------ -------- ---------- ----" >> ~/"$temp_file_name"
 
 		for pool in $all_pools; do
-			volumes_in_pool=$(left_part_of "$(virsh vol-list "$pool" | grep " /")" " /")
+			volumes_in_pool=$(get_volumes "$pool")
 			for volume in $volumes_in_pool; do
-				capacity_ws=$(right_part_of "$(virsh vol-info "$volume" "$pool" | grep "Capacity:")" "Capacity:")
-				capacity=$(echo "$capacity_ws" | sed -e 's/^[ \t]*//' | tr -d " ")
-				allocation_ws=$(right_part_of "$(virsh vol-info "$volume" "$pool" | grep "Allocation:")" "Allocation:")
-				allocation=$(echo "$allocation_ws" | sed -e 's/^[ \t]*//' | tr -d " ")
+				capacity=$(echo "$(right_part_of "$(virsh vol-info "$volume" "$pool" | grep "Capacity:")" "Capacity:")" | tr -d " ")
+				allocation=$(echo "$(right_part_of "$(virsh vol-info "$volume" "$pool" | grep "Allocation:")" "Allocation:")" | tr -d " ")
 				echo "$volume" "$capacity" "$allocation" "$pool" >> ~/"$temp_file_name"
 			done
 		done
