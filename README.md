@@ -23,7 +23,7 @@ Currently the following commands are implemented:
   attach	: attach new storage volumes to (in)active VMs
   check-service	: try to connect to specified TCP port of one or more active VMs
   clone		: clone a template VM into one or more new VMs
-  create	: create a new libvirt network or a new storage pool
+  create	: create a new libvirt network, a new storage pool, or a new volume
   deactivate	: gracefully shutdown active VMs
   define	: define one or more new VMs
   getmac	: reveal MAC addresses
