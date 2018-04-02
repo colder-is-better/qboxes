@@ -248,26 +248,6 @@ show_usage() {
 }
 
 # ---------------------------------------------------------------------------
-# is_size_valid():
-#   Checks if given size (of either RAM or volume) is valid
-#   Given size is valid if it's between size_min and size_max
-#   inclusive, and is also an integer multiple of size_min
-# ---------------------------------------------------------------------------
-
-is_size_valid() {
-	answer="yes"
-	the_value="$1"
-	size_min="$2"
-	size_max="$3"
-	if [ "$the_value" -lt "$size_min" ] \
-	|| [ "$the_value" -gt "$size_max" ] \
-	|| [ $((the_value % size_min)) -gt 0 ]; then
-		answer="no"
-	fi
-	echo "$answer"
-}
-
-# ---------------------------------------------------------------------------
 # is_name_valid():
 #   Checks if given name is valid
 #   A name is valid for qboxes if it comprises alphanumerics,
@@ -304,6 +284,26 @@ is_number_valid() {
 			answer="yes"
 	    fi
     fi
+	echo "$answer"
+}
+
+# ---------------------------------------------------------------------------
+# is_size_valid():
+#   Checks if given size (of either RAM or volume) is valid
+#   Given size is valid if it's between size_min and size_max
+#   inclusive, and is also an integer multiple of size_min
+# ---------------------------------------------------------------------------
+
+is_size_valid() {
+	answer="yes"
+	the_value="$1"
+	size_min="$2"
+	size_max="$3"
+	if [ "$the_value" -lt "$size_min" ] \
+	|| [ "$the_value" -gt "$size_max" ] \
+	|| [ $((the_value % size_min)) -gt 0 ]; then
+		answer="no"
+	fi
 	echo "$answer"
 }
 
@@ -381,60 +381,60 @@ in_between() {
 }
 
 # ---------------------------------------------------------------------------
-# get_mac_addr():
+# get_first_nic_mac():
 #   Returns the MAC address of a VM's first Ethernet adapter
 # ---------------------------------------------------------------------------
 
-get_mac_addr() {
+get_first_nic_mac() {
 	the_vm="$1"
 	line_in_xml="$(virsh --quiet dumpxml "$the_vm" | grep "mac address")"
-	the_mac_addr="$(in_between "$line_in_xml" "<mac address='" "'")"
-	echo "$the_mac_addr"
+	first_nic_mac="$(in_between "$line_in_xml" "<mac address='" "'")"
+	echo "$first_nic_mac"
 }
 
 # ---------------------------------------------------------------------------
-# get_first_net():
+# get_first_nic_net():
 #   Returns the name or the connection type of given VM's first net adapter
 # ---------------------------------------------------------------------------
 
-get_first_net() {
+get_first_nic_net() {
 	the_vm="$1"
-	first_net="n/a"
+	first_nic_net="n/a"
 	line_in_xml="$(virsh --quiet dumpxml "$the_vm" | grep "<source bridge='" | head -n 1)"
 	if [ -n "$line_in_xml" ]; then
-		first_net="hostBridge"
+		first_nic_net="hostBridge"
 	else
 		line_in_xml="$(virsh --quiet dumpxml "$the_vm" | grep "<source network='" | head -n 1)"
 		if [ -n "$line_in_xml" ]; then
-			first_net="$(in_between "$line_in_xml" "<source network='" "'")"
+			first_nic_net="$(in_between "$line_in_xml" "<source network='" "'")"
 		fi
 	fi
-	echo "$first_net"
+	echo "$first_nic_net"
 }
 
 # ---------------------------------------------------------------------------
-# get_first_net_adapt_ip():
+# get_first_nic_ip():
 #   Returns the IPv4 address of a VM's first network adapter
 # ---------------------------------------------------------------------------
 
-get_first_net_adapt_ip() {
+get_first_nic_ip() {
 	the_vm="$1"
-	first_net_adapt_ip="n/a"
-	first_net="$(get_first_net "$the_vm")"
-	if [ "$first_net" != "n/a" ]; then
-		first_net_adapt_ip="unknown"
-		mac_addr="$(get_mac_addr "$the_vm")"
-		via_guest_agent="$(virsh domifaddr --source agent "$the_vm" 2> /dev/null | grep "$mac_addr" | awk '{ print $4 }')"
+	first_nic_ip="n/a"
+	first_nic_net="$(get_first_nic_net "$the_vm")"
+	if [ "$first_nic_net" != "n/a" ]; then
+		first_nic_ip="unknown"
+		first_nic_mac="$(get_first_nic_mac "$the_vm")"
+		via_guest_agent="$(virsh domifaddr --source agent "$the_vm" 2> /dev/null | grep "$first_nic_mac" | awk '{ print $4 }')"
 		if [ -n "$via_guest_agent" ]; then
-			first_net_adapt_ip=$(left_part_of "$via_guest_agent" "/")
-		elif [ "$first_net" != "hostBridge" ]; then
-			via_local_dhcp="$(virsh domifaddr --source lease "$the_vm" 2> /dev/null | grep "$mac_addr" | awk '{ print $4 }')"
+			first_nic_ip=$(left_part_of "$via_guest_agent" "/")
+		elif [ "$first_nic_net" != "hostBridge" ]; then
+			via_local_dhcp="$(virsh domifaddr --source lease "$the_vm" 2> /dev/null | grep "$first_nic_mac" | awk '{ print $4 }')"
 			if [ -n "$via_local_dhcp" ]; then
-				first_net_adapt_ip=$(left_part_of "$via_local_dhcp" "/")
+				first_nic_ip=$(left_part_of "$via_local_dhcp" "/")
 			fi
 		fi
 	fi
-	echo "$first_net_adapt_ip"
+	echo "$first_nic_ip"
 }
 
 # ---------------------------------------------------------------------------
@@ -507,7 +507,8 @@ get_networks() {
 
 get_pool_path() {
 	the_pool="$1"
-	echo "$(in_between "$(virsh pool-dumpxml "$the_pool" | grep "<path>")" "<path>" "</path>")"
+	the_path=$(in_between "$(virsh pool-dumpxml "$the_pool" | grep "<path>")" "<path>" "</path>")
+	echo "$the_path"
 }
 
 # ---------------------------------------------------------------------------
@@ -808,7 +809,7 @@ checkservice_cmd() {
 			if [ "$answer" == "no" ]; then
 				printf "%s%s is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
-				candidate_ip=$(get_first_net_adapt_ip "$candidate")
+				candidate_ip=$(get_first_nic_ip "$candidate")
 				if [ "$candidate_ip" == "n/a" ]; then
 					printf "%s%s does not seem to have any network adapter connected to it%s\n" "$yellow" "$candidate" "$regular"
 				elif [ "$candidate_ip" == "unknown" ]; then
@@ -1683,7 +1684,7 @@ getmac_cmd() {
 			if [ "$answer" == "no" ]; then
 				printf "%scannot seem to find VM '%s'%s\n" "$yellow" "$candidate" "$regular"
 			else
-				mac_addr=$(get_mac_addr "$candidate")
+				mac_addr=$(get_first_nic_mac "$candidate")
 				printf "%s%s looks like %s in the local network%s\n" "$green" "$candidate" "$mac_addr" "$regular"
 			fi
 		fi
@@ -1734,11 +1735,11 @@ list_cmd() {
 			bridged_net="<interface type='bridge'"
 			network_adapters=$(virsh dumpxml "$name" | grep -e "$nated_net" -e "$bridged_net" -c)
 
-			first_net_adapt_conn="$(get_first_net "$name")"
+			first_net_adapt_conn="$(get_first_nic_net "$name")"
 			if [ "$state" != "active" ]; then
 				first_net_adapt_ip="n/a"
 			else
-				first_net_adapt_ip="$(get_first_net_adapt_ip "$name")"
+				first_net_adapt_ip="$(get_first_nic_ip "$name")"
 			fi
 
 			echo "$name" "$state" "$CPUs" "$ram_size_mb" "$block_devices" \
@@ -1950,7 +1951,7 @@ ping_cmd() {
 			if [ "$answer" == "no" ]; then
 				printf "%s%s is not an active VM%s\n" "$yellow" "$candidate" "$regular"
 			else
-				candidate_ip=$(get_first_net_adapt_ip "$candidate")
+				candidate_ip=$(get_first_nic_ip "$candidate")
 				if [ "$candidate_ip" == "n/a" ]; then
 					printf "%s%s does not seem to have any network adapter connected to it%s\n" "$yellow" "$candidate" "$regular"	
 				elif [ "$candidate_ip" == "unknown" ]; then
