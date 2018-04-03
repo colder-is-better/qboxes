@@ -30,14 +30,61 @@ show_usage() {
 		;;
 		annihilate)
 			printf "COMMAND NAME\n"
-			printf "  annihilate - remove any trace of inactive VMs\n\n"
+			printf "  annihilate - remove any trace of given libvirt entity\n\n"
 			printf "SYNOPSIS\n"
-			printf "  annihilate <inactive_VM_1> ... <inactive_VM_k>\n\n"
+			printf "  annihilate <vm|network|pool|volume>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Undefine one or more inactive VMs, delete all snapshots and"
-			printf " associated storage volumes (%sthink TWICE before annihilating%s)\n\n" "$red" "$regular"
+			printf "  Delete existing libvirt entity, where \"entity\" may"
+			printf " be any one of vm, network, pool, volume\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes annihilate guest_{1..5}%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes annihilate vm node{1..8}%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes annihilate network qbxnet localnet%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes annihilate pool templates tank%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes annihilate volume --pool=datastore disk{0..4}%s\n\n" "$bold" "$regular"
+			exit "$error_code"
+		;;
+		annihilate-vms)
+			printf "COMMAND NAME & OBJECT\n"
+			printf "  annihilate vm - remove any trace of given VMs\n\n"
+			printf "SYNOPSIS\n"
+			printf "  annihilate vm <inactive_VM_1> ... <inactive_VM_k>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Delete one or more inactive VMs\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~> %sqboxes annihilate vm node{1..8}%s\n\n" "$bold" "$regular"
+			exit "$error_code"
+		;;
+		annihilate-networks)
+			printf "COMMAND NAME & OBJECT\n"
+			printf "  annihilate network - remove given libvirt networks\n\n"
+			printf "SYNOPSIS\n"
+			printf "  annihilate network <net_1> ... <net_k>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Delete one or more libvirt networks\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~> %sqboxes annihilate network qbxnet localnet%s\n\n" "$bold" "$regular"
+			exit "$error_code"
+		;;
+		annihilate-pools)
+			printf "COMMAND NAME & OBJECT\n"
+			printf "  annihilate pool - remove given storage pools\n\n"
+			printf "SYNOPSIS\n"
+			printf "  annihilate pool <pool_1> ... <pool_k>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Delete one or more storage pools\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~> %sqboxes annihilate pool templates tank%s\n\n" "$bold" "$regular"
+			exit "$error_code"
+		;;
+		annihilate-volumes)
+			printf "COMMAND NAME & OBJECT\n"
+			printf "  annihilate volume - remove storage volumes\n\n"
+			printf "SYNOPSIS\n"
+			printf "  annihilate volume <vol_1> ... <vol_k>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  Delete one or more storage volumes from given pool\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~> %sqboxes annihilate --pool=datastore disk{0..4}%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		attach)
@@ -83,7 +130,7 @@ show_usage() {
 			printf "  create <network|pool|volume>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Create a new libvirt entity, where \"entity\" may"
-			printf " be a network, a pool, or a volume\n\n"
+			printf " be any one of network, pool, volume\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes create network --name=lvirtnet --domain=local.qbx --router=10.20.30.254" "$bold"
 			printf " --netmask=255.255.255.0 --dhcp=on --from=10.20.30.100 --to=10.20.30.253%s\n\n" "$regular"
@@ -171,7 +218,7 @@ show_usage() {
 			printf "  list <vm(s)|network(s)|pool(s)|volume(s)>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Present all available entities of given type, where \"type\""
-			printf " may be any one of these: vm, network, pool, volume\n\n"
+			printf " may be any one of vm, network, pool, volume\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes list networks%s\n\n" "$bold" "$regular"
 			exit "$error_code"
@@ -217,7 +264,7 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Force-power-off one or more active VMs\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes unplug guest{1..3}\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes unplug guest{1..3}%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		*)
@@ -225,11 +272,11 @@ show_usage() {
 			printf " for managing local QEMU/KVM VMs.\n"
 			printf "Currently the following commands are implemented:\n\n"
 			printf "  activate\t: bring inactive VMs up\n"
-			printf "  annihilate\t: remove any trace of inactive VMs\n"
+			printf "  annihilate\t: remove any trace of inactive VMs, networks, pools, or volumes\n"
 			printf "  attach\t: attach new storage volumes to (in)active VMs\n"
 			printf "  check-service\t: try to connect to specified TCP port of one or more active VMs\n"
 			printf "  clone\t\t: clone a template VM into one or more new VMs\n"
-			printf "  create\t: create a new libvirt network, storage pool, or volume\n"
+			printf "  create\t: create a new libvirt network, storage pool, or storage volume\n"
 			printf "  deactivate\t: gracefully shutdown active VMs\n"
 			printf "  define\t: define one or more new VMs\n"
 			printf "  getmac\t: reveal MAC addresses\n"
@@ -552,16 +599,20 @@ activate_cmd() {
 }
 
 # ---------------------------------------------------------------------------
-# annihilate_cmd():
-#   Undefines one or more inactive VMs,
-#   deletes all associated storage volumes and snapshots
+# annihilate_vms_cmd():
+#   Removes any trace of one or more inactive VMs
 # ---------------------------------------------------------------------------
 
-annihilate_cmd() {
+annihilate_vms_cmd() {
+	if [ "$1" == "help" ]; then
+		echo
+		show_usage annihilate-vms 0
+	fi
+
 	lowest_num_args=1
 	if [ $# -lt $lowest_num_args ]; then
 		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" $lowest_num_args "$regular"
-		show_usage annihilate 1
+		show_usage annihilate-vms 1
 	fi
 
 	all_inactive_VMs=$(virsh list --name --inactive)
@@ -579,25 +630,6 @@ annihilate_cmd() {
 			if [ "$answer" == "no" ]; then
 				printf "%s'%s' does not look like an inactive VM%s\n" "$yellow" "$candidate" "$regular"
 			else
-				user_known_hosts=~/.ssh/known_hosts
-				if [ -e "$user_known_hosts" ]; then
-					printf "%slooking for and removing entries related to " "$green"
-					printf "%s from %s%s\n" "$candidate" "$user_known_hosts" "$regular"
-					random_alphanum=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 30 | tr -d '\n')
-					mkdir ~/"$random_alphanum"
-					sudo virt-copy-out -d "$candidate" /etc/ssh/ssh_host_*_key.pub ~/"$random_alphanum"/ > /dev/null 2>&1
-					virt_copy_out_ec=$?
-					if [ $virt_copy_out_ec -ne 0 ]; then
-						printf "%scannot read host keys from %s, virt-copy-out " "$yellow" "$candidate"
-						printf "returned error code %d%s\n" $virt_copy_out_ec "$regular"
-					else
-						for each_file in ~/"$random_alphanum"/*.pub; do
-							host_key=$(awk -F " " '{ print $2 }' "$each_file" | awk -F " " '{ print $1 }')
-							sed -i "/${host_key//\//\\/}/d" "$user_known_hosts"
-						done
-					fi
-					rm -fr ~/"$random_alphanum"
-				fi
 				printf "%sannihilating %s%s\n" "$green" "$candidate" "$regular"
 				all_snapshots=$(virsh snapshot-list --name "$candidate")
 				if [ -n "$all_snapshots" ]; then
@@ -622,6 +654,201 @@ annihilate_cmd() {
 			fi
 		fi
 	done
+}
+
+# ---------------------------------------------------------------------------
+# annihilate_networks_cmd():
+#   Removes any trace of one or more libvirt networks
+# ---------------------------------------------------------------------------
+
+annihilate_networks_cmd() {
+	if [ "$1" == "help" ]; then
+		echo
+		show_usage annihilate-networks 0
+	fi
+
+	lowest_num_args=1
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" $lowest_num_args "$regular"
+		show_usage annihilate-networks 1
+	fi
+
+	all_networks=$(get_networks "all")
+	if [ -z "$all_networks" ]; then
+		printf "\n%scannot seem to find a single libvirt network on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		exit 0
+	fi
+
+	for candidate; do
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
+			printf "%s'%s' is not a valid network name%s\n" "$yellow" "$candidate" "$regular"
+		else
+			answer=$(is_a_member "$candidate" "$all_networks")
+			if [ "$answer" == "no" ]; then
+				printf "%s'%s' does not look like a libvirt network%s\n" "$yellow" "$candidate" "$regular"
+			else
+				printf "%sannihilating %s%s\n" "$green" "$candidate" "$regular"
+				virsh net-destroy "$candidate" > /dev/null 2>&1
+				virsh net-undefine "$candidate" > /dev/null 2>&1
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d, skipping %s%s\n" "$yellow" $virsh_ec "$candidate" "$regular"
+				fi
+			fi
+		fi
+	done
+}
+
+# ---------------------------------------------------------------------------
+# annihilate_pools_cmd():
+#   Removes any trace of one or more storage pools
+# ---------------------------------------------------------------------------
+
+annihilate_pools_cmd() {
+	if [ "$1" == "help" ]; then
+		echo
+		show_usage annihilate-pools 0
+	fi
+
+	lowest_num_args=1
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" $lowest_num_args "$regular"
+		show_usage annihilate-pools 1
+	fi
+
+	all_pools=$(get_pools "all")
+	if [ -z "$all_pools" ]; then
+		printf "\n%scannot seem to find a single storage pool on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		exit 0
+	fi
+
+	for candidate; do
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
+			printf "%s'%s' is not a valid pool name%s\n" "$yellow" "$candidate" "$regular"
+		else
+			answer=$(is_a_member "$candidate" "$all_pools")
+			if [ "$answer" == "no" ]; then
+				printf "%s'%s' does not look like a storage pool%s\n" "$yellow" "$candidate" "$regular"
+			else
+				printf "%sannihilating %s%s\n" "$green" "$candidate" "$regular"
+				virsh pool-destroy "$candidate" > /dev/null 2>&1
+				virsh pool-undefine "$candidate" > /dev/null 2>&1
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d, skipping %s%s\n" "$yellow" $virsh_ec "$candidate" "$regular"
+				fi
+			fi
+		fi
+	done
+}
+
+# ---------------------------------------------------------------------------
+# annihilate_volumes_cmd():
+#   Removes any trace of one or more storage volumes
+# ---------------------------------------------------------------------------
+
+annihilate_volumes_cmd() {
+	if [ "$1" == "help" ]; then
+		echo
+		show_usage annihilate-volumes 0
+	fi
+
+	lowest_num_args=2
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" $lowest_num_args "$regular"
+		show_usage annihilate-volumes 1
+	fi
+
+	param=$(left_part_of "$1" "=")
+	the_pool=$(right_part_of "$1" "=")
+
+	if [ "$param" != "--pool" ]; then
+		printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
+		show_usage annihilate-volumes 1
+	fi
+
+	answer=$(is_name_valid "$the_pool")
+	if [ "$answer" == "no" ]; then
+		printf "%s'%s' is not a valid pool name%s\n" "$red" "$the_pool" "$regular"
+		exit 1
+	fi
+
+	all_pools=$(get_pools "all")
+	if [ -z "$all_pools" ]; then
+		printf "\n%scannot seem to find a single storage pool on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		exit 1
+	fi
+
+	answer=$(is_a_member "$the_pool" "$all_pools")
+	if [ "$answer" == "no" ]; then
+		printf "%scannot seem to find pool '%s'%s\n" "$red" "$the_pool" "$regular"
+		exit 1
+	fi
+
+	shift
+
+	all_pool_volumes=$(get_volumes "$the_pool")
+
+	for candidate; do
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
+			printf "%s'%s' is not a valid volume name%s\n" "$yellow" "$candidate" "$regular"
+		else
+			qcow2_full_name="$candidate".qcow2
+			answer=$(is_a_member "$qcow2_full_name" "$all_pool_volumes")
+			if [ "$answer" == "no" ]; then
+				printf "%s'%s' does not look like a storage volume%s\n" "$yellow" "$qcow2_full_name" "$regular"
+			else
+				printf "%sannihilating %s%s\n" "$green" "$qcow2_full_name" "$regular"
+				virsh vol-delete "$qcow2_full_name" --pool "$the_pool" > /dev/null 2>&1
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d, skipping %s%s\n" \
+					"$yellow" $virsh_ec "$qcow2_full_name" "$regular"
+				fi
+				virsh pool-refresh "$the_pool" > /dev/null 2>&1
+			fi
+		fi
+	done
+}
+
+# ---------------------------------------------------------------------------
+# annihilate_cmd():
+#   Removes any trace of inactive VMs,
+#   libvirt networks, storage pools, or storage volumes
+# ---------------------------------------------------------------------------
+
+annihilate_cmd() {
+	entity_type="$1"
+
+	case $entity_type in
+	vm|vms)
+		shift
+		annihilate_vms_cmd "$@"
+	;;
+	network|networks)
+		shift
+		annihilate_networks_cmd "$@"
+	;;
+	pool|pools)
+		shift
+		annihilate_pools_cmd "$@"
+	;;
+	volume|volumes)
+		shift
+		annihilate_volumes_cmd "$@"
+	;;
+	"")
+		printf "\n%sentity type not specified%s\n\n" "$red" "$regular"
+		show_usage annihilate 1
+	;;
+	*)
+		printf "\n%sinvalid entity type '%s'%s\n\n" "$red" "$entity_type" "$regular"
+		show_usage annihilate 1
+	;;
+	esac
 }
 
 # ---------------------------------------------------------------------------
@@ -1395,7 +1622,8 @@ create_volume_cmd() {
 
 # ---------------------------------------------------------------------------
 # create_cmd():
-#   Creates a new libvirt network, a new storage pool, or a new volume
+#   Creates a new libvirt network,
+#   a new storage pool, or a new storage volume
 # ---------------------------------------------------------------------------
 
 create_cmd() {
@@ -1692,204 +1920,242 @@ getmac_cmd() {
 }
 
 # ---------------------------------------------------------------------------
+# list_vms_cmd():
+#   Presents all available VMs
+# ---------------------------------------------------------------------------
+
+list_vms_cmd() {
+	all_VMs=$(virsh list --name --all)
+	if [ -z "$all_VMs" ]; then
+		printf "\n%scannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		exit 0
+	fi
+
+	temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
+
+	echo "Name State CPU(s) RAM[MiB] BLK(s) NIC(s) PrimNet PrimAdaptIP" >> ~/"$temp_file_name"
+	echo "---- ----- ------ -------- ------ ------ ------- -----------" >> ~/"$temp_file_name"
+
+	for name in $all_VMs; do
+		state=$(echo "$(right_part_of "$(virsh dominfo "$name" | grep State)" ":")" | awk '{ print $1 }')
+		if [ "$state" == "running" ]; then
+			state="active"
+		else
+			state="inactive"
+		fi
+
+		CPUs=$(echo "$(right_part_of "$(virsh dominfo "$name" | grep CPU\(s\))" ":")" | awk '{ print $1 }')
+		ram_size=$(in_between "$(virsh dominfo "$name" | grep "Max memory")" ":" " ")
+		ram_size_mb=$(( ram_size / 1024 ))
+		block_devices=$(($(virsh domblklist "$name" | wc -l)-3))
+
+		nated_net="<source network='"
+		bridged_net="<interface type='bridge'"
+		network_adapters=$(virsh dumpxml "$name" | grep -e "$nated_net" -e "$bridged_net" -c)
+
+		first_nic_net="$(get_first_nic_net "$name")"
+		if [ "$state" == "inactive" ]; then
+			first_nic_ip="n/a"
+		else
+			first_nic_ip="$(get_first_nic_ip "$name")"
+		fi
+
+		echo "$name" "$state" "$CPUs" "$ram_size_mb" "$block_devices" \
+			"$network_adapters" "$first_nic_net" "$first_nic_ip" >> ~/"$temp_file_name"
+	done
+
+	echo
+	column -t ~/"$temp_file_name"
+	echo
+
+	rm -f ~/"$temp_file_name"
+}
+
+# ---------------------------------------------------------------------------
+# list_networks_cmd():
+#   Presents all available libvirt networks
+# ---------------------------------------------------------------------------
+
+list_networks_cmd() {
+	all_networks=$(get_networks "all")
+	if [ -z "$all_networks" ]; then
+		printf "\n%scannot seem to find a single libvirt network on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		exit 0
+	fi
+
+	temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
+
+	echo "Name State Mode Domain MACaddr Router/DNSaddr DHCP fromIPaddr toIPaddr Clients" >> ~/"$temp_file_name"
+	echo "---- ----- ---- ------ ------- -------------- ---- ---------- -------- -------" >> ~/"$temp_file_name"
+
+	all_VMs=$(virsh list --name --all)
+
+	for name in $all_networks; do
+		state=$(echo "$(right_part_of "$(virsh net-info "$name" | grep Active)" ":")" | awk '{ print $1 }')
+		if [ "$state" == "yes" ]; then
+			state="active"
+		else
+			state="inactive"
+		fi
+
+		ip_addr="n/a"
+		ip_begin="n/a"
+		ip_end="n/a"
+		dhcp_server="n/a"
+
+		mode=$(in_between "$(virsh net-dumpxml "$name" | grep "mode='")" "mode='" "'")
+		if [ -z "$mode" ]; then
+			mode="isolated"
+		else
+			ip_addr=$(in_between "$(virsh net-dumpxml "$name" | grep "<ip address='")" "<ip address='" "'")
+			dhcp_server=$(virsh net-dumpxml "$name" | grep '<dhcp>')
+			if [ -z "$dhcp_server" ]; then
+				dhcp_server="off"
+			else
+				dhcp_server="on"
+				ip_begin=$(in_between "$(virsh net-dumpxml "$name" | grep "<range start='")" "<range start='" "'")
+				ip_end=$(in_between "$(virsh net-dumpxml "$name" | grep "<range start='")" "' end='" "'")
+			fi
+		fi
+
+		domain_name=$(in_between "$(virsh net-dumpxml "$name" | grep "<domain name='")" "<domain name='" "'")
+		if [ -z "$domain_name" ]; then
+			domain_name="n/a"
+		fi
+
+		mac_addr=$(in_between "$(virsh net-dumpxml "$name" | grep "<mac address='")" "<mac address='" "'")
+		if [ -z "$mac_addr" ]; then
+			mac_addr="n/a"
+		fi
+
+		net_clients=0
+		if [ -n "$all_VMs" ]; then
+			for guest in $all_VMs; do
+				how_many=$(virsh dumpxml "$guest" | grep -c "$name")
+				if [ "$how_many" -gt 0 ]; then
+					(( net_clients += 1 ))
+				fi
+			done
+		fi
+
+		echo "$name" "$state" "$mode" "$domain_name" "$mac_addr" "$ip_addr" \
+			"$dhcp_server" "$ip_begin" "$ip_end" "$net_clients" >> ~/"$temp_file_name"
+	done
+
+	echo
+	column -t ~/"$temp_file_name"
+	echo
+
+	rm -f ~/"$temp_file_name"
+}
+
+# ---------------------------------------------------------------------------
+# list_pools_cmd():
+#   Presents all available storage pools
+# ---------------------------------------------------------------------------
+
+list_pools_cmd() {
+	all_pools=$(get_pools "all")
+	if [ -z "$all_pools" ]; then
+		printf "\n%scannot seem to find a single pool on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		exit 0
+	fi
+
+	temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
+
+	echo "Name State Capacity Allocation Available PoolDirPath Volumes" >> ~/"$temp_file_name"
+	echo "---- ----- -------- ---------- --------- ----------- -------" >> ~/"$temp_file_name"
+
+	for name in $all_pools; do
+		state=$(echo "$(right_part_of "$(virsh pool-info "$name" | grep "State:")" "State:")" | awk '{ print $1 }')
+		if [ "$state" == "running" ]; then
+			state="active"
+			capacity=$(echo "$(right_part_of "$(virsh pool-info "$name" | grep "Capacity")" "Capacity:")" | tr -d " ") 
+			allocation=$(echo "$(right_part_of "$(virsh pool-info "$name" | grep "Allocation")" "Allocation:")" | tr -d " ")
+			available=$(echo "$(right_part_of "$(virsh pool-info "$name" | grep "Available")" "Available:")" | tr -d " ")
+			volumes=$(echo "$(get_volumes "$name")" | wc -l)
+		else
+			state="inactive"
+			capacity="n/a"
+			allocation="n/a"
+			available="n/a"
+			volumes="n/a"
+		fi
+
+		path2pool_dir=$(get_pool_path "$name")
+
+		echo "$name" "$state" "$capacity" "$allocation" "$available" "$path2pool_dir" "$volumes" >> ~/"$temp_file_name"
+	done
+
+	echo
+	column -t ~/"$temp_file_name"
+	echo
+
+	rm -f ~/"$temp_file_name"
+}
+
+# ---------------------------------------------------------------------------
+# list_volumes_cmd():
+#   Presents all available storage volumes
+# ---------------------------------------------------------------------------
+
+list_volumes_cmd() {
+	all_pools=$(get_pools "all")
+	if [ -z "$all_pools" ]; then
+		printf "\n%scannot seem to find a single pool on this host, " "$red"
+		printf "so I am assuming there are no volumes either (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$regular"
+		exit 0
+	fi
+
+	temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
+
+	echo "Volume Capacity Allocation Pool" >> ~/"$temp_file_name"
+	echo "------ -------- ---------- ----" >> ~/"$temp_file_name"
+
+	for pool in $all_pools; do
+		volumes_in_pool=$(get_volumes "$pool")
+		for volume in $volumes_in_pool; do
+			capacity=$(echo "$(right_part_of "$(virsh vol-info "$volume" "$pool" | grep "Capacity:")" "Capacity:")" | tr -d " ")
+			allocation=$(echo "$(right_part_of "$(virsh vol-info "$volume" "$pool" | grep "Allocation:")" "Allocation:")" | tr -d " ")
+			echo "$volume" "$capacity" "$allocation" "$pool" >> ~/"$temp_file_name"
+		done
+	done
+
+	echo
+	column -t ~/"$temp_file_name"
+	echo
+
+	rm -f ~/"$temp_file_name"
+}
+
+# ---------------------------------------------------------------------------
 # list_cmd():
 #   Presents all available VMs, libvirt networks, pools, or volumes
 # ---------------------------------------------------------------------------
 
 list_cmd() {
-	num_args=1
-	if [ $# -ne $num_args ]; then
-		printf "\n%sincorrect number of entity types (need exactly %d)%s\n\n" "$red" $num_args "$regular"
-		show_usage list 1
-	fi
-
 	entity_type="$1"
 
 	case $entity_type in
 	vm|vms)
-		all_VMs=$(virsh list --name --all)
-		if [ -z "$all_VMs" ]; then
-			printf "\n%scannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
-			exit 0
-		fi
-
-		temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
-
-		echo "Name State CPU(s) RAM[MiB] BLK(s) NIC(s) PrimNet PrimAdaptIP" >> ~/"$temp_file_name"
-		echo "---- ----- ------ -------- ------ ------ ------- -----------" >> ~/"$temp_file_name"
-
-		for name in $all_VMs; do
-			state=$(echo "$(right_part_of "$(virsh dominfo "$name" | grep State)" ":")" | awk '{ print $1 }')
-			if [ "$state" == "running" ]; then
-				state="active"
-			else
-				state="inactive"
-			fi
-
-			CPUs=$(echo "$(right_part_of "$(virsh dominfo "$name" | grep CPU\(s\))" ":")" | awk '{ print $1 }')
-			ram_size=$(in_between "$(virsh dominfo "$name" | grep "Max memory")" ":" " ")
-			ram_size_mb=$(( ram_size / 1024 ))
-			block_devices=$(($(virsh domblklist "$name" | wc -l)-3))
-
-			nated_net="<source network='"
-			bridged_net="<interface type='bridge'"
-			network_adapters=$(virsh dumpxml "$name" | grep -e "$nated_net" -e "$bridged_net" -c)
-
-			first_net_adapt_conn="$(get_first_nic_net "$name")"
-			if [ "$state" != "active" ]; then
-				first_net_adapt_ip="n/a"
-			else
-				first_net_adapt_ip="$(get_first_nic_ip "$name")"
-			fi
-
-			echo "$name" "$state" "$CPUs" "$ram_size_mb" "$block_devices" \
-				"$network_adapters" "$first_net_adapt_conn" "$first_net_adapt_ip" >> ~/"$temp_file_name"
-		done
-
-		echo
-		column -t ~/"$temp_file_name"
-		echo
-
-		rm -f ~/"$temp_file_name"
+		shift
+		list_vms_cmd "$@"
 	;;
 	network|networks)
-		all_networks=$(get_networks "all")
-		if [ -z "$all_networks" ]; then
-			printf "\n%scannot seem to find a single libvirt network on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
-			exit 0
-		fi
-
-		temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
-
-		echo "Name State Mode Domain MACaddr Router/DNSaddr DHCP fromIPaddr toIPaddr Clients" >> ~/"$temp_file_name"
-		echo "---- ----- ---- ------ ------- -------------- ---- ---------- -------- -------" >> ~/"$temp_file_name"
-
-		all_VMs=$(virsh list --name --all)
-
-		for name in $all_networks; do
-			state=$(echo "$(right_part_of "$(virsh net-info "$name" | grep Active)" ":")" | awk '{ print $1 }')
-			if [ "$state" == "yes" ]; then
-				state="active"
-			else
-				state="inactive"
-			fi
-
-			ip_addr="n/a"
-			ip_begin="n/a"
-			ip_end="n/a"
-			dhcp_server="n/a"
-
-			mode=$(in_between "$(virsh net-dumpxml "$name" | grep "mode='")" "mode='" "'")
-			if [ -z "$mode" ]; then
-				mode="isolated"
-			else
-				ip_addr=$(in_between "$(virsh net-dumpxml "$name" | grep "<ip address='")" "<ip address='" "'")
-				dhcp_server=$(virsh net-dumpxml "$name" | grep '<dhcp>')
-				if [ -z "$dhcp_server" ]; then
-					dhcp_server="off"
-				else
-					dhcp_server="on"
-					ip_begin=$(in_between "$(virsh net-dumpxml "$name" | grep "<range start='")" "<range start='" "'")
-					ip_end=$(in_between "$(virsh net-dumpxml "$name" | grep "<range start='")" "' end='" "'")
-				fi
-			fi
-
-			domain_name=$(in_between "$(virsh net-dumpxml "$name" | grep "<domain name='")" "<domain name='" "'")
-			if [ -z "$domain_name" ]; then
-				domain_name="n/a"
-			fi
-
-			mac_addr=$(in_between "$(virsh net-dumpxml "$name" | grep "<mac address='")" "<mac address='" "'")
-			if [ -z "$mac_addr" ]; then
-				mac_addr="n/a"
-			fi
-
-			net_clients=0
-			if [ -n "$all_VMs" ]; then
-				for guest in $all_VMs; do
-					how_many=$(virsh dumpxml "$guest" | grep -c "$name")
-					if [ "$how_many" -gt 0 ]; then
-						(( net_clients += 1 ))
-					fi
-				done
-			fi
-
-			echo "$name" "$state" "$mode" "$domain_name" "$mac_addr" "$ip_addr" \
-				"$dhcp_server" "$ip_begin" "$ip_end" "$net_clients" >> ~/"$temp_file_name"
-		done
-
-		echo
-		column -t ~/"$temp_file_name"
-		echo
-
-		rm -f ~/"$temp_file_name"
+		shift
+		list_networks_cmd "$@"
 	;;
 	pool|pools)
-		all_pools=$(get_pools "all")
-		if [ -z "$all_pools" ]; then
-			printf "\n%scannot seem to find a single pool on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
-			exit 0
-		fi
-
-		temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
-
-		echo "Name State Capacity Allocation Available PoolDirPath Volumes" >> ~/"$temp_file_name"
-		echo "---- ----- -------- ---------- --------- ----------- -------" >> ~/"$temp_file_name"
-
-		for name in $all_pools; do
-			state=$(echo "$(right_part_of "$(virsh pool-info "$name" | grep "State:")" "State:")" | awk '{ print $1 }')
-			if [ "$state" == "running" ]; then
-				state="active"
-				capacity=$(echo "$(right_part_of "$(virsh pool-info "$name" | grep "Capacity")" "Capacity:")" | tr -d " ") 
-				allocation=$(echo "$(right_part_of "$(virsh pool-info "$name" | grep "Allocation")" "Allocation:")" | tr -d " ")
-				available=$(echo "$(right_part_of "$(virsh pool-info "$name" | grep "Available")" "Available:")" | tr -d " ")
-				volumes=$(echo "$(get_volumes "$name")" | wc -l)
-			else
-				state="inactive"
-				capacity="n/a"
-				allocation="n/a"
-				available="n/a"
-				volumes="n/a"
-			fi
-
-			path2pool_dir=$(get_pool_path "$name")
-
-			echo "$name" "$state" "$capacity" "$allocation" "$available" "$path2pool_dir" "$volumes" >> ~/"$temp_file_name"
-		done
-
-		echo
-		column -t ~/"$temp_file_name"
-		echo
-
-		rm -f ~/"$temp_file_name"
+		shift
+		list_pools_cmd "$@"
 	;;
 	volume|volumes)
-		all_pools=$(get_pools "all")
-		if [ -z "$all_pools" ]; then
-			printf "\n%scannot seem to find a single pool on this host, " "$red"
-			printf "so I am assuming there are no volumes either (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$regular"
-			exit 0
-		fi
-
-		temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
-
-		echo "Volume Capacity Allocation Pool" >> ~/"$temp_file_name"
-		echo "------ -------- ---------- ----" >> ~/"$temp_file_name"
-
-		for pool in $all_pools; do
-			volumes_in_pool=$(get_volumes "$pool")
-			for volume in $volumes_in_pool; do
-				capacity=$(echo "$(right_part_of "$(virsh vol-info "$volume" "$pool" | grep "Capacity:")" "Capacity:")" | tr -d " ")
-				allocation=$(echo "$(right_part_of "$(virsh vol-info "$volume" "$pool" | grep "Allocation:")" "Allocation:")" | tr -d " ")
-				echo "$volume" "$capacity" "$allocation" "$pool" >> ~/"$temp_file_name"
-			done
-		done
-
-		echo
-		column -t ~/"$temp_file_name"
-		echo
-
-		rm -f ~/"$temp_file_name"
+		shift
+		list_volumes_cmd "$@"
+	;;
+	"")
+		printf "\n%sentity type not specified%s\n\n" "$red" "$regular"
+		show_usage list 1
 	;;
 	*)
 		printf "\n%sinvalid entity type '%s'%s\n\n" "$red" "$entity_type" "$regular"
@@ -1911,14 +2177,14 @@ ping_cmd() {
 	fi
 
 	param=$(left_part_of "$1" "=")
-	value=$(right_part_of "$1" "=")
+	n_packets=$(right_part_of "$1" "=")
 
 	if [ "$param" != "--count" ]; then
 		printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
 		show_usage ping 1
 	fi
 
-	answer=$(is_number_valid "$value")
+	answer=$(is_number_valid "$n_packets")
 	if [ "$answer" == "no" ]; then
 		printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
 		exit 1
@@ -1927,12 +2193,10 @@ ping_cmd() {
 	count_min=1
 	count_max=64
 
-	if [ "$value" -lt "$count_min" ] || [ "$value" -gt "$count_max" ]; then
+	if [ "$n_packets" -lt "$count_min" ] || [ "$n_packets" -gt "$count_max" ]; then
 		printf "%spacket count should be between %d and %d inclusive%s\n" "$red" $count_min $count_max "$regular"
 		exit 1
 	fi
-
-	n_packets="$value"
 
 	all_active_VMs=$(virsh list --name)
 	if [ -z "$all_active_VMs" ]; then
@@ -2116,6 +2380,7 @@ fi
 arg_two="$2"
 
 if [ "$arg_two" == "help" ]; then
+	echo
 	show_usage "$arg_one" 0
 fi
 
