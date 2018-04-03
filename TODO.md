@@ -6,9 +6,13 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 `annihilate`
 * facilitate the deletion of networks, pools, volumes
 
+`assimilate`
+* integrate an existing QCOW2 into an existing storage pool
+
 `attach`
-* new volumes should be existing ones or instantiated by the `create volume` command
-* this command should act on a single VM (for many VMs we have the `clone` command)
+* new volumes should be existing ones 
+* this command should act on a single VM
+* facilitate the attachment of networks, optical media
 
 `check-service`
 * __all_done__
@@ -16,7 +20,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 `clone`
 * optional: indicate network for clones
 * optional: indicate storage pool for clones (it is currently mandatory)
-* handle the cloning of "empty" VMs
+* handle the cloning of VMs with zero-sized storage volumes
 * clone VMs with more than one storage volumes
 
 `create`
@@ -27,7 +31,10 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 
 `define`
 * volumes should be existing ones or instantiated by the `create volume` command
-* this command should act on a single VM (for many VMs we have the `clone` command)
+* this command should act on a single VM
+
+`detach`
+* facilitate the dettachment of networks, volumes, optical media
 
 `getmac`
 * __all_done__
@@ -41,6 +48,9 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 
 `modify`
 * support the changing of RAM & number of cores (VMs)
+
+`rename`
+* rename a VM
 
 `ping`
 * __all_done__
