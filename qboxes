@@ -2073,7 +2073,7 @@ list_pools_cmd() {
 			capacity=$(echo "$(right_part_of "$(virsh pool-info "$name" | grep "Capacity")" "Capacity:")" | tr -d " ") 
 			allocation=$(echo "$(right_part_of "$(virsh pool-info "$name" | grep "Allocation")" "Allocation:")" | tr -d " ")
 			available=$(echo "$(right_part_of "$(virsh pool-info "$name" | grep "Available")" "Available:")" | tr -d " ")
-			volumes=$(echo "$(get_volumes "$name")" | wc -l)
+			volumes=$(echo "$(get_volumes "$name")" | wc -w)
 		else
 			state="inactive"
 			capacity="n/a"
