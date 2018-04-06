@@ -4,7 +4,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * __all_done__
 
 `annihilate`
-* facilitate the deletion of networks, pools, volumes
+* __done__
 
 `assimilate`
 * integrate an existing QCOW2 into an existing storage pool
