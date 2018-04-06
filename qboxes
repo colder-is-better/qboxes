@@ -2113,6 +2113,7 @@ list_volumes_cmd() {
 	echo "------ -------- ---------- ----" >> ~/"$temp_file_name"
 
 	for pool in $all_pools; do
+		virsh pool-refresh "$pool" > /dev/null 2>&1
 		volumes_in_pool=$(get_volumes "$pool")
 		for volume in $volumes_in_pool; do
 			capacity=$(echo "$(right_part_of "$(virsh vol-info "$volume" "$pool" | grep "Capacity:")" "Capacity:")" | tr -d " ")
@@ -2141,7 +2142,7 @@ list_cmd() {
 		shift
 		list_vms_cmd "$@"
 	;;
-	network|networks)
+	network|net|networks|nets)
 		shift
 		list_networks_cmd "$@"
 	;;
@@ -2149,7 +2150,7 @@ list_cmd() {
 		shift
 		list_pools_cmd "$@"
 	;;
-	volume|volumes)
+	volume|vol|volumes|vols)
 		shift
 		list_volumes_cmd "$@"
 	;;
