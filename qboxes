@@ -56,22 +56,22 @@ show_usage() {
 		;;
 		annihilate-networks)
 			printf "COMMAND NAME & OBJECT\n"
-			printf "  annihilate network - remove given libvirt networks\n\n"
+			printf "  annihilate network - remove given active libvirt networks\n\n"
 			printf "SYNOPSIS\n"
-			printf "  annihilate network <net_1> ... <net_k>\n\n"
+			printf "  annihilate network <active_net_1> ... <active_net_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Delete one or more libvirt networks\n\n"
+			printf "  Delete one or more active libvirt networks\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes annihilate network qbxnet localnet%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		annihilate-pools)
 			printf "COMMAND NAME & OBJECT\n"
-			printf "  annihilate pool - remove given storage pools\n\n"
+			printf "  annihilate pool - remove given active storage pools\n\n"
 			printf "SYNOPSIS\n"
-			printf "  annihilate pool <pool_1> ... <pool_k>\n\n"
+			printf "  annihilate pool <active_pool_1> ... <active_pool_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Delete one or more storage pools\n\n"
+			printf "  Delete one or more active storage pools\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes annihilate pool templates tank%s\n\n" "$bold" "$regular"
 			exit "$error_code"
@@ -80,20 +80,32 @@ show_usage() {
 			printf "COMMAND NAME & OBJECT\n"
 			printf "  annihilate volume - remove storage volumes\n\n"
 			printf "SYNOPSIS\n"
-			printf "  annihilate volume <vol_1> ... <vol_k>\n\n"
+			printf "  annihilate volume --pool=<active_pool_name> <vol_1> ... <vol_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Delete one or more storage volumes from given pool\n\n"
+			printf "  Delete one or more storage volumes from given active pool\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes annihilate --pool=datastore disk{0..4}%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes annihilate volume --pool=datastore disk{0..4}.qcow2%s\n\n" "$bold" "$regular"
+			exit "$error_code"
+		;;
+		assimilate)
+			printf "COMMAND NAME\n"
+			printf "  assimilate - integrate storage volumes into an existing active storage pool\n\n"
+			printf "SYNOPSIS\n"
+			printf "  assimilate --pool=<active_pool_name> <vol_1> ... <vol_k>\n\n"
+			printf "DESCRIPTION\n"
+			printf "  move one or more storage volumes (files of type ISO, QCOW2, etc.)"
+			printf " into an existing active storage pool and/or refresh the pool\n\n"
+			printf "%sEXAMPLE%s\n" "$bold" "$regular"
+			printf "  ~> %sqboxes assimilate --pool=templates opensuse-leap-423.qcow2 bionic-beaver.qcow2%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		attach)
 			printf "COMMAND NAME\n"
 			printf "  attach - attach new storage volumes to (in)active VMs\n\n"
 			printf "SYNOPSIS\n"
-			printf "  attach --name=<volume_name> --size=<capacity_in_GiB> --pool=<name> <VM_1> ... <VM_k>\n\n"
+			printf "  attach --name=<volume_name> --size=<capacity_in_GiB> --pool=<active_pool_name> <VM_1> ... <VM_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Create sparse QCOW2 files in specified pool, attach them as virtual"
+			printf "  Create sparse QCOW2 files in specified active pool, attach them as virtual"
 			printf " hard drives to (in)active VMs\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes attach --name=data --size=4096 --pool=lab osd_node_{1,2,3}%s\n\n" "$bold" "$regular"
@@ -107,17 +119,17 @@ show_usage() {
 			printf "DESCRIPTION\n";
 			printf "  Check if one or more active VMs are reachable via specificied TCP port\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes check-service --port=22 smt-server master%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes check-service --port=22 smt-server master-node%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		clone)
 			printf "COMMAND NAME\n"
 			printf "  clone - clone a template VM into one or more new VMs\n\n"
 			printf "SYNOPSIS\n"
-			printf "  clone --template=<VM_0> --target-pool=<pool_name> <VM_1> ... <VM_k>\n\n"
+			printf "  clone --template=<VM_0> --target-pool=<active_pool_name> <VM_1> ... <VM_k>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Clone an existing inactive template VM into one or more new VMs, indicate"
-			printf " a target storage pool for the cloned volumes\n\n"
+			printf " a target active pool for keeping the cloned volumes\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes clone --template=sles12sp3 --target-pool=services" "$bold"
 			printf " www-srv-1 www-srv-2 balancer%s\n\n" "$regular"
@@ -190,7 +202,7 @@ show_usage() {
 			printf "  define - define one or more new VMs\n\n"
 			printf "SYNOPSIS\n"
 			printf "  define --ram=<size_in_MiB> --cores=<count> --volume-size=<capacity_in_GiB>"
-			printf " --network=<name> --guest-os=<os_variant> --pool=<name> <VM_1> ... <VM_k>\n\n"
+			printf " --network=<name> --guest-os=<os_variant> --pool=<active_pool_name> <VM_1> ... <VM_k>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Define one or more VMs according to specifications, do not install a guest"
 			printf " OS on any of them\n"
@@ -272,7 +284,8 @@ show_usage() {
 			printf " for managing local QEMU/KVM VMs.\n"
 			printf "Currently the following commands are implemented:\n\n"
 			printf "  activate\t: bring inactive VMs up\n"
-			printf "  annihilate\t: remove any trace of inactive VMs, networks, pools, or volumes\n"
+			printf "  annihilate\t: remove any trace of inactive VMs, active networks, active pools, or volumes\n"
+			printf "  assimilate\t: integrate storage volumes into an existing active pool\n"
 			printf "  attach\t: attach new storage volumes to (in)active VMs\n"
 			printf "  check-service\t: try to connect to specified TCP port of one or more active VMs\n"
 			printf "  clone\t\t: clone a template VM into one or more new VMs\n"
@@ -673,9 +686,9 @@ annihilate_networks_cmd() {
 		show_usage annihilate-networks 1
 	fi
 
-	all_networks=$(get_networks "all")
-	if [ -z "$all_networks" ]; then
-		printf "\n%scannot seem to find a single libvirt network on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+	all_active_networks=$(get_networks "active")
+	if [ -z "$all_active_networks" ]; then
+		printf "\n%scannot seem to find a single active libvirt network on this host%s\n\n" "$red" "$regular"
 		exit 0
 	fi
 
@@ -684,9 +697,9 @@ annihilate_networks_cmd() {
 		if [ "$answer" == "no" ]; then
 			printf "%s'%s' is not a valid network name%s\n" "$yellow" "$candidate" "$regular"
 		else
-			answer=$(is_a_member "$candidate" "$all_networks")
+			answer=$(is_a_member "$candidate" "$all_active_networks")
 			if [ "$answer" == "no" ]; then
-				printf "%s'%s' does not look like a libvirt network%s\n" "$yellow" "$candidate" "$regular"
+				printf "%s'%s' does not look like an active libvirt network%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%sannihilating %s%s\n" "$green" "$candidate" "$regular"
 				virsh net-destroy "$candidate" > /dev/null 2>&1
@@ -717,9 +730,9 @@ annihilate_pools_cmd() {
 		show_usage annihilate-pools 1
 	fi
 
-	all_pools=$(get_pools "all")
-	if [ -z "$all_pools" ]; then
-		printf "\n%scannot seem to find a single storage pool on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+	all_active_pools=$(get_pools "active")
+	if [ -z "$all_active_pools" ]; then
+		printf "\n%scannot seem to find a single active storage pool on this host%s\n\n" "$red" "$regular"
 		exit 0
 	fi
 
@@ -728,9 +741,9 @@ annihilate_pools_cmd() {
 		if [ "$answer" == "no" ]; then
 			printf "%s'%s' is not a valid pool name%s\n" "$yellow" "$candidate" "$regular"
 		else
-			answer=$(is_a_member "$candidate" "$all_pools")
+			answer=$(is_a_member "$candidate" "$all_active_pools")
 			if [ "$answer" == "no" ]; then
-				printf "%s'%s' does not look like a storage pool%s\n" "$yellow" "$candidate" "$regular"
+				printf "%s'%s' does not look like an active storage pool%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%sannihilating %s%s\n" "$green" "$candidate" "$regular"
 				virsh pool-destroy "$candidate" > /dev/null 2>&1
@@ -775,15 +788,15 @@ annihilate_volumes_cmd() {
 		exit 1
 	fi
 
-	all_pools=$(get_pools "all")
-	if [ -z "$all_pools" ]; then
-		printf "\n%scannot seem to find a single storage pool on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+	all_active_pools=$(get_pools "active")
+	if [ -z "$all_active_pools" ]; then
+		printf "\n%scannot seem to find a single active storage pool on this host%s\n\n" "$red" "$regular"
 		exit 1
 	fi
 
-	answer=$(is_a_member "$the_pool" "$all_pools")
+	answer=$(is_a_member "$the_pool" "$all_active_pools")
 	if [ "$answer" == "no" ]; then
-		printf "%scannot seem to find pool '%s'%s\n" "$red" "$the_pool" "$regular"
+		printf "%scannot seem to find active pool '%s'%s\n" "$red" "$the_pool" "$regular"
 		exit 1
 	fi
 
@@ -796,17 +809,16 @@ annihilate_volumes_cmd() {
 		if [ "$answer" == "no" ]; then
 			printf "%s'%s' is not a valid volume name%s\n" "$yellow" "$candidate" "$regular"
 		else
-			qcow2_full_name="$candidate".qcow2
-			answer=$(is_a_member "$qcow2_full_name" "$all_pool_volumes")
+			answer=$(is_a_member "$candidate" "$all_pool_volumes")
 			if [ "$answer" == "no" ]; then
-				printf "%s'%s' does not look like a storage volume%s\n" "$yellow" "$qcow2_full_name" "$regular"
+				printf "%s'%s' does not look like a storage volume%s\n" "$yellow" "$candidate" "$regular"
 			else
-				printf "%sannihilating %s%s\n" "$green" "$qcow2_full_name" "$regular"
-				virsh vol-delete "$qcow2_full_name" --pool "$the_pool" > /dev/null 2>&1
+				printf "%sannihilating %s%s\n" "$green" "$candidate" "$regular"
+				virsh vol-delete "$candidate" --pool "$the_pool" > /dev/null 2>&1
 				virsh_ec=$?
 				if [ $virsh_ec -ne 0 ]; then
 					printf "%soperation failed, virsh returned error code %d, skipping %s%s\n" \
-					"$yellow" $virsh_ec "$qcow2_full_name" "$regular"
+					"$yellow" $virsh_ec "$candidate" "$regular"
 				fi
 				virsh pool-refresh "$the_pool" > /dev/null 2>&1
 			fi
@@ -828,7 +840,7 @@ annihilate_cmd() {
 		shift
 		annihilate_vms_cmd "$@"
 	;;
-	network|networks)
+	network|net|networks|nets)
 		shift
 		annihilate_networks_cmd "$@"
 	;;
@@ -836,7 +848,7 @@ annihilate_cmd() {
 		shift
 		annihilate_pools_cmd "$@"
 	;;
-	volume|volumes)
+	volume|vol|volumes|vols)
 		shift
 		annihilate_volumes_cmd "$@"
 	;;
@@ -849,6 +861,69 @@ annihilate_cmd() {
 		show_usage annihilate 1
 	;;
 	esac
+}
+
+# ---------------------------------------------------------------------------
+# assimilate_cmd():
+#   Moves, if necessary, given files (of type ISO, QCOW2, etc.)
+#   into an existing active storage pool and/or refreshes said pool
+# ---------------------------------------------------------------------------
+
+assimilate_cmd() {
+	lowest_num_args=2
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" $lowest_num_args "$regular"
+		show_usage assimilate 1
+	fi
+
+	param=$(left_part_of "$1" "=")
+	the_pool=$(right_part_of "$1" "=")
+
+	if [ "$param" != "--pool" ]; then
+		printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
+		show_usage assimilate 1
+	fi
+
+	answer=$(is_name_valid "$the_pool")
+	if [ "$answer" == "no" ]; then
+		printf "%s'%s' is not a valid pool name%s\n" "$red" "$the_pool" "$regular"
+		exit 1
+	fi
+
+	all_active_pools=$(get_pools "active")
+	answer=$(is_a_member "$the_pool" "$all_active_pools")
+	if [ "$answer" == "no" ]; then
+		printf "%s'%s' does not look like an active pool%s\n" "$red" "$the_pool" "$regular"
+		exit 1
+	fi
+
+	shift
+
+	the_pool_path=$(get_pool_path "$the_pool")
+
+	for candidate; do
+		if [ ! -f "$candidate" ]; then
+			printf "%scannot locate '%s'%s\n" "$yellow" "$the_pool" "$regular"
+		else
+			candidate_path=$(dirname "$candidate")
+			if [ "$candidate_path" == "$the_pool_path" ]; then
+				printf "%s%s is already in the directory of %s, so I am just going to refresh the pool%s\n" "$green" "$candidate" "$the_pool" "$regular"
+			else
+				mv "$candidate" "$the_pool_path"/ > /dev/null 2>&1
+				mv_ec=$?
+				if [ $mv_ec -ne 0 ]; then
+					candidate_name=$(basename "$candidate")
+					printf "%sfailed to move %s from %s into %s, mv returned error code %d%s\n" \
+					"$yellow" "$candidate_name" "$candidate_path" "$the_pool_path" $mv_ec "$regular"
+				fi
+			fi
+			virsh pool-refresh "$the_pool" > /dev/null 2>&1
+			virsh_ec=$?
+			if [ $virsh_ec -ne 0 ]; then
+				printf "%sfailed to refresh %s, virsh returned error code %d%s\n" "$yellow" "$the_pool" $virsh_ec "$regular"
+			fi
+		fi
+	done
 }
 
 # ---------------------------------------------------------------------------
@@ -907,7 +982,7 @@ attach_cmd() {
 				all_active_pools=$(get_pools "active")
 				answer=$(is_a_member "$value" "$all_active_pools")
 				if [ "$answer" == "no" ]; then
-					printf "%scannot seem to find pool '%s'%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' does not look like an active pool%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				pool_name=$value
@@ -1099,7 +1174,7 @@ clone_cmd() {
 				all_active_pools=$(get_pools "active")
 				answer=$(is_a_member "$value" "$all_active_pools")
 				if [ "$answer" == "no" ]; then
-					printf "%scannot seem to find pool '%s'%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' does not look like an active pool%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				clone_pool_name=$value
@@ -1248,10 +1323,10 @@ create_network_cmd() {
 					printf "%s'%s' is not a valid network name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				all_networks=$(get_networks "all")
-				answer=$(is_a_member "$value" "$all_networks")
+				all_active_networks=$(get_networks "active")
+				answer=$(is_a_member "$value" "$all_active_networks")
 				if [ "$answer" == "yes" ]; then
-					printf "%snetwork '%s' already exists%s\n" "$red" "$value" "$regular"
+					printf "%sactive network '%s' already exists%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				net_name=$value
@@ -1268,11 +1343,11 @@ create_network_cmd() {
 					printf "%s'%s' is not a valid domain name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				all_networks=$(get_networks "all")
-				for each_net in $all_networks; do
+				all_active_networks=$(get_networks "active")
+				for each_net in $all_active_networks; do
 					domain_name=$(in_between "$(virsh net-dumpxml "$each_net" | grep "<domain name='")" "<domain name='" "'")
 					if [ "$value" == "$domain_name" ]; then
-						printf "%sdomain %s is already used in network %s%s\n" "$red" "$value" "$each_net" "$regular"
+						printf "%sdomain %s is already used in active network %s%s\n" "$red" "$value" "$each_net" "$regular"
 						exit 1
 					fi
 				done
@@ -1284,11 +1359,11 @@ create_network_cmd() {
 					printf "%s'%s' is not a valid router IPv4 address%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				all_networks=$(get_networks "all")
-				for each_net in $all_networks; do
+				all_active_networks=$(get_networks "active")
+				for each_net in $all_active_networks; do
 					router_addr=$(in_between "$(virsh net-dumpxml "$each_net" | grep "<ip address='")" "<ip address='" "'")
 					if [ "$value" == "$router_addr" ]; then
-						printf "%srouter address %s is already used in network %s%s\n" "$red" "$value" "$each_net" "$regular"
+						printf "%srouter address %s is already used in active network %s%s\n" "$red" "$value" "$each_net" "$regular"
 						exit 1
 					fi
 				done
@@ -1772,7 +1847,7 @@ define_cmd() {
 				all_active_networks=$(get_networks "active")
 				answer=$(is_a_member "$value" "$all_active_networks")
 				if [ "$answer" == "no" ]; then
-					printf "%sI cannot seem to find network '%s'%s\n" "$red" "$value" "$regular"
+					printf "%scannot seem to find active network '%s'%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				libvirt_network=$value
@@ -1800,7 +1875,7 @@ define_cmd() {
 				all_active_pools=$(get_pools "active")
 				answer=$(is_a_member "$value" "$all_active_pools")
 				if [ "$answer" == "no" ]; then
-					printf "%scannot seem to find pool '%s'%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' does not look like an active pool%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				pool_name=$value
@@ -2368,7 +2443,7 @@ if [ "$arg_one" == "help" ]; then
 	show_usage "help" 0
 fi
 
-accepted_commands="activate annihilate attach check-service clone \
+accepted_commands="activate annihilate assimilate attach check-service clone \
 create deactivate define getmac list ping powcycle reboot unplug"
 
 answer=$(is_a_member "$arg_one" "$accepted_commands")
@@ -2391,6 +2466,8 @@ case $arg_one in
 		activate_cmd "$@" ;;
 	annihilate)
 		annihilate_cmd "$@" ;;
+	assimilate)
+		assimilate_cmd "$@" ;;
 	attach)
 		attach_cmd "$@" ;;
 	check-service)
