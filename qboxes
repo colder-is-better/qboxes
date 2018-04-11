@@ -811,7 +811,7 @@ annihilate_volumes_cmd() {
 		else
 			answer=$(is_a_member "$candidate" "$all_pool_volumes")
 			if [ "$answer" == "no" ]; then
-				printf "%s'%s' does not look like a storage volume%s\n" "$yellow" "$candidate" "$regular"
+				printf "%sthere is no file %s in pool %s%s\n" "$yellow" "$candidate" "$the_pool" "$regular"
 			else
 				printf "%sannihilating %s%s\n" "$green" "$candidate" "$regular"
 				virsh vol-delete "$candidate" --pool "$the_pool" > /dev/null 2>&1
@@ -897,30 +897,48 @@ assimilate_cmd() {
 		exit 1
 	fi
 
+	virsh pool-refresh "$the_pool" > /dev/null 2>&1
+	virsh_ec=$?
+	if [ $virsh_ec -ne 0 ]; then
+		printf "%sfailed to refresh %s, virsh returned error code %d%s\n" "$red" "$the_pool" $virsh_ec "$regular"
+		exit 1
+    fi
+
 	shift
 
 	the_pool_path=$(get_pool_path "$the_pool")
 
 	for candidate; do
-		if [ ! -f "$candidate" ]; then
-			printf "%scannot locate '%s'%s\n" "$yellow" "$the_pool" "$regular"
+		candidate_name=$(basename "$candidate" 2>/dev/null)
+		answer=$(is_name_valid "$candidate_name")
+		if [ "$answer" == "no" ]; then
+			printf "%s'%s' is not a valid volume name%s\n" "$yellow" "$candidate" "$regular"
+		elif [ ! -f "$candidate" ]; then
+			printf "%scannot locate '%s'%s\n" "$yellow" "$candidate" "$regular"
 		else
 			candidate_path=$(dirname "$candidate")
 			if [ "$candidate_path" == "$the_pool_path" ]; then
-				printf "%s%s is already in the directory of %s, so I am just going to refresh the pool%s\n" "$green" "$candidate" "$the_pool" "$regular"
+				printf "%sfile '%s' is already in the directory of %s%s\n" "$yellow" "$candidate_name" "$the_pool" "$regular"
 			else
-				mv "$candidate" "$the_pool_path"/ > /dev/null 2>&1
-				mv_ec=$?
-				if [ $mv_ec -ne 0 ]; then
-					candidate_name=$(basename "$candidate")
-					printf "%sfailed to move %s from %s into %s, mv returned error code %d%s\n" \
-					"$yellow" "$candidate_name" "$candidate_path" "$the_pool_path" $mv_ec "$regular"
+				all_pool_volumes=$(get_volumes "$the_pool")
+				answer=$(is_a_member "$candidate_name" "$all_pool_volumes")
+				if [ "$answer" == "yes" ]; then
+					printf "%sthere is already a file named '%s' in pool %s%s\n" "$yellow" "$candidate_name" "$the_pool" "$regular"
+				else
+					printf "%smoving %s [%s ==> %s]%s\n" "$green" "$candidate_name" "$candidate_path" "$the_pool_path" "$regular"
+					sudo mv "$candidate" "$the_pool_path"/ > /dev/null 2>&1
+					mv_ec=$?
+					if [ $mv_ec -ne 0 ]; then
+						printf "%sfailed to move %s from %s into %s, mv returned error code %d%s\n" \
+						"$yellow" "$candidate_name" "$candidate_path" "$the_pool_path" $mv_ec "$regular"
+					else
+						virsh pool-refresh "$the_pool" > /dev/null 2>&1
+						virsh_ec=$?
+						if [ $virsh_ec -ne 0 ]; then
+							printf "%sfailed to refresh %s, virsh returned error code %d%s\n" "$yellow" "$the_pool" $virsh_ec "$regular"
+						fi
+					fi
 				fi
-			fi
-			virsh pool-refresh "$the_pool" > /dev/null 2>&1
-			virsh_ec=$?
-			if [ $virsh_ec -ne 0 ]; then
-				printf "%sfailed to refresh %s, virsh returned error code %d%s\n" "$yellow" "$the_pool" $virsh_ec "$regular"
 			fi
 		fi
 	done
