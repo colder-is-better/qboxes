@@ -7,7 +7,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * __done__
 
 `assimilate`
-* integrate an existing QCOW2 into an existing storage pool
+* __done__
 
 `attach`
 * new volumes should be existing ones 
