@@ -152,12 +152,12 @@ show_usage() {
 		;;
 		create-network)
 			printf "COMMAND NAME & OBJECT\n"
-			printf "  create network - create a new libvirt NATed network\n\n"
+			printf "  create network - create a new libvirt network\n\n"
 			printf "SYNOPSIS\n"
 			printf "  create network --name=<net_name> --domain=<domain.name> --router=<router.ip.v4.address>"
 			printf " --netmask=<netmask.ip.v4.addr> --dhcp=<on|off> [--from=<from.ip.v4.addr>] [--to=<to.ip.v4.addr>]\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Create a new libvirt NATed network offering routing and DNS services,"
+			printf "  Create a new libvirt network offering routing and DNS services,"
 			printf " optionally DHCP service also\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes create network --name=localnet --domain=local.qbx --router=10.20.30.254" "$bold"
@@ -166,7 +166,7 @@ show_usage() {
 		;;
 		create-pool)
 			printf "COMMAND NAME & OBJECT\n"
-			printf "  create pool - create a new libvirt storage pool\n\n"
+			printf "  create pool - create a new storage pool\n\n"
 			printf "SYNOPSIS\n"
 			printf "  create pool --name=<pool_name> --path=<path_to_local_dir>\n\n"
 			printf "DESCRIPTION\n"
@@ -229,10 +229,11 @@ show_usage() {
 			printf "SYNOPSIS\n"
 			printf "  list <vm(s)|network(s)|pool(s)|volume(s)>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Present all available entities of given type, where \"type\""
-			printf " may be any one of vm, network, pool, volume\n\n"
+			printf "  Present all available (in)active entities of given type, where"
+			printf " \"type\" may be any one of vm, network, pool, volume.\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes list networks%s\n\n" "$bold" "$regular"
+            printf "  ~> %sqboxes list vms%s\n\n" "$bold" "$regular"
+            printf "  ~> %sqboxes list networks%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		ping)
@@ -293,7 +294,7 @@ show_usage() {
 			printf "  deactivate\t: gracefully shutdown active VMs\n"
 			printf "  define\t: define one or more new VMs\n"
 			printf "  getmac\t: reveal MAC addresses\n"
-			printf "  list\t\t: present all available VMs, libvirt networks, pools, or volumes\n"
+			printf "  list\t\t: present all available (in)active VMs, libvirt networks, pools, or volumes\n"
 			printf "  ping\t\t: send ICMP packets to active VMs\n"
 			printf "  powcycle\t: cold-restart active VMs\n"
 			printf "  reboot\t: gracefully restart active VMs\n"
@@ -510,7 +511,7 @@ get_volumes() {
 
 # ---------------------------------------------------------------------------
 # get_pools():
-#   Returns active, inactive or all libvirt pools
+#   Returns active, inactive or all pools
 #   Implemented for compatibility reasons (old versions
 #   of virsh do not understand the --name option)
 # ---------------------------------------------------------------------------
@@ -585,7 +586,7 @@ activate_cmd() {
 
 	all_inactive_VMs=$(virsh list --name --inactive)
 	if [ -z "$all_inactive_VMs" ]; then
-		printf "\n%scannot seem to find a single inactive VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		printf "\n%scannot seem to find a single inactive VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
 	fi
 
@@ -596,7 +597,7 @@ activate_cmd() {
 		else
 			answer=$(is_a_member "$candidate" "$all_inactive_VMs")
 			if [ "$answer" == "no" ]; then
-				printf "%s'%s' does not look like an inactive VM%s\n" "$yellow" "$candidate" "$regular"
+				printf "%s'%s' is not an inactive VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%spowering up %s%s\n" "$green" "$candidate" "$regular"
 				virsh start "$candidate" > /dev/null 2>&1
@@ -630,7 +631,7 @@ annihilate_vms_cmd() {
 
 	all_inactive_VMs=$(virsh list --name --inactive)
 	if [ -z "$all_inactive_VMs" ]; then
-		printf "\n%scannot seem to find a single inactive VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		printf "\n%scannot seem to find a single inactive VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
 	fi
 
@@ -641,7 +642,7 @@ annihilate_vms_cmd() {
 		else
 			answer=$(is_a_member "$candidate" "$all_inactive_VMs")
 			if [ "$answer" == "no" ]; then
-				printf "%s'%s' does not look like an inactive VM%s\n" "$yellow" "$candidate" "$regular"
+				printf "%s'%s' is not an inactive VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%sannihilating %s%s\n" "$green" "$candidate" "$regular"
 				all_snapshots=$(virsh snapshot-list --name "$candidate")
@@ -688,7 +689,7 @@ annihilate_networks_cmd() {
 
 	all_active_networks=$(get_networks "active")
 	if [ -z "$all_active_networks" ]; then
-		printf "\n%scannot seem to find a single active libvirt network on this host%s\n\n" "$red" "$regular"
+		printf "\n%scannot seem to find a single active libvirt network on this host%s\n\n" "$yellow" "$regular"
 		exit 0
 	fi
 
@@ -699,7 +700,7 @@ annihilate_networks_cmd() {
 		else
 			answer=$(is_a_member "$candidate" "$all_active_networks")
 			if [ "$answer" == "no" ]; then
-				printf "%s'%s' does not look like an active libvirt network%s\n" "$yellow" "$candidate" "$regular"
+				printf "%s'%s' is not an active libvirt network%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%sannihilating %s%s\n" "$green" "$candidate" "$regular"
 				virsh net-destroy "$candidate" > /dev/null 2>&1
@@ -732,7 +733,7 @@ annihilate_pools_cmd() {
 
 	all_active_pools=$(get_pools "active")
 	if [ -z "$all_active_pools" ]; then
-		printf "\n%scannot seem to find a single active storage pool on this host%s\n\n" "$red" "$regular"
+		printf "\n%scannot seem to find a single active pool on this host%s\n\n" "$yellow" "$regular"
 		exit 0
 	fi
 
@@ -743,7 +744,7 @@ annihilate_pools_cmd() {
 		else
 			answer=$(is_a_member "$candidate" "$all_active_pools")
 			if [ "$answer" == "no" ]; then
-				printf "%s'%s' does not look like an active storage pool%s\n" "$yellow" "$candidate" "$regular"
+				printf "%s'%s' is not an active storage pool%s\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%sannihilating %s%s\n" "$green" "$candidate" "$regular"
 				virsh pool-destroy "$candidate" > /dev/null 2>&1
@@ -790,13 +791,13 @@ annihilate_volumes_cmd() {
 
 	all_active_pools=$(get_pools "active")
 	if [ -z "$all_active_pools" ]; then
-		printf "\n%scannot seem to find a single active storage pool on this host%s\n\n" "$red" "$regular"
-		exit 1
+		printf "\n%scannot seem to find a single active pool on this host%s\n\n" "$yellow" "$regular"
+		exit 0
 	fi
 
 	answer=$(is_a_member "$the_pool" "$all_active_pools")
 	if [ "$answer" == "no" ]; then
-		printf "%scannot seem to find active pool '%s'%s\n" "$red" "$the_pool" "$regular"
+		printf "%s'%s' is not an active pool%s\n" "$red" "$the_pool" "$regular"
 		exit 1
 	fi
 
@@ -893,7 +894,7 @@ assimilate_cmd() {
 	all_active_pools=$(get_pools "active")
 	answer=$(is_a_member "$the_pool" "$all_active_pools")
 	if [ "$answer" == "no" ]; then
-		printf "%s'%s' does not look like an active pool%s\n" "$red" "$the_pool" "$regular"
+		printf "%s'%s' is not an active pool%s\n" "$red" "$the_pool" "$regular"
 		exit 1
 	fi
 
@@ -978,7 +979,7 @@ attach_cmd() {
 			--size)
 				answer=$(is_number_valid "$value")
 				if [ "$answer" == "no" ]; then
-					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				volume_size_min=128
@@ -986,7 +987,7 @@ attach_cmd() {
 				answer=$(is_size_valid "$value" "$volume_size_min" "$volume_size_max")
 				if [ "$answer" == "no" ]; then
 					printf "%svolume size must be between %d and %d GiB inclusive, and an integer multiple of %d%s\n" \
-						"$red" $volume_size_min $volume_size_max $volume_size_min "$regular"
+					"$red" $volume_size_min $volume_size_max $volume_size_min "$regular"
 					exit 1
 				fi
 				volume_size=$value
@@ -1000,7 +1001,7 @@ attach_cmd() {
 				all_active_pools=$(get_pools "active")
 				answer=$(is_a_member "$value" "$all_active_pools")
 				if [ "$answer" == "no" ]; then
-					printf "%s'%s' does not look like an active pool%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not an active pool%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				pool_name=$value
@@ -1022,7 +1023,7 @@ attach_cmd() {
 
 	all_VMs=$(virsh list --name --all)
 	if [ -z "$all_VMs" ]; then
-		printf "\n%scannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		printf "\n%scannot seem to find a single (in)active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
 	fi
 
@@ -1035,7 +1036,7 @@ attach_cmd() {
 		else
 			answer=$(is_a_member "$candidate" "$all_VMs")
 			if [ "$answer" == "no" ]; then
-				printf "%s'%s' does not look like a VM%s\n" "$yellow" "$candidate" "$regular"
+				printf "%s'%s' is not a VM%s\n" "$yellow" "$candidate" "$regular"
 			else
 				virtio_dev=""
 				devices_taken=$(in_between "$(virsh dumpxml "$candidate" | grep "<target dev='")" "<target dev='" "' bus='")
@@ -1101,7 +1102,7 @@ checkservice_cmd() {
 
 	answer=$(is_number_valid "$value")
 	if [ "$answer" == "no" ]; then
-		printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
+		printf "%s'%s' is not a positive integer%s\n" "$red" "$value" "$regular"
 		exit 1
 	fi
 
@@ -1114,7 +1115,7 @@ checkservice_cmd() {
 
 	all_active_VMs=$(virsh list --name)
 	if [ -z "$all_active_VMs" ]; then
-		printf "\n%scannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		printf "\n%scannot seem to find a single active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
 	fi
 
@@ -1192,7 +1193,7 @@ clone_cmd() {
 				all_active_pools=$(get_pools "active")
 				answer=$(is_a_member "$value" "$all_active_pools")
 				if [ "$answer" == "no" ]; then
-					printf "%s'%s' does not look like an active pool%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not an active pool%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				clone_pool_name=$value
@@ -1542,7 +1543,7 @@ create_network_cmd() {
 
 # ---------------------------------------------------------------------------
 # create_pool_cmd()
-#   Instantiates a new libvirt storage pool
+#   Instantiates a new storage pool
 # ---------------------------------------------------------------------------
 
 create_pool_cmd() {
@@ -1628,7 +1629,7 @@ create_pool_cmd() {
 
 # ---------------------------------------------------------------------------
 # create_volume_cmd()
-#   Creates a new libvirt storage volume
+#   Creates a new volume within given active storage pool
 # ---------------------------------------------------------------------------
 
 create_volume_cmd() {
@@ -1656,16 +1657,16 @@ create_volume_cmd() {
 					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				all_pools=$(get_pools "all")
-				answer=$(is_a_member "$value" "$all_pools")
+				all_active_pools=$(get_pools "active")
+				answer=$(is_a_member "$value" "$all_active_pools")
 				if [ "$answer" == "no" ]; then
-					printf "%scannot seem to find pool '%s'%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not an active pool%s\n" "$yellow" "$value" "$regular"
 					exit 1
 				fi
 				all_pool_volumes=$(get_volumes "$value")
 				answer=$(is_a_member "$volume_name" "$all_pool_volumes")
 				if [ "$answer" == "yes" ]; then
-					printf "%svolume %s already exists in pool %s%s\n" "$red" "$volume_name" "$value" "$regular"
+					printf "%sfile %s already exists in pool %s%s\n" "$red" "$volume_name" "$value" "$regular"
 					exit 1
 				fi
 				pool_name=$value
@@ -1673,7 +1674,7 @@ create_volume_cmd() {
 			--size)
 				answer=$(is_number_valid "$value")
 				if [ "$answer" == "no" ]; then
-					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				volume_size_min=32
@@ -1681,7 +1682,7 @@ create_volume_cmd() {
 				answer=$(is_size_valid "$value" "$volume_size_min" "$volume_size_max")
 				if [ "$answer" == "no" ]; then
 					printf "%svolume size must be between %d and %d GiB inclusive, and an integer multiple of %d%s\n" \
-						"$red" $volume_size_min $volume_size_max $volume_size_min "$regular"
+					"$red" $volume_size_min $volume_size_max $volume_size_min "$regular"
 					exit 1
 				fi
 				volume_size=$value
@@ -1761,7 +1762,7 @@ deactivate_cmd() {
 
 	all_active_VMs=$(virsh list --name)
 	if [ -z "$all_active_VMs" ]; then
-		printf "\n%scannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		printf "\n%scannot seem to find a single active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
 	fi
 
@@ -1814,7 +1815,7 @@ define_cmd() {
 			--ram)
 				answer=$(is_number_valid "$value")
 				if [ "$answer" == "no" ]; then
-					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				memory_size_min=32
@@ -1822,7 +1823,7 @@ define_cmd() {
 				answer=$(is_size_valid "$value" "$memory_size_min" "$memory_size_max")	
 				if [ "$answer" == "no" ]; then
 					printf "%smemory size must be between %d and %d MiB inclusive, and an integer multiple of %d%s\n" \
-						"$red" $memory_size_min $memory_size_max $memory_size_min "$regular"
+					"$red" $memory_size_min $memory_size_max $memory_size_min "$regular"
 					exit 1
 				fi
 				memory_size=$value
@@ -1830,7 +1831,7 @@ define_cmd() {
 			--cores)
 				answer=$(is_number_valid "$value")
 				if [ "$answer" == "no" ]; then
-					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				cpu_cores_max=$(right_part_of "$(virsh nodeinfo | grep "CPU(s):")" ":")
@@ -1843,7 +1844,7 @@ define_cmd() {
 			--volume-size)
 				answer=$(is_number_valid "$value")
 				if [ "$answer" == "no" ]; then
-					printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not a positive integer%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				volume_size_min=16
@@ -1851,7 +1852,7 @@ define_cmd() {
 				answer=$(is_size_valid "$value" "$volume_size_min" "$volume_size_max")
 				if [ "$answer" == "no" ]; then
 					printf "%svolume size must be between %d and %d GiB inclusive, and an integer multiple of %d%s\n" \
-						"$red" $volume_size_min $volume_size_max $volume_size_min "$regular"
+					"$red" $volume_size_min $volume_size_max $volume_size_min "$regular"
 					exit 1
 				fi
 				volume_size=$value
@@ -1893,7 +1894,7 @@ define_cmd() {
 				all_active_pools=$(get_pools "active")
 				answer=$(is_a_member "$value" "$all_active_pools")
 				if [ "$answer" == "no" ]; then
-					printf "%s'%s' does not look like an active pool%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not an active pool%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				pool_name=$value
@@ -1992,7 +1993,7 @@ getmac_cmd() {
 
 	all_VMs=$(virsh list --name --all)
 	if [ -z "$all_VMs" ]; then
-		printf "\n%scannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		printf "\n%scannot seem to find a single (in)active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
 	fi
 
@@ -2020,7 +2021,7 @@ getmac_cmd() {
 list_vms_cmd() {
 	all_VMs=$(virsh list --name --all)
 	if [ -z "$all_VMs" ]; then
-		printf "\n%scannot seem to find a single VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		printf "\n%scannot seem to find a single (in)active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
 	fi
 
@@ -2072,7 +2073,7 @@ list_vms_cmd() {
 list_networks_cmd() {
 	all_networks=$(get_networks "all")
 	if [ -z "$all_networks" ]; then
-		printf "\n%scannot seem to find a single libvirt network on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		printf "\n%scannot seem to find a single (in)active libvirt network on this host%s\n\n" "$yellow" "$regular"
 		exit 0
 	fi
 
@@ -2150,7 +2151,7 @@ list_networks_cmd() {
 list_pools_cmd() {
 	all_pools=$(get_pools "all")
 	if [ -z "$all_pools" ]; then
-		printf "\n%scannot seem to find a single pool on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		printf "\n%scannot seem to find a single (in)active pool on this host%s\n\n" "$yellow" "$regular"
 		exit 0
 	fi
 
@@ -2195,8 +2196,8 @@ list_pools_cmd() {
 list_volumes_cmd() {
 	all_pools=$(get_pools "all")
 	if [ -z "$all_pools" ]; then
-		printf "\n%scannot seem to find a single pool on this host, " "$red"
-		printf "so I am assuming there are no volumes either (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$regular"
+		printf "\n%scannot seem to find a single (in)active pool on this host, " "$yellow"
+		printf "so I am assuming there are no volumes either%s\n\n" "$regular"
 		exit 0
 	fi
 
@@ -2224,7 +2225,8 @@ list_volumes_cmd() {
 
 # ---------------------------------------------------------------------------
 # list_cmd():
-#   Presents all available VMs, libvirt networks, pools, or volumes
+#   Presents all available (in)active VMs,
+#   libvirt networks, storage pools, or storage volumes
 # ---------------------------------------------------------------------------
 
 list_cmd() {
@@ -2280,7 +2282,7 @@ ping_cmd() {
 
 	answer=$(is_number_valid "$n_packets")
 	if [ "$answer" == "no" ]; then
-		printf "%s'%s' does not look like a positive integer%s\n" "$red" "$value" "$regular"
+		printf "%s'%s' is not a positive integer%s\n" "$red" "$value" "$regular"
 		exit 1
 	fi
 
@@ -2294,7 +2296,7 @@ ping_cmd() {
 
 	all_active_VMs=$(virsh list --name)
 	if [ -z "$all_active_VMs" ]; then
-		printf "\n%scannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		printf "\n%scannot seem to find a single active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
 	fi
 
@@ -2338,7 +2340,7 @@ powcycle_cmd() {
 
 	all_active_VMs=$(virsh list --name)
 	if [ -z "$all_active_VMs" ]; then
-		printf "\n%scannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		printf "\n%scannot seem to find a single active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
 	fi
 
@@ -2379,7 +2381,7 @@ reboot_cmd() {
 
 	all_active_VMs=$(virsh list --name)
 	if [ -z "$all_active_VMs" ]; then
-		printf "\n%scannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		printf "\n%scannot seem to find a single active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
 	fi
 
@@ -2421,7 +2423,7 @@ unplug_cmd() {
 
 	all_active_VMs=$(virsh list --name)
 	if [ -z "$all_active_VMs" ]; then
-		printf "\n%scannot seem to find a single active VM on this host (is LIBVIRT_DEFAULT_URI set?)%s\n\n" "$red" "$regular"
+		printf "\n%scannot seem to find a single active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
 	fi
 
