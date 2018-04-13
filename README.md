@@ -29,7 +29,7 @@ Currently the following commands are implemented:
   deactivate	: gracefully shutdown active VMs
   define	: define one or more new VMs
   getmac	: reveal MAC addresses
-  list		: return all available VMs, libvirt networks, pools, or volumes
+  list		: return all available (in)active VMs, libvirt networks, pools, or volumes
   ping		: send ICMP packets to active VMs
   powcycle	: cold-restart active VMs
   reboot	: gracefully restart active VMs
