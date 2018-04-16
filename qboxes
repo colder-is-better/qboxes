@@ -584,7 +584,7 @@ activate_cmd() {
 		show_usage activate 1
 	fi
 
-	all_inactive_VMs=$(virsh list --name --inactive > /dev/null 2>&1)
+	all_inactive_VMs=$(virsh list --name --inactive 2> /dev/null)
 	if [ -z "$all_inactive_VMs" ]; then
 		printf "\n%scannot seem to find a single inactive VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
@@ -629,7 +629,7 @@ annihilate_vms_cmd() {
 		show_usage annihilate-vms 1
 	fi
 
-	all_inactive_VMs=$(virsh list --name --inactive > /dev/null 2>&1)
+	all_inactive_VMs=$(virsh list --name --inactive 2> /dev/null)
 	if [ -z "$all_inactive_VMs" ]; then
 		printf "\n%scannot seem to find a single inactive VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
@@ -1021,7 +1021,7 @@ attach_cmd() {
 		show_usage attach 1
 	fi
 
-	all_VMs=$(virsh list --name --all > /dev/null 2>&1)
+	all_VMs=$(virsh list --name --all 2> /dev/null)
 	if [ -z "$all_VMs" ]; then
 		printf "\n%scannot seem to find a single (in)active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
@@ -1113,7 +1113,7 @@ checkservice_cmd() {
 
 	tcp_port=$value
 
-	all_active_VMs=$(virsh list --name > /dev/null 2>&1)
+	all_active_VMs=$(virsh list --name 2> /dev/null)
 	if [ -z "$all_active_VMs" ]; then
 		printf "\n%scannot seem to find a single active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
@@ -1176,7 +1176,7 @@ clone_cmd() {
 					printf "%s'%s' is not a valid template name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				all_inactive_VMs=$(virsh list --name --inactive > /dev/null 2>&1)
+				all_inactive_VMs=$(virsh list --name --inactive 2> /dev/null)
 				answer=$(is_a_member "$value" "$all_inactive_VMs")
 				if [ "$answer" == "no" ]; then
 					printf "%stemplate should be an existing inactive VM%s\n" "$red" "$regular"
@@ -1226,7 +1226,7 @@ clone_cmd() {
 		fi
 	done
 
-	all_VMs=$(virsh list --name --all > /dev/null 2>&1)
+	all_VMs=$(virsh list --name --all 2> /dev/null)
 
 	clone_pool_path=$(get_pool_path "$clone_pool_name")
 
@@ -1760,7 +1760,7 @@ deactivate_cmd() {
 		show_usage deactivate 1
 	fi
 
-	all_active_VMs=$(virsh list --name > /dev/null 2>&1)
+	all_active_VMs=$(virsh list --name 2> /dev/null)
 	if [ -z "$all_active_VMs" ]; then
 		printf "\n%scannot seem to find a single active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
@@ -1917,7 +1917,7 @@ define_cmd() {
 		show_usage define 1
 	fi
 
-	all_VMs=$(virsh list --name --all > /dev/null 2>&1)
+	all_VMs=$(virsh list --name --all 2> /dev/null)
 	pool_path=$(get_pool_path "$pool_name")
 	for candidate; do
 		answer=$(is_name_valid "$candidate")
@@ -1991,7 +1991,7 @@ getmac_cmd() {
 		show_usage getmac 1
 	fi
 
-	all_VMs=$(virsh list --name --all > /dev/null 2>&1)
+	all_VMs=$(virsh list --name --all 2> /dev/null)
 	if [ -z "$all_VMs" ]; then
 		printf "\n%scannot seem to find a single (in)active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
@@ -2019,7 +2019,7 @@ getmac_cmd() {
 # ---------------------------------------------------------------------------
 
 list_vms_cmd() {
-	all_VMs=$(virsh list --name --all > /dev/null 2>&1)
+	all_VMs=$(virsh list --name --all 2> /dev/null)
 	if [ -z "$all_VMs" ]; then
 		printf "\n%scannot seem to find a single (in)active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
@@ -2082,7 +2082,7 @@ list_networks_cmd() {
 	echo "Name State Mode Domain MACaddr Router/DNSaddr DHCP fromIPaddr toIPaddr Clients" >> ~/"$temp_file_name"
 	echo "---- ----- ---- ------ ------- -------------- ---- ---------- -------- -------" >> ~/"$temp_file_name"
 
-	all_VMs=$(virsh list --name --all > /dev/null 2>&1)
+	all_VMs=$(virsh list --name --all 2> /dev/null)
 
 	for name in $all_networks; do
 		state=$(echo "$(right_part_of "$(virsh net-info "$name" | grep Active)" ":")" | awk '{ print $1 }')
@@ -2294,7 +2294,7 @@ ping_cmd() {
 		exit 1
 	fi
 
-	all_active_VMs=$(virsh list --name > /dev/null 2>&1)
+	all_active_VMs=$(virsh list --name 2> /dev/null)
 	if [ -z "$all_active_VMs" ]; then
 		printf "\n%scannot seem to find a single active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
@@ -2338,7 +2338,7 @@ powcycle_cmd() {
 		show_usage powcycle 1
 	fi
 
-	all_active_VMs=$(virsh list --name > /dev/null 2>&1)
+	all_active_VMs=$(virsh list --name 2> /dev/null)
 	if [ -z "$all_active_VMs" ]; then
 		printf "\n%scannot seem to find a single active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
@@ -2379,7 +2379,7 @@ reboot_cmd() {
 		show_usage reboot 1
 	fi
 
-	all_active_VMs=$(virsh list --name > /dev/null 2>&1)
+	all_active_VMs=$(virsh list --name 2> /dev/null)
 	if [ -z "$all_active_VMs" ]; then
 		printf "\n%scannot seem to find a single active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
@@ -2421,7 +2421,7 @@ unplug_cmd() {
 		show_usage unplug 1
 	fi
 
-	all_active_VMs=$(virsh list --name > /dev/null 2>&1)
+	all_active_VMs=$(virsh list --name 2> /dev/null)
 	if [ -z "$all_active_VMs" ]; then
 		printf "\n%scannot seem to find a single active VM on this host%s\n\n" "$yellow" "$regular"
 		exit 0
