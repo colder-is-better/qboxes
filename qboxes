@@ -448,7 +448,7 @@ in_between() {
 
 get_first_nic_mac() {
 	the_vm="$1"
-	line_in_xml="$(virsh --quiet dumpxml "$the_vm" | grep "mac address")"
+	line_in_xml="$(virsh --quiet dumpxml "$the_vm" | grep "mac address" | head -n 1)"
 	first_nic_mac="$(in_between "$line_in_xml" "<mac address='" "'")"
 	echo "$first_nic_mac"
 }
