@@ -1,13 +1,13 @@
 This is an alphabetical list of the currently implemented and also planned `qboxes` commands. For some of them there are bullet points regarding functionality/features we plan on adding.
 
 `activate`
-* __all_done__
+* __all done__
 
 `annihilate`
-* __done__
+* __all done__
 
 `assimilate`
-* __done__
+* __all done__
 
 `attach`
 * new volumes should be existing ones 
@@ -15,7 +15,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * facilitate the attachment of networks, optical media
 
 `check-service`
-* __all_done__
+* __all done__
 
 `clone`
 * optional: indicate network for clones
@@ -27,7 +27,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * facilitate the creation of isolated libvirt networks
 
 `deactivate`
-* __all_done__
+* __all done__
 
 `define`
 * volumes should be existing ones or instantiated by the `create volume` command
@@ -37,7 +37,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * facilitate the dettachment of networks, volumes, optical media
 
 `getmac`
-* __all_done__
+* __all done__
 
 `info`
 * return detailed information on VMs, networks, pools, volumes
@@ -53,16 +53,16 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * rename a VM
 
 `ping`
-* __all_done__
+* __all done__
 
 `reboot`
-* __all_done__
+* __all done__
 
 `powcycle`
-* __all_done__
+* __all done__
 
 `snapshot`
 * facilitate the creation, removal and listing of VM snapshots
 
 `unplug`
-* __all_done__
+* __all done__
