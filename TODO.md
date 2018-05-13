@@ -10,9 +10,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * __all done__
 
 `attach`
-* new volumes should be existing ones 
-* this command should act on a single VM
-* facilitate the attachment of networks, optical media
+* facilitate the attachment of libvirt networks
 
 `check-service`
 * __all done__
