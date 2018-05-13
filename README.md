@@ -22,7 +22,7 @@ Currently the following commands are implemented:
   activate	: bring inactive VMs up
   annihilate	: remove any trace of inactive VMs, active networks, active pools, or volumes
   assimilate	: integrate a file (ISO, QCOW2, etc.) into an existing active storage pool
-  attach	: attach new storage volumes to (in)active VMs
+  attach	: attach an existing storage volume to an (in)active VM
   check-service	: try to connect to specified TCP port of one or more active VMs
   clone		: clone a template VM into one or more new VMs
   create	: create a new libvirt network, a new pool, or a new volume
