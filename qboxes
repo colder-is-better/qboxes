@@ -93,7 +93,7 @@ show_usage() {
 			printf "SYNOPSIS\n"
 			printf "  assimilate --pool=<active_pool_name> <vol_1> ... <vol_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  move one or more storage volumes (files of type ISO, QCOW2, etc.)"
+			printf "  Move one or more storage volumes (files of type ISO, QCOW2, etc.)"
 			printf " into an existing active storage pool and/or refresh the pool\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes assimilate --pool=templates opensuse-leap-423.qcow2 bionic-beaver.qcow2%s\n\n" "$bold" "$regular"
@@ -105,7 +105,7 @@ show_usage() {
 			printf "SYNOPSIS\n"
 			printf "  attach --name=<volume_filename> --pool=<active_pool_name> <VM_name>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  attach an existing storage volume from given pool, to an (in)active VM\n\n"
+			printf "  Attach an existing storage volume from given pool, to an (in)active VM\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes attach --name=datadrive.qcow2 --pool=storage fileserver%s\n\n" "$bold" "$regular"
 			exit "$error_code"
@@ -198,17 +198,16 @@ show_usage() {
 		;;
 		define)
 			printf "COMMAND NAME\n"
-			printf "  define - define one or more new VMs\n\n"
+			printf "  define - define a new VM\n\n"
 			printf "SYNOPSIS\n"
-			printf "  define --ram=<size_in_MiB> --cores=<count> --volume-size=<capacity_in_GiB>"
-			printf " --network=<name> --guest-os=<os_variant> --pool=<active_pool_name> <VM_1> ... <VM_k>\n\n"
+			printf "  define --ram=<size_in_MiB> --cores=<count> --volume=<capacity_in_GiB>"
+			printf " --pool=<active_pool_name> --network=<name> --guest-os=<os_variant> <VM_name>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Define one or more VMs according to specifications, do not install a guest"
-			printf " OS on any of them\n"
+			printf "  Define a new VM according to specifications, do not install a guest OS\n"
 			printf "  (Tip: Type %sosinfo-query os%s for a list of all the supported OS variants)\n\n" "$bold" "$regular"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes define --ram=2048 --cores=2 --volume-size=256 --network=default" "$bold"
-			printf " --guest-os=opensuse42.3 --pool=ceph osd{1..5}%s\n\n" "$regular"
+			printf "  ~> %sqboxes define --ram=2048 --cores=2 --volume=leap423_os_disk.qcow2" "$bold"
+			printf " --pool=packer_images --network=localnet --guest-os=opensuse42.3 leap423%s\n\n" "$regular"
 			exit "$error_code"
 		;;
 		getmac)
@@ -291,7 +290,7 @@ show_usage() {
 			printf "  clone\t\t: clone a template VM into one or more new VMs\n"
 			printf "  create\t: create a new libvirt network, storage pool, or storage volume\n"
 			printf "  deactivate\t: gracefully shutdown active VMs\n"
-			printf "  define\t: define one or more new VMs\n"
+			printf "  define\t: define a new VM according to specifications, do not install a guest OS\n"
 			printf "  getmac\t: reveal MAC addresses\n"
 			printf "  list\t\t: present all available (in)active VMs, libvirt networks, pools, or volumes\n"
 			printf "  ping\t\t: send ICMP packets to active VMs\n"
@@ -950,16 +949,16 @@ assimilate_cmd() {
 # ---------------------------------------------------------------------------
 
 attach_cmd() {
-	lowest_num_args=3
-	if [ $# -lt $lowest_num_args ]; then
-		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" $lowest_num_args "$regular"
+	num_args=3
+	if [ $# -ne $num_args ]; then
+		printf "\n%sincorrect number of arguments (need exactly %d)%s\n\n" "$red" $num_args "$regular"
 		show_usage attach 1
 	fi
 
 	volume_name=""
 	pool_name=""
 
-	for ((argument=1 ; argument <= $((lowest_num_args - 1)) ; argument++)); do
+	for ((argument=1 ; argument <= $((num_args - 1)) ; argument++)); do
 
 		param=$(left_part_of "$1" "=")
 		value=$(right_part_of "$1" "=")
@@ -988,7 +987,7 @@ attach_cmd() {
 				all_pool_volumes=$(get_volumes "$value")
 				answer=$(is_a_member "$volume_name" "$all_pool_volumes")
 				if [ "$answer" == "no" ]; then
-					printf "%sfile %s does not exist in pool %s%s\n" "$red" "$volume_name" "$value" "$regular"
+					printf "%sfile %s is not in pool %s%s\n" "$red" "$volume_name" "$value" "$regular"
 					exit 1
 				fi
 				pool_name=$value
@@ -1015,13 +1014,13 @@ attach_cmd() {
 	the_vm="$1"
 	answer=$(is_name_valid "$the_vm")
 	if [ "$answer" == "no" ]; then
-		printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$the_vm" "$regular"
-		exit 0
+		printf "%s'%s' is not a valid VM name%s\n" "$red" "$the_vm" "$regular"
+		exit 1
 	fi
 	answer=$(is_a_member "$the_vm" "$all_VMs")
 	if [ "$answer" == "no" ]; then
-		printf "%s'%s' is not a VM%s\n" "$yellow" "$the_vm" "$regular"
-		exit 0
+		printf "%s'%s' is not a VM%s\n" "$red" "$the_vm" "$regular"
+		exit 1
 	fi
 
 	virtio_dev=""
@@ -1036,8 +1035,8 @@ attach_cmd() {
 	done
 
 	if [ -z "$virtio_dev" ]; then
-		printf "%sthere seems to be a shortage of VirtIO storage device names for '%s'%s\n" "$yellow" "$the_vm" "$regular"
-		exit 0
+		printf "%sthere seems to be a shortage of VirtIO storage device names for '%s'%s\n" "$red" "$the_vm" "$regular"
+		exit 1
 	fi
 
 	pool_path=$(get_pool_path "$pool_name")
@@ -1076,7 +1075,7 @@ checkservice_cmd() {
 
 	answer=$(is_number_valid "$value")
 	if [ "$answer" == "no" ]; then
-		printf "%s'%s' is not a positive integer%s\n" "$red" "$value" "$regular"
+		printf "%s'%s' is not a positive integer (for TCP port number)%s\n" "$red" "$value" "$regular"
 		exit 1
 	fi
 
@@ -1648,7 +1647,7 @@ create_volume_cmd() {
 			--size)
 				answer=$(is_number_valid "$value")
 				if [ "$answer" == "no" ]; then
-					printf "%s'%s' is not a positive integer%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not a positive integer (for volume size)%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				volume_size_min=32
@@ -1763,24 +1762,24 @@ deactivate_cmd() {
 
 # ---------------------------------------------------------------------------
 # define_cmd():
-#   Defines one or more new VMs -- no guest OS is installed
+#   Defines a new VM, sans guest OS, according to specifications
 # ---------------------------------------------------------------------------
 
 define_cmd() {
-	lowest_num_args=7
-	if [ $# -lt $lowest_num_args ]; then
-		printf "\n%sincorrect number of arguments (minimum is %d)%s\n\n" "$red" $lowest_num_args "$regular"
+	num_args=7
+	if [ $# -ne $num_args ]; then
+		printf "\n%sincorrect number of arguments (need exactly %d)%s\n\n" "$red" $num_args "$regular"
 		show_usage define 1
 	fi
 
 	memory_size=""
 	cpu_cores=""
-	volume_size=""
+	volume_name=""
+	pool_name=""
 	libvirt_network=""
 	os_variant=""
-	pool_name=""
 
-	for ((argument=1 ; argument <= $((lowest_num_args - 1)) ; argument++)); do
+	for ((argument=1 ; argument <= $((num_args - 1)) ; argument++)); do
 
 		param=$(left_part_of "$1" "=")
 		value=$(right_part_of "$1" "=")
@@ -1789,7 +1788,7 @@ define_cmd() {
 			--ram)
 				answer=$(is_number_valid "$value")
 				if [ "$answer" == "no" ]; then
-					printf "%s'%s' is not a positive integer%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not a positive integer (for RAM size)%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				memory_size_min=32
@@ -1805,31 +1804,43 @@ define_cmd() {
 			--cores)
 				answer=$(is_number_valid "$value")
 				if [ "$answer" == "no" ]; then
-					printf "%s'%s' is not a positive integer%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not a positive integer (for core count)%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				cpu_cores_max=$(right_part_of "$(virsh nodeinfo | grep "CPU(s):")" ":")
 				if [ "$value" -lt 1 ] || [ "$value" -gt "$cpu_cores_max" ]; then
-					printf "%snumber of CPU cores should be between 1 and %s inclusive%s\n" "$red" "$cpu_cores_max" "$regular"
+					printf "%snumber of CPU cores should be between 1 and %d inclusive%s\n" "$red" "$cpu_cores_max" "$regular"
 					exit 1
 				fi
 				cpu_cores=$value
 			;;
-			--volume-size)
-				answer=$(is_number_valid "$value")
+			--volume)
+				answer=$(is_name_valid "$value")
 				if [ "$answer" == "no" ]; then
-					printf "%s'%s' is not a positive integer%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not a valid volume name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				volume_size_min=16
-				volume_size_max=512
-				answer=$(is_size_valid "$value" "$volume_size_min" "$volume_size_max")
+				volume_name=$value
+			;;
+			--pool)
+				answer=$(is_name_valid "$value")
 				if [ "$answer" == "no" ]; then
-					printf "%svolume size must be between %d and %d GiB inclusive, and an integer multiple of %d%s\n" \
-					"$red" $volume_size_min $volume_size_max $volume_size_min "$regular"
+					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				volume_size=$value
+				all_active_pools=$(get_pools "active")
+				answer=$(is_a_member "$value" "$all_active_pools")
+				if [ "$answer" == "no" ]; then
+					printf "%s'%s' is not an active pool%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
+				all_pool_volumes=$(get_volumes "$value")
+				answer=$(is_a_member "$volume_name" "$all_pool_volumes")
+				if [ "$answer" == "no" ]; then
+					printf "%sfile %s is not in pool %s%s\n" "$red" "$volume_name" "$value" "$regular"
+					exit 1
+				fi
+				pool_name=$value
 			;;
 			--network)
 				answer=$(is_name_valid "$value")
@@ -1859,20 +1870,6 @@ define_cmd() {
 				fi
 				os_variant=$value
 			;;
-			--pool)
-				answer=$(is_name_valid "$value")
-				if [ "$answer" == "no" ]; then
-					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
-					exit 1
-				fi
-				all_active_pools=$(get_pools "active")
-				answer=$(is_a_member "$value" "$all_active_pools")
-				if [ "$answer" == "no" ]; then
-					printf "%s'%s' is not an active pool%s\n" "$red" "$value" "$regular"
-					exit 1
-				fi
-				pool_name=$value
-			;;
 			*)
 				printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
 				show_usage define 1
@@ -1883,74 +1880,64 @@ define_cmd() {
 
 	if [ -z "$memory_size" ] \
 		|| [ -z "$cpu_cores" ] \
-		|| [ -z "$volume_size" ] \
+		|| [ -z "$volume_name" ] \
+		|| [ -z "$pool_name" ] \
 		|| [ -z "$libvirt_network" ] \
-		|| [ -z "$os_variant" ] \
-		|| [ -z "$pool_name" ]; then
+		|| [ -z "$os_variant" ] ; then
 		printf "\n%sat least one of the required arguments has not been set%s\n\n" "$red" "$regular"
 		show_usage define 1
 	fi
 
+	the_vm="$1"
+	answer=$(is_name_valid "$the_vm")
+	if [ "$answer" == "no" ]; then
+		printf "%s'%s' is not a valid VM name%s\n" "$red" "$the_vm" "$regular"
+		exit 1
+	fi
+
 	all_VMs=$(virsh list --name --all 2> /dev/null)
+	answer=$(is_a_member "$the_vm" "$all_VMs")
+	if [ "$answer" == "yes" ]; then
+		printf "%sthere is already a VM '%s', and I am not touching it%s\n" "$red" "$candidate" "$regular"
+		exit 1
+	fi
+
+	random_alphanum=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n')
+	xml_path="$the_vm"_"$random_alphanum".xml
+
 	pool_path=$(get_pool_path "$pool_name")
-	for candidate; do
-		answer=$(is_name_valid "$candidate")
-		if [ "$answer" == "no" ]; then
-			printf "%s'%s' is not a valid VM name%s\n" "$yellow" "$candidate" "$regular"
-		else
-			answer=$(is_a_member "$candidate" "$all_VMs")
-			if [ "$answer" == "yes" ]; then
-				printf "%sthere is already a VM '%s', so I am skipping that one%s\n" "$yellow" "$candidate" "$regular"
-			else
-				random_alphanum=$(strings /dev/urandom \
-					| grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n')
-				xml_path="$candidate"_"$random_alphanum".xml
-				qcow2_name="$candidate".qcow2
-				qcow2_path="$pool_path"/"$qcow2_name"
+	volume_path="$pool_path"/"$volume_name"
 
-				printf "%screating volume %s for %s%s\n" \
-					"$green" "$qcow2_name" "$candidate" "$regular"
+	printf "%scoming up with a detailed XML description of %s%s\n" "$green" "$the_vm" "$regular"
 
-				virsh vol-create-as "$pool_name" --name "$qcow2_name" --capacity "$volume_size"G --format qcow2 > /dev/null 2>&1
-				virsh_ec=$?
-				if [ $virsh_ec -ne 0 ]; then
-					printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
-					exit 2
-				fi
+	virt-install --name "$the_vm" --os-variant "$os_variant" \
+		--memory "$memory_size" --cpu host --vcpus="$cpu_cores" \
+		--network network="$libvirt_network",model=virtio \
+		--disk "$volume_path",bus=virtio --boot network,hd \
+		--print-xml 1 > ~/"$xml_path" 2> /dev/null
+	virt_install_ec=$?
+	if [ $virt_install_ec -ne 0 ]; then
+		printf "%soperation failed, virt-install returned error code %d, terminating now%s\n" \
+			"$red" $virt_install_ec "$regular"
+		rm -f ~/"$xml_path"
+		exit 2
+	fi
 
-				printf "%scoming up with a detailed XML description of %s%s\n" "$green" "$candidate" "$regular"
+	printf "%sretracting sound card & tablet input devices from XML description%s\n" "$green" "$regular"
 
-				virt-install --name "$candidate" --os-variant "$os_variant" \
-					--memory "$memory_size" --cpu host --vcpus="$cpu_cores" \
-					--network network="$libvirt_network",model=virtio \
-					--disk "$qcow2_path",bus=virtio --boot network,hd \
-					--print-xml 1 > ~/"$xml_path" 2> /dev/null
-				virt_install_ec=$?
-				if [ $virt_install_ec -ne 0 ]; then
-					printf "%soperation failed, virt-install returned error code %d, terminating now%s\n" \
-						"$red" $virt_install_ec "$regular"
-					rm -f ~/"$xml_path"
-					exit 2
-				fi
+	sed -i /'<sound model'/d ~/"$xml_path"
+	sed -i /'<input type="tablet'/d ~/"$xml_path"
 
-				printf "%sretracting sound card & tablet input devices from XML description%s\n" "$green" "$regular"
+	printf "%sdefining %s%s\n\n" "$green" "$the_vm" "$regular"
 
-				sed -i /'<sound model'/d ~/"$xml_path"
-				sed -i /'<input type="tablet'/d ~/"$xml_path"
-
-				printf "%sdefining %s%s\n\n" "$green" "$candidate" "$regular"
-
-				virsh define ~/"$xml_path" --validate > /dev/null 2>&1
-				virsh_ec=$?
-				if [ $virsh_ec -ne 0 ]; then
-					printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
-					rm -f ~/"$xml_path"
-					exit 2
-				fi
-				rm -f ~/"$xml_path"
-			fi
-		fi
-	done
+	virsh define ~/"$xml_path" --validate > /dev/null 2>&1
+	virsh_ec=$?
+	if [ $virsh_ec -ne 0 ]; then
+		printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
+		rm -f ~/"$xml_path"
+		exit 2
+	fi
+	rm -f ~/"$xml_path"
 }
 
 # ---------------------------------------------------------------------------
@@ -2256,7 +2243,7 @@ ping_cmd() {
 
 	answer=$(is_number_valid "$n_packets")
 	if [ "$answer" == "no" ]; then
-		printf "%s'%s' is not a positive integer%s\n" "$red" "$value" "$regular"
+		printf "%s'%s' is not a positive integer (for packet count)%s\n" "$red" "$value" "$regular"
 		exit 1
 	fi
 

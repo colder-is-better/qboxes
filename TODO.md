@@ -28,11 +28,10 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * __all done__
 
 `define`
-* volumes should be existing ones or instantiated by the `create volume` command
-* this command should act on a single VM
+* __all done__
 
 `detach`
-* facilitate the dettachment of networks, volumes, optical media
+* facilitate the dettachment of networks, volumes
 
 `getmac`
 * __all done__

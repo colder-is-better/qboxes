@@ -27,7 +27,7 @@ Currently the following commands are implemented:
   clone		: clone a template VM into one or more new VMs
   create	: create a new libvirt network, a new pool, or a new volume
   deactivate	: gracefully shutdown active VMs
-  define	: define one or more new VMs
+  define	: define a new VM, sans guest OS, according to specifications
   getmac	: reveal MAC addresses
   list		: return all available (in)active VMs, libvirt networks, pools, or volumes
   ping		: send ICMP packets to active VMs
