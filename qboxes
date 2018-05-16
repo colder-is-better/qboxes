@@ -571,6 +571,18 @@ get_pool_path() {
 }
 
 # ---------------------------------------------------------------------------
+# get_vm_vols():
+#   Returns paths of all storage volumes
+#   (VirtIO, IDE, SATA, or SCSI devices) of given VM
+# ---------------------------------------------------------------------------
+
+get_vm_vols() {
+	the_vm="$1"
+	the_storage_vols=$(virsh domblklist "$the_vm" | egrep '^(vd|sd|hd)')
+	echo "$the_storage_vols"
+}
+
+# ---------------------------------------------------------------------------
 # activate_cmd():
 #   Powers up one or more inactive VMs
 # ---------------------------------------------------------------------------
@@ -1023,6 +1035,16 @@ attach_cmd() {
 		exit 1
 	fi
 
+	pool_path=$(get_pool_path "$pool_name")
+	volume_path="$pool_path"/"$volume_name"
+
+	all_vm_vols=$(get_vm_vols "$the_vm")
+	answer=$(is_a_member "$volume_path" "$all_vm_vols")
+	if [ "$answer" == "yes" ]; then
+		printf "\n%svolume %s from pool %s is already attached to %s%s\n\n" "$yellow" "$volume_name" "$pool_name" "$the_vm" "$regular"
+		exit 0
+	fi
+
 	virtio_dev=""
 	devices_taken=$(in_between "$(virsh dumpxml "$the_vm" | grep "<target dev='")" "<target dev='" "' bus='")
 	for letter in {a..z}; do
@@ -1038,9 +1060,6 @@ attach_cmd() {
 		printf "%sthere seems to be a shortage of VirtIO storage device names for '%s'%s\n" "$red" "$the_vm" "$regular"
 		exit 1
 	fi
-
-	pool_path=$(get_pool_path "$pool_name")
-	volume_path="$pool_path"/"$volume_name"
 
 	printf "%sattaching storage volume %s to %s%s\n" "$green" "$volume_name" "$the_vm" "$regular"
 
@@ -2002,7 +2021,8 @@ list_vms_cmd() {
 		CPUs=$(echo "$(right_part_of "$(virsh dominfo "$name" | grep CPU\(s\))" ":")" | awk '{ print $1 }')
 		ram_size=$(in_between "$(virsh dominfo "$name" | grep "Max memory")" ":" " ")
 		ram_size_mb=$(( ram_size / 1024 ))
-		block_devices=$(($(virsh domblklist "$name" | wc -l)-3))
+		all_vm_vols=$(get_vm_vols "$name")
+		block_devices=$(($(echo "$all_vm_vols" | wc -w) / 2))
 
 		nated_net="<source network='"
 		bridged_net="<interface type='bridge'"
