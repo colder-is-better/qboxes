@@ -93,10 +93,10 @@ show_usage() {
 			printf "SYNOPSIS\n"
 			printf "  assimilate --pool=<active_pool_name> <vol_1> ... <vol_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Move one or more storage volumes (files of type ISO, QCOW2, etc.)"
-			printf " into an existing active storage pool and/or refresh the pool\n\n"
+			printf "  Copy, if necessary, one or more storage volumes (files of type ISO,"
+			printf " QCOW2, etc.) to an existing active storage pool and/or refresh the pool\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes assimilate --pool=templates opensuse-leap-423.qcow2 bionic-beaver.qcow2%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes assimilate --pool=templates /tmp/packer_out/opensuse-leap-423.qcow2 ./bionic-beaver.qcow2%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		attach)
@@ -876,7 +876,7 @@ annihilate_cmd() {
 
 # ---------------------------------------------------------------------------
 # assimilate_cmd():
-#   Moves, if necessary, given files (of type ISO, QCOW2, etc.)
+#   Copies, if necessary, given files (of type ISO, QCOW2, etc.)
 #   into an existing active storage pool and/or refreshes said pool
 # ---------------------------------------------------------------------------
 
@@ -936,12 +936,12 @@ assimilate_cmd() {
 				if [ "$answer" == "yes" ]; then
 					printf "%sthere is already a file named '%s' in pool %s%s\n" "$yellow" "$candidate_name" "$the_pool" "$regular"
 				else
-					printf "%smoving %s [%s ==> %s]%s\n" "$green" "$candidate_name" "$candidate_path" "$the_pool_path" "$regular"
-					sudo mv "$candidate" "$the_pool_path"/ > /dev/null 2>&1
-					mv_ec=$?
-					if [ $mv_ec -ne 0 ]; then
-						printf "%sfailed to move %s from %s into %s, mv returned error code %d%s\n" \
-						"$yellow" "$candidate_name" "$candidate_path" "$the_pool_path" $mv_ec "$regular"
+					printf "%scopying %s [%s ==> %s]%s\n" "$green" "$candidate_name" "$candidate_path" "$the_pool_path" "$regular"
+					sudo cp "$candidate" "$the_pool_path"/ > /dev/null 2>&1
+					cp_ec=$?
+					if [ $cp_ec -ne 0 ]; then
+						printf "%sfailed to copy %s from %s to %s, cp returned error code %d%s\n" \
+						"$yellow" "$candidate_name" "$candidate_path" "$the_pool_path" $cp_ec "$regular"
 					else
 						virsh pool-refresh "$the_pool" > /dev/null 2>&1
 						virsh_ec=$?
