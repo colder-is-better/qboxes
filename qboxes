@@ -312,7 +312,7 @@ show_usage() {
 # ---------------------------------------------------------------------------
 
 get_random_alphanum() {
-	echo $(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 48 | tr -d '\n')
+	echo "$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 48 | tr -d '\n')"
 }
 
 # ---------------------------------------------------------------------------
@@ -593,29 +593,82 @@ get_vm_vols() {
 
 # ---------------------------------------------------------------------------
 # create_xml_net_isolated():
-#   Returns an XML file describing a libvirt isolated network
+#   Returns the path to an XML file describing
+#   a libvirt isolated network
 # ---------------------------------------------------------------------------
 
 create_xml_net_isolated() {
-	yes
+	net_name="$1"
+	bridge_dev="$2"
+	domain_name="$3"
+	xml_net_isolated=~/$(get_random_alphanum).xml
+	echo "<network>" > "$xml_net_isolated"
+	echo "  <name>""$net_name""</name>" >> "$xml_net_isolated"
+	echo "  <bridge name='""$bridge_dev""' stp='on' delay='0'/>" >> "$xml_net_isolated"
+	echo "  <domain name='""$domain_name""'/>" >> "$xml_net_isolated"
+	echo "</network>" >> "$xml_net_isolated"
+	echo "$xml_net_isolated"
 }
 
 # ---------------------------------------------------------------------------
 # create_xml_net_nat_no_dhcp():
-#   Returns an XML file describing a libvirt NAT network without DHCP support
+#   Returns the path to an XML file describing
+#   a libvirt NAT network without DHCP support
 # ---------------------------------------------------------------------------
 
 create_xml_net_nat_no_dhcp() {
-	yes
+	net_name="$1"
+	bridge_dev="$2"
+	domain_name="$3"
+	router_addr="$4"
+	netmask_addr="$5"
+	xml_net_nat_no_dhcp=~/$(get_random_alphanum).xml
+	echo "<network>" > "$xml_net_nat_no_dhcp"
+	echo "  <name>""$net_name""</name>" >> "$xml_net_nat_no_dhcp"
+	echo "  <forward mode='nat'>" >> "$xml_net_nat_no_dhcp"
+	echo "    <nat>" >> "$xml_net_nat_no_dhcp"
+	echo "      <port start='1024' end='65535'/>" >> "$xml_net_nat_no_dhcp"
+	echo "    </nat>" >> "$xml_net_nat_no_dhcp"
+	echo "  </forward>" >> "$xml_net_nat_no_dhcp"
+	echo "  <bridge name='""$bridge_dev""' stp='on' delay='0'/>" >> "$xml_net_nat_no_dhcp"
+	echo "  <domain name='""$domain_name""'/>" >> "$xml_net_nat_no_dhcp"
+	echo "  <ip address='""$router_addr""' netmask='""$netmask_addr""'>" >> "$xml_net_nat_no_dhcp"
+	echo "  </ip>" >> "$xml_net_nat_no_dhcp"
+	echo "</network>" >> "$xml_net_nat_no_dhcp"
+	echo "$xml_net_nat_no_dhcp"
 }
 
 # ---------------------------------------------------------------------------
 # create_xml_net_nat_dhcp():
-#   Returns an XML file describing a libvirt NAT network with DHCP support
+#   Returns the path to an XML file describing
+#   a libvirt NAT network with DHCP support
 # ---------------------------------------------------------------------------
 
 create_xml_net_nat_dhcp() {
-	yes
+	net_name="$1"
+	bridge_dev="$2"
+	domain_name="$3"
+	router_addr="$4"
+	netmask_addr="$5"
+	from_addr="$6"
+	to_addr="$7"
+	xml_net_nat_dhcp=~/$(get_random_alphanum).xml
+   	echo "<network>" > "$xml_net_nat_dhcp"
+	echo "  <name>""$net_name""</name>" >> "$xml_net_nat_dhcp"
+	echo "  <forward mode='nat'>" >> "$xml_net_nat_dhcp"
+	echo "    <nat>" >> "$xml_net_nat_dhcp"
+	echo "      <port start='1024' end='65535'/>" >> "$xml_net_nat_dhcp"
+	echo "    </nat>" >> "$xml_net_nat_dhcp"
+	echo "  </forward>" >> "$xml_net_nat_dhcp"
+	echo "  <bridge name='""$bridge_dev""' stp='on' delay='0'/>" >> "$xml_net_nat_dhcp"
+	echo "  <domain name='""$domain_name""'/>" >> "$xml_net_nat_dhcp"
+	echo "  <ip address='""$router_addr""' netmask='""$netmask_addr""'>" >> "$xml_net_nat_dhcp"
+	echo "    <dhcp>" >> "$xml_net_nat_dhcp"
+	echo "      <range start='""$from_addr""' end='""$to_addr""'/>" >> "$xml_net_nat_dhcp"
+	echo "    </dhcp>" >> "$xml_net_nat_dhcp"
+	echo "  </ip>" >> "$xml_net_nat_dhcp"
+	echo "</network>" >> "$xml_net_nat_dhcp"
+	echo "$xml_net_nat_dhcp"
 }
 
 # ---------------------------------------------------------------------------
