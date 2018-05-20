@@ -143,7 +143,7 @@ show_usage() {
 			printf "  Create a new libvirt entity, where \"entity\" may"
 			printf " be any one of network, pool, volume\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes create network --name=lvirtnet --domain=local.qbx --router=10.20.30.254" "$bold"
+			printf "  ~> %sqboxes create network --type=nated --name=lvirtnet --domain=local.qbx --router=10.20.30.254" "$bold"
 			printf " --netmask=255.255.255.0 --dhcp=on --from=10.20.30.100 --to=10.20.30.253%s\n\n" "$regular"
 			printf "  ~> %sqboxes create pool --name=ceph --path=/usr/local/testing/storage-clusters%s\n\n" "$bold" "$regular"
 			printf "  ~> %sqboxes create volume --name=data_disk --size=1024 --pool=tank%s\n\n" "$bold" "$regular"
@@ -153,13 +153,13 @@ show_usage() {
 			printf "COMMAND NAME & OBJECT\n"
 			printf "  create network - create a new libvirt network\n\n"
 			printf "SYNOPSIS\n"
-			printf "  create network --name=<net_name> --domain=<domain.name> --router=<router.ip.v4.address>"
+			printf "  create network --type=<nated|isolated> --name=<net_name> --domain=<domain.name> --router=<router.ip.v4.address>"
 			printf " --netmask=<netmask.ip.v4.addr> --dhcp=<on|off> [--from=<from.ip.v4.addr>] [--to=<to.ip.v4.addr>]\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Create a new libvirt network offering routing and DNS services,"
-			printf " optionally DHCP service also\n\n"
+			printf "  Create a new libvirt network, optionally offering routing and DNS"
+			printf " services, and DHCP services also\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes create network --name=localnet --domain=local.qbx --router=10.20.30.254" "$bold"
+			printf "  ~> %sqboxes create network --type=nated --name=localnet --domain=local.qbx --router=10.20.30.254" "$bold"
 			printf " --netmask=255.255.255.0 --dhcp=on --from=10.20.30.100 --to=10.20.30.253%s\n\n" "$regular"
 			exit "$error_code"
 		;;
@@ -1403,6 +1403,7 @@ clone_cmd() {
 # ---------------------------------------------------------------------------
 
 create_network_cmd() {
+	net_type=""
 	net_name=""
 	domain_name=""
 	router_addr=""
@@ -1417,6 +1418,13 @@ create_network_cmd() {
 		value=$(right_part_of "$argument" "=")
 
 		case $param in
+			--type)
+				if [ "$value" != "nated" ] && [ "$value" != "isolated" ]; then
+					printf "%s'%s' is not a valid network type%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
+				net_type="$value"
+			;;
 			--name)
 				answer=$(is_name_valid "$value")
 				if [ "$answer" == "no" ]; then
@@ -1511,15 +1519,20 @@ create_network_cmd() {
 		esac
 	done
 
-	if [ -z "$net_name" ] || [ -z "$domain_name" ] || \
-		[ -z "$router_addr" ] || [ -z "$netmask_addr" ] || [ -z "$dhcp_srv" ]; then
-		printf "\n%sat least one of the required arguments has not been set%s\n\n" "$red" "$regular"
-		show_usage create-network 1
-	fi
-	
-	if [ "$dhcp_srv" == "on" ] && ([ -z "$from_addr" ] || [ -z "$to_addr" ]); then
-		printf "\n%sIP range for dynamic address allocation has not been defined%s\n\n" "$red" "$regular"
-		show_usage create-network 1
+	if [ "$net_type" == "isolated" ]; then
+		if [ -z "$net_name" ] || [ -z "$domain_name" ]; then
+			printf "\n%snetwork name and/or domain name has not been set for isolated network%s\n\n" "$red" "$regular"
+			show_usage create-network 1
+		fi
+	else
+		if [ -z "$net_name" ] || [ -z "$domain_name" ] || [ -z "$router_addr" ] || [ -z "$netmask_addr" ] || [ -z "$dhcp_srv" ]; then
+			printf "\n%sat least one of the required arguments has not been set for NATed network%s\n\n" "$red" "$regular"
+			show_usage create-network 1
+		fi
+		if [ "$dhcp_srv" == "on" ] && ([ -z "$from_addr" ] || [ -z "$to_addr" ]); then
+			printf "\n%sIP range for dynamic address allocation has not been defined%s\n\n" "$red" "$regular"
+			show_usage create-network 1
+		fi
 	fi
 
 	max_bridge_devs=25
@@ -1568,37 +1581,21 @@ create_network_cmd() {
 		fi
 	done
 
-	temp_net_xml="$(get_random_alphanum)".xml
-	cat "$default_net_xml" > ~/"$temp_net_xml"
-
-	sed -i /'<uuid>'/d ~/"$temp_net_xml"
-	sed -i /'<mac address='/d ~/"$temp_net_xml"
-
-	if [ "$dhcp_srv" == "on" ]; then
-		new_line='<range start="'${from_addr}'" end="'${to_addr}'"/>'
-		sed -i "/<range start/c \ \ \ \ \ \ $new_line" ~/"$temp_net_xml"
+	if [ "$net_type" == "isolated" ]; then
+		temp_net_xml="$(create_xml_net_isolated "$net_name" \
+			"$bridge_dev" "$domain_name")"
+	elif [ "$dhcp_srv" == "off" ]; then
+		temp_net_xml="$(create_xml_net_nat_no_dhcp "$net_name" \
+			"$bridge_dev" "$domain_name" "$router_addr" "$netmask_addr")"
 	else
-		sed -i /'<dhcp>'/d ~/"$temp_net_xml"
-		sed -i /'<range start='/d ~/"$temp_net_xml"
-		sed -i /'<\/dhcp>'/d ~/"$temp_net_xml"
+		temp_net_xml="$(create_xml_net_nat_dhcp "$net_name" \
+			"$bridge_dev" "$domain_name" "$router_addr" "$netmask_addr" "$from_addr" "$to_addr")"
 	fi
 
-	new_line='<name>'${net_name}'</name>'
-	sed -i "/<name>default/c\ \ $new_line" ~/"$temp_net_xml"
-
-	new_line='<bridge name="'${bridge_dev}'"/>'
-	sed -i "/<bridge name=/c\ \ $new_line" ~/"$temp_net_xml"
-
-	new_line='<ip address="'${router_addr}'" netmask="'${netmask_addr}'">'
-	sed -i "/<ip address=/c\ \ $new_line" ~/"$temp_net_xml"
-
-	new_line='<domain name="'${domain_name}'" localOnly="yes"/>'
-	sed -i "/<ip address/i\ \ ${new_line}" ~/"$temp_net_xml"
-
-	virsh net-define ~/"$temp_net_xml" > /dev/null 2>&1
+	virsh net-define "$temp_net_xml" > /dev/null 2>&1
 	virsh_ec=$?
 
-	rm ~/"$temp_net_xml"
+	rm "$temp_net_xml"
 
 	if [ $virsh_ec -ne 0 ]; then
 		printf "%sfailed to define %s, virsh returned error code %d, terminating now%s\n" "$red" "$net_name" $virsh_ec "$regular"
