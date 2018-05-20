@@ -10,7 +10,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * __all done__
 
 `attach`
-* facilitate the attachment of libvirt networks
+* facilitate the attachment of virtual NICs
 
 `check-service`
 * __all done__
@@ -22,7 +22,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * clone VMs with more than one storage volumes
 
 `create`
-* facilitate the creation of isolated libvirt networks
+* __all done__
 
 `deactivate`
 * __all done__
