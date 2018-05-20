@@ -307,6 +307,15 @@ show_usage() {
 }
 
 # ---------------------------------------------------------------------------
+# get_random_alphanum():
+#   Returns a random string of alphanumeric characters
+# ---------------------------------------------------------------------------
+
+get_random_alphanum() {
+	echo $(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 48 | tr -d '\n')
+}
+
+# ---------------------------------------------------------------------------
 # is_name_valid():
 #   Checks if given name is valid
 #   A name is valid for qboxes if it comprises alphanumerics,
@@ -580,6 +589,33 @@ get_vm_vols() {
 	the_vm="$1"
 	the_storage_vols=$(virsh domblklist "$the_vm" | egrep '^(vd|sd|hd)')
 	echo "$the_storage_vols"
+}
+
+# ---------------------------------------------------------------------------
+# create_xml_net_isolated():
+#   Returns an XML file describing a libvirt isolated network
+# ---------------------------------------------------------------------------
+
+create_xml_net_isolated() {
+	yes
+}
+
+# ---------------------------------------------------------------------------
+# create_xml_net_nat_no_dhcp():
+#   Returns an XML file describing a libvirt NAT network without DHCP support
+# ---------------------------------------------------------------------------
+
+create_xml_net_nat_no_dhcp() {
+	yes
+}
+
+# ---------------------------------------------------------------------------
+# create_xml_net_nat_dhcp():
+#   Returns an XML file describing a libvirt NAT network with DHCP support
+# ---------------------------------------------------------------------------
+
+create_xml_net_nat_dhcp() {
+	yes
 }
 
 # ---------------------------------------------------------------------------
@@ -1233,7 +1269,7 @@ clone_cmd() {
 			else
 				clone_volume_name="$candidate".qcow2
 
-				printf "%scloning %s into %s%s\n" "$green" "$template_volume_name" "$clone_volume_name" "$regular"
+				printf "%scloning volume %s into %s%s\n" "$green" "$template_volume_name" "$clone_volume_name" "$regular"
 
 				virsh vol-clone --pool "$template_pool_name" "$template_volume_name" "$clone_volume_name" > /dev/null 2>&1
 				virsh_ec=$?
@@ -1243,7 +1279,7 @@ clone_cmd() {
 				fi
 
 				if [ "$template_pool_path" != "$clone_pool_path" ]; then
-					printf "%smoving %s between pools (%s ==> %s)%s\n" \
+					printf "%smoving volume %s between pools (%s ==> %s)%s\n" \
 						"$green" "$clone_volume_name" "$template_pool_name" "$clone_pool_name" "$regular"
 
 					sudo mv "$template_pool_path"/"$clone_volume_name" "$clone_pool_path"/
@@ -1257,7 +1293,7 @@ clone_cmd() {
 					virsh pool-refresh "$clone_pool_name" > /dev/null 2>&1
 				fi
 
-				printf "%scloning %s into %s and attaching %s to it%s\n" \
+				printf "%scloning VM %s into %s and attaching volume %s to it%s\n" \
 					"$green" "$template_VM" "$candidate" "$clone_volume_name" "$regular"
 
 				virt-clone -o "$template_VM" -n "$candidate" \
@@ -1272,7 +1308,7 @@ clone_cmd() {
 				valid_hostname=$(echo "$candidate" | tr "[:upper:]._" "[:lower:]00")
 				valid_hostname=${valid_hostname/%-/0}
 
-				printf "%ssetting '%s' as the hostname for %s%s\n" "$green" "$valid_hostname" "$candidate" "$regular"
+				printf "%ssetting '%s' as the hostname for VM %s%s\n" "$green" "$valid_hostname" "$candidate" "$regular"
 
                 sudo virt-customize -d "$candidate" --hostname "$valid_hostname" > /dev/null 2>&1
 				virt_customize_ec=$?
@@ -1282,7 +1318,7 @@ clone_cmd() {
 					exit 2
 				fi
 
-				printf "%sdeleting SSH host keys from %s%s\n\n" "$green" "$candidate" "$regular"
+				printf "%sdeleting SSH host keys from VM %s%s\n\n" "$green" "$candidate" "$regular"
 
 				sudo virt-customize -d "$candidate" \
 					--delete /etc/ssh/ssh_host_dsa_key \
@@ -1479,9 +1515,7 @@ create_network_cmd() {
 		fi
 	done
 
-	random_alphanum=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n')
-	temp_net_xml="$random_alphanum".xml
-
+	temp_net_xml="$(get_random_alphanum)".xml
 	cat "$default_net_xml" > ~/"$temp_net_xml"
 
 	sed -i /'<uuid>'/d ~/"$temp_net_xml"
@@ -1921,9 +1955,7 @@ define_cmd() {
 		exit 1
 	fi
 
-	random_alphanum=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n')
-	xml_path="$the_vm"_"$random_alphanum".xml
-
+	xml_path="$the_vm"_"$(get_random_alphanum)".xml
 	pool_path=$(get_pool_path "$pool_name")
 	volume_path="$pool_path"/"$volume_name"
 
@@ -2005,7 +2037,7 @@ list_vms_cmd() {
 		exit 0
 	fi
 
-	temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
+	temp_file_name="$(get_random_alphanum)".lst
 
 	echo "Name State CPU(s) RAM[MiB] BLK(s) NIC(s) PrimNet PrimAdaptIP" >> ~/"$temp_file_name"
 	echo "---- ----- ------ -------- ------ ------ ------- -----------" >> ~/"$temp_file_name"
@@ -2058,7 +2090,7 @@ list_networks_cmd() {
 		exit 0
 	fi
 
-	temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
+	temp_file_name="$(get_random_alphanum)".lst
 
 	echo "Name State Mode Domain MACaddr Router/DNSaddr DHCP fromIPaddr toIPaddr Clients" >> ~/"$temp_file_name"
 	echo "---- ----- ---- ------ ------- -------------- ---- ---------- -------- -------" >> ~/"$temp_file_name"
@@ -2136,7 +2168,7 @@ list_pools_cmd() {
 		exit 0
 	fi
 
-	temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
+	temp_file_name="$(get_random_alphanum)".lst
 
 	echo "Name State Capacity Allocation Available PoolDirPath Volumes" >> ~/"$temp_file_name"
 	echo "---- ----- -------- ---------- --------- ----------- -------" >> ~/"$temp_file_name"
@@ -2182,7 +2214,7 @@ list_volumes_cmd() {
 		exit 0
 	fi
 
-	temp_file_name=$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 20 | tr -d '\n').lst
+	temp_file_name="$(get_random_alphanum)".lst
 
 	echo "Volume Capacity Allocation Pool" >> ~/"$temp_file_name"
 	echo "------ -------- ---------- ----" >> ~/"$temp_file_name"
