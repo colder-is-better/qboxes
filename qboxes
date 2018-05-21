@@ -201,7 +201,7 @@ show_usage() {
 			printf "  define - define a new VM\n\n"
 			printf "SYNOPSIS\n"
 			printf "  define --ram=<size_in_MiB> --cores=<count> --volume=<capacity_in_GiB>"
-			printf " --pool=<active_pool_name> --network=<{bridged}|net_name> --guest-os=<os_variant> <VM_name>\n\n"
+			printf " --pool=<active_pool_name> --network=<{host_bridge}|net_name> --guest-os=<os_variant> <VM_name>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Define a new VM according to specifications, do not install a guest OS\n"
 			printf "  (Tip: Type %sosinfo-query os%s for a list of all the supported OS variants)\n\n" "$bold" "$regular"
@@ -1960,7 +1960,7 @@ define_cmd() {
 				pool_name=$value
 			;;
 			--network)
-				if [ "$value" == "{bridged}" ]; then
+				if [ "$value" == "{host_bridge}" ]; then
 					bridge_gw_dev="$(get_bridge_gw_dev)"
 					if [ "$bridge_gw_dev" == "n/a" ]; then
 						printf "%scannot seem to find a bridge gateway device on this host%s\n" "$red" "$regular"
