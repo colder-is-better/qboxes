@@ -201,7 +201,7 @@ show_usage() {
 			printf "  define - define a new VM\n\n"
 			printf "SYNOPSIS\n"
 			printf "  define --ram=<size_in_MiB> --cores=<count> --volume=<capacity_in_GiB>"
-			printf " --pool=<active_pool_name> --network=<name> --guest-os=<os_variant> <VM_name>\n\n"
+			printf " --pool=<active_pool_name> --network=<{bridged}|net_name> --guest-os=<os_variant> <VM_name>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Define a new VM according to specifications, do not install a guest OS\n"
 			printf "  (Tip: Type %sosinfo-query os%s for a list of all the supported OS variants)\n\n" "$bold" "$regular"
@@ -304,15 +304,6 @@ show_usage() {
 			exit "$error_code"
 		;;
 	esac
-}
-
-# ---------------------------------------------------------------------------
-# get_random_alphanum():
-#   Returns a random string of alphanumeric characters
-# ---------------------------------------------------------------------------
-
-get_random_alphanum() {
-	echo "$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 48 | tr -d '\n')"
 }
 
 # ---------------------------------------------------------------------------
@@ -446,6 +437,29 @@ in_between() {
 	right_part="$(right_part_of "$input_string" "$left_mark")"
 	middle_part="$(left_part_of "$right_part" "$right_mark")"
 	echo "$middle_part"
+}
+
+# ---------------------------------------------------------------------------
+# get_random_alphanum():
+#   Returns a random string of alphanumeric characters
+# ---------------------------------------------------------------------------
+
+get_random_alphanum() {
+	echo "$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 48 | tr -d '\n')"
+}
+
+# ---------------------------------------------------------------------------
+# get_bridge_gw_dev():
+#   Returns the bridge host device that is also the default gateway
+# ---------------------------------------------------------------------------
+
+get_bridge_gw_dev() {
+	bridge_gw_dev="$(sudo brctl show | egrep "^$(sudo route -n | grep "UG" \
+		| grep -v "UGH" | awk '{ print $8 }')" | awk '{ print $1 }')"
+	if [ -z "$bridge_gw_dev" ]; then
+		bridge_gw_dev="n/a"
+	fi
+	echo "$bridge_gw_dev"
 }
 
 # ---------------------------------------------------------------------------
@@ -1879,7 +1893,7 @@ define_cmd() {
 	cpu_cores=""
 	volume_name=""
 	pool_name=""
-	libvirt_network=""
+	network_spec=""
 	os_variant=""
 
 	for ((argument=1 ; argument <= $((num_args - 1)) ; argument++)); do
@@ -1946,18 +1960,27 @@ define_cmd() {
 				pool_name=$value
 			;;
 			--network)
-				answer=$(is_name_valid "$value")
-				if [ "$answer" == "no" ]; then
-					printf "%s'%s' is not a valid network name%s\n" "$red" "$value" "$regular"
-					exit 1
+				if [ "$value" == "{bridged}" ]; then
+					bridge_gw_dev="$(get_bridge_gw_dev)"
+					if [ "$bridge_gw_dev" == "n/a" ]; then
+						printf "%scannot seem to find a bridge gateway device on this host%s\n" "$red" "$regular"
+						exit 1
+					fi
+					network_spec="bridge=""$bridge_gw_dev"
+				else
+					answer=$(is_name_valid "$value")
+					if [ "$answer" == "no" ]; then
+						printf "%s'%s' is not a valid network name%s\n" "$red" "$value" "$regular"
+						exit 1
+					fi
+					all_active_networks=$(get_networks "active")
+					answer=$(is_a_member "$value" "$all_active_networks")
+					if [ "$answer" == "no" ]; then
+						printf "%scannot seem to find active network '%s'%s\n" "$red" "$value" "$regular"
+						exit 1
+					fi
+					network_spec="network=""$value"
 				fi
-				all_active_networks=$(get_networks "active")
-				answer=$(is_a_member "$value" "$all_active_networks")
-				if [ "$answer" == "no" ]; then
-					printf "%scannot seem to find active network '%s'%s\n" "$red" "$value" "$regular"
-					exit 1
-				fi
-				libvirt_network=$value
 			;;
 			--guest-os)
 				answer=$(is_name_valid "$value")
@@ -1981,12 +2004,9 @@ define_cmd() {
 		shift
 	done
 
-	if [ -z "$memory_size" ] \
-		|| [ -z "$cpu_cores" ] \
-		|| [ -z "$volume_name" ] \
-		|| [ -z "$pool_name" ] \
-		|| [ -z "$libvirt_network" ] \
-		|| [ -z "$os_variant" ] ; then
+	if [ -z "$memory_size" ] || [ -z "$cpu_cores" ] \
+		|| [ -z "$volume_name" ] || [ -z "$pool_name" ] \
+		|| [ -z "$network_spec" ] || [ -z "$os_variant" ] ; then
 		printf "\n%sat least one of the required arguments has not been set%s\n\n" "$red" "$regular"
 		show_usage define 1
 	fi
@@ -2013,7 +2033,7 @@ define_cmd() {
 
 	virt-install --name "$the_vm" --os-variant "$os_variant" \
 		--memory "$memory_size" --cpu host --vcpus="$cpu_cores" \
-		--network network="$libvirt_network",model=virtio \
+		--network "$network_spec",model=virtio \
 		--disk "$volume_path",bus=virtio --boot network,hd \
 		--print-xml 1 > ~/"$xml_path" 2> /dev/null
 	virt_install_ec=$?
@@ -2257,8 +2277,8 @@ list_pools_cmd() {
 # ---------------------------------------------------------------------------
 
 list_volumes_cmd() {
-	all_pools=$(get_pools "all")
-	if [ -z "$all_pools" ]; then
+	all_active_pools=$(get_pools "active")
+	if [ -z "$all_active_pools" ]; then
 		printf "\n%scannot seem to find a single (in)active pool on this host, " "$yellow"
 		printf "so I am assuming there are no volumes either%s\n\n" "$regular"
 		exit 0
@@ -2269,7 +2289,7 @@ list_volumes_cmd() {
 	echo "Volume Capacity Allocation Pool" >> ~/"$temp_file_name"
 	echo "------ -------- ---------- ----" >> ~/"$temp_file_name"
 
-	for pool in $all_pools; do
+	for pool in $all_active_pools; do
 		virsh pool-refresh "$pool" > /dev/null 2>&1
 		volumes_in_pool=$(get_volumes "$pool")
 		for volume in $volumes_in_pool; do
