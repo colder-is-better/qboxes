@@ -506,13 +506,13 @@ get_first_nic_ip() {
 	if [ "$first_nic_net" != "n/a" ]; then
 		first_nic_ip="unknown"
 		first_nic_mac="$(get_first_nic_mac "$the_vm")"
-		via_guest_agent="$(virsh domifaddr --source agent "$the_vm" 2> /dev/null | grep "$first_nic_mac" | awk '{ print $4 }')"
+		via_guest_agent="$(virsh domifaddr --source agent "$the_vm" 2> /dev/null | grep "$first_nic_mac" | grep -v "N/A" | awk '{ print $4 }')"
 		if [ -n "$via_guest_agent" ]; then
 			first_nic_ip=$(left_part_of "$via_guest_agent" "/")
 		elif [ "$first_nic_net" != "hostBridge" ]; then
 			via_local_dhcp="$(virsh domifaddr --source lease "$the_vm" 2> /dev/null | grep "$first_nic_mac" | awk '{ print $4 }')"
 			if [ -n "$via_local_dhcp" ]; then
-				first_nic_ip=$(left_part_of "$via_local_dhcp" "/")
+				first_nic_ip="$(left_part_of "$via_local_dhcp" "/")"
 			fi
 		fi
 	fi
