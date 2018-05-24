@@ -200,7 +200,7 @@ show_usage() {
 			printf "COMMAND NAME\n"
 			printf "  define - define a new VM\n\n"
 			printf "SYNOPSIS\n"
-			printf "  define --ram=<size_in_MiB> --cores=<count> --volume=<capacity_in_GiB>"
+			printf "  define --ram=<size_in_MiB> --cores=<count> --osdrive=<volume_name>"
 			printf " --pool=<active_pool_name> --network=<{host_bridge}|net_name> --guest-os=<os_variant> <VM_name>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Define a new VM according to specifications, do not install a guest OS\n"
@@ -1931,7 +1931,7 @@ define_cmd() {
 				fi
 				cpu_cores=$value
 			;;
-			--volume)
+			--osdrive)
 				answer=$(is_name_valid "$value")
 				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid volume name%s\n" "$red" "$value" "$regular"
