@@ -206,7 +206,7 @@ show_usage() {
 			printf "  Define a new VM according to specifications, do not install a guest OS\n"
 			printf "  (Tip: Type %sosinfo-query os%s for a list of all the supported OS variants)\n\n" "$bold" "$regular"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes define --ram=2048 --cores=2 --volume=leap423_os_disk.qcow2" "$bold"
+			printf "  ~> %sqboxes define --ram=2048 --cores=2 --osdrive=leap423_os_disk.qcow2" "$bold"
 			printf " --pool=packer_images --network=localnet --guest-os=opensuse42.3 leap423%s\n\n" "$regular"
 			exit "$error_code"
 		;;
