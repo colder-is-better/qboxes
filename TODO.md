@@ -17,6 +17,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 
 `clone`
 * optional: indicate network for clones
+* optional: specify MAC address for first NIC
 * optional: indicate storage pool for clones (it is currently mandatory)
 * handle the cloning of VMs with zero-sized storage volumes
 * clone VMs with more than one storage volumes
@@ -28,7 +29,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * __all done__
 
 `define`
-* __all done__
+* optional: indicate MAC address for first NIC
 
 `detach`
 * facilitate the dettachment of networks, volumes
@@ -44,7 +45,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * show MAC address of primary network adapter and IP address (if applicable)
 
 `modify`
-* support the changing of RAM & number of cores (VMs)
+* facilitate the changing of RAM & number of cores
 
 `rename`
 * rename a VM
