@@ -200,8 +200,8 @@ show_usage() {
 			printf "COMMAND NAME\n"
 			printf "  define - define a new VM\n\n"
 			printf "SYNOPSIS\n"
-			printf "  define --ram=<size_in_MiB> --cores=<count> --osdrive=<volume_name>"
-			printf " --pool=<active_pool_name> --network=<{host_bridge}|libvirt_net_name> --guest-os=<os_variant> <VM_name>\n\n"
+			printf "  define --ram=<size_in_MiB> --cores=<count> --osdrive=<volume_name> --pool=<active_pool_name>"
+			printf " --network=<{host_bridge}|libvirt_net_name> [--mac=<MAC_address>] --guest-os=<os_variant> <VM_name>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Define a new VM according to specifications, do not install a guest OS\n"
 			printf "  (Tip: Type %sosinfo-query os%s for a list of all the supported OS variants)\n\n" "$bold" "$regular"
@@ -367,6 +367,23 @@ is_size_valid() {
 }
 
 # ---------------------------------------------------------------------------
+# is_mac_valid():
+#   Checks if given string represents a valid MAC address
+# ---------------------------------------------------------------------------
+
+is_mac_valid() {
+	answer="no"
+	the_mac="$1"
+	the_mac_caps=${the_mac^^}
+	valid_mac_regexp="([0-9A-F]{2}:){5}[0-9A-F]{2}$"
+	valid_mac_test="$(echo "$the_mac_caps" | grep -E "^$valid_mac_regexp")"
+	if [ -n "$valid_mac_test" ]; then
+		answer="yes"
+	fi
+	echo "$answer"
+}
+
+# ---------------------------------------------------------------------------
 # is_ipv4_valid():
 #   Checks if given string represents a valid IPv4 address
 # ---------------------------------------------------------------------------
@@ -376,7 +393,7 @@ is_ipv4_valid() {
 	the_address="$1"
 	zero_to_255="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
 	valid_ipv4_regex="$zero_to_255"\."$zero_to_255"\."$zero_to_255"\."$zero_to_255"
-	valid_ipv4_test=$(echo "$the_address" | grep -x -E "$valid_ipv4_regex")
+	valid_ipv4_test=$(echo "$the_address" | grep -E "^$valid_ipv4_regex")
 	if [ -n "$valid_ipv4_test" ]; then
 		answer="yes"
 	fi
@@ -1885,7 +1902,7 @@ deactivate_cmd() {
 define_cmd() {
 	num_args=7
 	if [ $# -ne $num_args ]; then
-		printf "\n%sincorrect number of arguments (need exactly %d)%s\n\n" "$red" $num_args "$regular"
+		printf "\n%sincorrect number of arguments (need at least %d)%s\n\n" "$red" $num_args "$regular"
 		show_usage define 1
 	fi
 
@@ -1894,6 +1911,7 @@ define_cmd() {
 	volume_name=""
 	pool_name=""
 	network_spec=""
+	mac_addr=""
 	os_variant=""
 
 	for ((argument=1 ; argument <= $((num_args - 1)) ; argument++)); do
@@ -1966,7 +1984,7 @@ define_cmd() {
 						printf "%scannot seem to find a bridge gateway device on this host%s\n" "$red" "$regular"
 						exit 1
 					fi
-					network_spec="bridge=""$bridge_gw_dev"
+					network_spec="bridge=""$bridge_gw_dev"",model=virtio"
 				else
 					answer=$(is_name_valid "$value")
 					if [ "$answer" == "no" ]; then
@@ -1979,8 +1997,16 @@ define_cmd() {
 						printf "%scannot seem to find active network '%s'%s\n" "$red" "$value" "$regular"
 						exit 1
 					fi
-					network_spec="network=""$value"
+					network_spec="network=""$value"",model=virtio"
 				fi
+			;;
+			--mac)
+				answer=$(is_mac_valid "$value")
+				if [ "$answer" == "no" ]; then
+					printf "%s'%s' is not a valid MAC address%s\n" "$red" "$value" "$regular"
+					exit 1
+				fi
+				mac_addr=",mac="$value
 			;;
 			--guest-os)
 				answer=$(is_name_valid "$value")
@@ -2033,9 +2059,8 @@ define_cmd() {
 
 	virt-install --name "$the_vm" --os-variant "$os_variant" \
 		--memory "$memory_size" --cpu host --vcpus="$cpu_cores" \
-		--network "$network_spec",model=virtio \
-		--disk "$volume_path",bus=virtio --boot network,hd \
-		--print-xml 1 > "$xml_path" 2> /dev/null
+		--network "$network_spec""$mac_addr" --disk "$volume_path",bus=virtio \
+		--boot hd,network --print-xml 1 > "$xml_path" 2> /dev/null
 	virt_install_ec=$?
 	if [ $virt_install_ec -ne 0 ]; then
 		printf "%soperation failed, virt-install returned error code %d, terminating now%s\n" \
