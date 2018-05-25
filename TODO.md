@@ -29,7 +29,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * __all done__
 
 `define`
-* optional: indicate MAC address for first NIC
+* __all done__
 
 `detach`
 * facilitate the dettachment of networks, volumes
