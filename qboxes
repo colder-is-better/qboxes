@@ -2076,6 +2076,15 @@ define_cmd() {
 	pool_path=$(get_pool_path "$pool_name")
 	volume_path="$pool_path"/"$volume_name"
 
+	for each_vm in $all_VMs; do
+		all_vm_vols=$(get_vm_vols "$each_vm")
+		answer=$(is_a_member "$volume_path" "$all_vm_vols")
+		if [ "$answer" == "yes" ]; then
+			printf "%sstorage volume %s is already connected to VM %s%s\n" "$red" "$volume_name" "$each_vm" "$regular"
+			exit 1
+		fi
+	done
+
 	printf "%scoming up with a detailed XML description of %s%s\n" "$green" "$the_vm" "$regular"
 
 	if [ "$mac_addr" == "AUTO" ]; then
