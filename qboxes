@@ -96,7 +96,7 @@ show_usage() {
 			printf "  Copy, if necessary, one or more storage volumes (files of type ISO,"
 			printf " QCOW2, etc.) to an existing active storage pool and/or refresh the pool\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes assimilate --pool=templates /tmp/packer_out/opensuse-leap-423.qcow2 ./bionic-beaver.qcow2%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes assimilate --pool=templates /tmp/packer_out/leap423.qcow2 ./bionic-beaver.qcow2%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		attach)
@@ -107,7 +107,7 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Attach an existing storage volume from given pool, to an (in)active VM\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes attach --name=datadrive.qcow2 --pool=storage fileserver%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes attach --name=datadisk.qcow2 --pool=storage fileserver%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		check-service)
@@ -118,7 +118,7 @@ show_usage() {
 			printf "DESCRIPTION\n";
 			printf "  Check if one or more active VMs are reachable via specificied TCP port\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes check-service --port=22 smt-server master-node%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes check-service --port=22 masternode%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		clone)
@@ -146,7 +146,7 @@ show_usage() {
 			printf "  ~> %sqboxes create network --type=nated --name=vnet --domain=local.qbx --router=10.20.30.254" "$bold"
 			printf " --netmask=255.255.255.0 --dhcp=on --from=10.20.30.100 --to=10.20.30.253%s\n\n" "$regular"
 			printf "  ~> %sqboxes create pool --name=ceph --path=/usr/local/testing/storage-clusters%s\n\n" "$bold" "$regular"
-			printf "  ~> %sqboxes create volume --name=data_disk.qcow2 --size=1024 --pool=tank%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes create volume --name=datadisk.qcow2 --size=1024 --pool=tank%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		create-network)
@@ -182,7 +182,7 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Create a new storage volume with given name and size, under existing storage pool\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes create volume --name=data_disk.qcow2 --size=1024 --pool=tank%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes create volume --name=datadisk.qcow2 --size=1024 --pool=tank%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		deactivate)
@@ -201,9 +201,10 @@ show_usage() {
 			printf "  define - define a new VM\n\n"
 			printf "SYNOPSIS\n"
 			printf "  define --ram=<size_in_MiB> --cores=<count> --osdisk=<volume_name> --pool=<active_pool_name>"
-			printf " --network=<{host_bridge}|libvirt_net_name> --mac=<auto|MAC_address> --guest-os=<os_variant> <VM_name>\n\n"
+			printf " --network=<host_bridge|libvirt_net_name> --mac=<auto|MAC_address> --guest-os=<os_variant> <VM_name>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Define a new VM according to specifications, do not install a guest OS\n"
+			printf "  (Hint: In --network=... host_bridge is a literal, while libvirt_net_name is a placeholder)\n"
 			printf "  (Tip: Type %sosinfo-query os%s for a list of all the supported OS variants)\n\n" "$bold" "$regular"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes define --ram=2048 --cores=2 --osdisk=leap423_disk.qcow2" "$bold"
@@ -316,14 +317,15 @@ show_usage() {
 
 is_name_valid() {
 	answer="no"
-    the_name="$1"
-    length=${#the_name}
-    if [ "$length" -gt 0 ] && [ "$length" -le 63 ] && [ "${the_name:0:1}" != "-" ]; then
-        valid_name_test=$(echo "$the_name" | tr -d "[:alnum:]-_.")
-        if [ -z "$valid_name_test" ]; then
+	the_name="$1"
+	length=${#the_name}
+	if [ "$the_name" != "host_bridge" ] && [ "${the_name:0:1}" != "-" ] \
+	&& [ "$length" -gt 0 ] && [ "$length" -le 63 ]; then
+		valid_name_test=$(echo "$the_name" | tr -d "[:alnum:]-_.")
+		if [ -z "$valid_name_test" ]; then
 			answer="yes"
 		fi
-    fi
+	fi
 	echo "$answer"
 }
 
@@ -1995,7 +1997,7 @@ define_cmd() {
 				pool_name=$value
 			;;
 			--network)
-				if [ "$value" == "{host_bridge}" ]; then
+				if [ "$value" == "host_bridge" ]; then
 					bridge_gw_dev=$(get_bridge_gw_dev)
 					if [ "$bridge_gw_dev" == "n/a" ]; then
 						printf "%scannot seem to find a bridge gateway device on this host%s\n" "$red" "$regular"
