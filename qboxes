@@ -1851,7 +1851,7 @@ create_cmd() {
 	entity_type="$1"
 
 	case $entity_type in
-	network)
+	network|net)
 		shift
 		create_network_cmd "$@"
 	;;
@@ -1859,7 +1859,7 @@ create_cmd() {
 		shift
 		create_pool_cmd "$@"
 	;;
-	volume)
+	volume|vol)
 		shift
 		create_volume_cmd "$@"
 	;;
