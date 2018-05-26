@@ -200,14 +200,14 @@ show_usage() {
 			printf "COMMAND NAME\n"
 			printf "  define - define a new VM\n\n"
 			printf "SYNOPSIS\n"
-			printf "  define --ram=<size_in_MiB> --cores=<count> --osdrive=<volume_name> --pool=<active_pool_name>"
-			printf " --network=<{host_bridge}|libvirt_net_name> [--mac=<MAC_address>] --guest-os=<os_variant> <VM_name>\n\n"
+			printf "  define --ram=<size_in_MiB> --cores=<count> --osdisk=<volume_name> --pool=<active_pool_name>"
+			printf " --network=<{host_bridge}|libvirt_net_name> --mac=<auto|MAC_address> --guest-os=<os_variant> <VM_name>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Define a new VM according to specifications, do not install a guest OS\n"
 			printf "  (Tip: Type %sosinfo-query os%s for a list of all the supported OS variants)\n\n" "$bold" "$regular"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes define --ram=2048 --cores=2 --osdrive=leap423_disk.qcow2" "$bold"
-			printf " --pool=packer_images --network=localnet --guest-os=opensuse42.3 leap423%s\n\n" "$regular"
+			printf "  ~> %sqboxes define --ram=2048 --cores=2 --osdisk=leap423_disk.qcow2" "$bold"
+			printf " --pool=tank --network=vnet --mac=auto --guest-os=opensuse42.3 leap423%s\n\n" "$regular"
 			exit "$error_code"
 		;;
 		getmac)
@@ -472,11 +472,28 @@ get_random_alphanum() {
 
 get_bridge_gw_dev() {
 	bridge_gw_dev="$(sudo brctl show | egrep "^$(sudo route -n | grep "UG" \
-		| grep -v "UGH" | awk '{ print $8 }')" | awk '{ print $1 }')"
+	| grep -v "UGH" | awk '{ print $8 }')" | awk '{ print $1 }')"
 	if [ -z "$bridge_gw_dev" ]; then
 		bridge_gw_dev="n/a"
 	fi
 	echo "$bridge_gw_dev"
+}
+
+# ---------------------------------------------------------------------------
+# get_canonical_mac():
+#   Replaces, if necessary, the manufacturer part of given
+#   MAC address with the given manufacturer code
+# ---------------------------------------------------------------------------
+
+get_canonical_mac() {
+	the_mac="$1"
+	manufacturer_code="$2"
+	manufacturer_part="${the_mac:0:8}"
+	if [ "$manufacturer_part" != "$manufacturer_code" ]; then
+		hardware_part="${the_mac:9:17}"
+		the_mac="$manufacturer_code":"$hardware_part"
+	fi
+	echo "$the_mac"
 }
 
 # ---------------------------------------------------------------------------
@@ -1900,9 +1917,9 @@ deactivate_cmd() {
 # ---------------------------------------------------------------------------
 
 define_cmd() {
-	num_args=7
-	if [ $# -ne $num_args ]; then
-		printf "\n%sincorrect number of arguments (need at least %d)%s\n\n" "$red" $num_args "$regular"
+	num_args=8
+	if [ $# -lt $num_args ]; then
+		printf "\n%sincorrect number of arguments (need exactly %d)%s\n\n" "$red" $num_args "$regular"
 		show_usage define 1
 	fi
 
@@ -1949,10 +1966,10 @@ define_cmd() {
 				fi
 				cpu_cores=$value
 			;;
-			--osdrive)
+			--osdisk)
 				answer=$(is_name_valid "$value")
 				if [ "$answer" == "no" ]; then
-					printf "%s'%s' is not a valid volume name%s\n" "$red" "$value" "$regular"
+					printf "%s'%s' is not a valid volume name (for OS disk)%s\n" "$red" "$value" "$regular"
 					exit 1
 				fi
 				volume_name=$value
@@ -1984,7 +2001,7 @@ define_cmd() {
 						printf "%scannot seem to find a bridge gateway device on this host%s\n" "$red" "$regular"
 						exit 1
 					fi
-					network_spec="bridge=""$bridge_gw_dev"",model=virtio"
+					network_spec="bridge=""$bridge_gw_dev"
 				else
 					answer=$(is_name_valid "$value")
 					if [ "$answer" == "no" ]; then
@@ -1997,16 +2014,20 @@ define_cmd() {
 						printf "%scannot seem to find active network '%s'%s\n" "$red" "$value" "$regular"
 						exit 1
 					fi
-					network_spec="network=""$value"",model=virtio"
+					network_spec="network=""$value"
 				fi
 			;;
 			--mac)
-				answer=$(is_mac_valid "$value")
-				if [ "$answer" == "no" ]; then
-					printf "%s'%s' is not a valid MAC address%s\n" "$red" "$value" "$regular"
-					exit 1
+				if [ "$value" == "auto" ]; then
+					mac_addr="AUTO"
+				else
+					answer=$(is_mac_valid "$value")
+					if [ "$answer" == "no" ]; then
+						printf "%s'%s' is not a valid MAC address%s\n" "$red" "$value" "$regular"
+						exit 1
+					fi
+					mac_addr="$value"
 				fi
-				mac_addr=",mac="$value
 			;;
 			--guest-os)
 				answer=$(is_name_valid "$value")
@@ -2032,7 +2053,7 @@ define_cmd() {
 
 	if [ -z "$memory_size" ] || [ -z "$cpu_cores" ] \
 		|| [ -z "$volume_name" ] || [ -z "$pool_name" ] \
-		|| [ -z "$network_spec" ] || [ -z "$os_variant" ] ; then
+		|| [ -z "$network_spec" ] || [ -z "$mac_addr" ] || [ -z "$os_variant" ]; then
 		printf "\n%sat least one of the required arguments has not been set%s\n\n" "$red" "$regular"
 		show_usage define 1
 	fi
@@ -2057,10 +2078,18 @@ define_cmd() {
 
 	printf "%scoming up with a detailed XML description of %s%s\n" "$green" "$the_vm" "$regular"
 
+	if [ "$mac_addr" == "AUTO" ]; then
+		mac_spec=""
+	else
+		canonical_mac=$(get_canonical_mac "$mac_addr" "52:54:00")
+		mac_spec=",mac=""$canonical_mac"
+	fi
+
 	virt-install --name "$the_vm" --os-variant "$os_variant" \
 		--memory "$memory_size" --cpu host --vcpus="$cpu_cores" \
-		--network "$network_spec""$mac_addr" --disk "$volume_path",bus=virtio \
+		--network "$network_spec",model=virtio"$mac_spec" --disk "$volume_path",bus=virtio \
 		--boot hd,network --print-xml 1 > "$xml_path" 2> /dev/null
+
 	virt_install_ec=$?
 	if [ $virt_install_ec -ne 0 ]; then
 		printf "%soperation failed, virt-install returned error code %d, terminating now%s\n" \
@@ -2077,6 +2106,7 @@ define_cmd() {
 	printf "%sdefining %s%s\n\n" "$green" "$the_vm" "$regular"
 
 	virsh define "$xml_path" --validate > /dev/null 2>&1
+
 	virsh_ec=$?
 	if [ $virsh_ec -ne 0 ]; then
 		printf "%soperation failed, virsh returned error code %d, terminating now%s\n" "$red" $virsh_ec "$regular"
