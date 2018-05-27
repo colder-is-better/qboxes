@@ -32,15 +32,15 @@ show_usage() {
 			printf "COMMAND NAME\n"
 			printf "  annihilate - remove any trace of given libvirt entity\n\n"
 			printf "SYNOPSIS\n"
-			printf "  annihilate <vm|network|pool|volume>\n\n"
+			printf "  annihilate <vm(s)|network(s)|pool(s)|volume(s)>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Delete existing libvirt entity, where \"entity\" may"
 			printf " be any one of vm, network, pool, volume\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes annihilate vm node{1..8}%s\n\n" "$bold" "$regular"
-			printf "  ~> %sqboxes annihilate network qbxnet localnet%s\n\n" "$bold" "$regular"
-			printf "  ~> %sqboxes annihilate pool templates tank%s\n\n" "$bold" "$regular"
-			printf "  ~> %sqboxes annihilate volume --pool=datastore disk{0..4}.qcow2%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes annihilate vms node{1..8}%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes annihilate networks qbxnet localnet%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes annihilate pools templates tank%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes annihilate volumes --pool=datastore disk{0..4}.qcow2%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		annihilate-vms)
@@ -80,11 +80,11 @@ show_usage() {
 			printf "COMMAND NAME & OBJECT\n"
 			printf "  annihilate volume - remove storage volumes\n\n"
 			printf "SYNOPSIS\n"
-			printf "  annihilate volume --pool=<active_pool_name> <vol_1> ... <vol_k>\n\n"
+			printf "  annihilate volume --from-pool=<active_pool_name> <vol_1> ... <vol_k>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Delete one or more storage volumes from given active pool\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes annihilate volume --pool=datastore disk{0..4}.qcow2%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes annihilate volume --from-pool=datastore disk{0..4}.qcow2%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		assimilate)
@@ -93,8 +93,8 @@ show_usage() {
 			printf "SYNOPSIS\n"
 			printf "  assimilate --pool=<active_pool_name> <vol_1> ... <vol_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Copy, if necessary, one or more storage volumes (files of type ISO,"
-			printf " QCOW2, etc.) to an existing active storage pool and/or refresh the pool\n\n"
+			printf "  Copy, if necessary, one or more storage volumes (files of type ISO, QCOW2, etc.)\n"
+			printf "  to an existing active storage pool, refresh the pool if necessary\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes assimilate --pool=templates /tmp/packer_out/leap423.qcow2 ./bionic-beaver.qcow2%s\n\n" "$bold" "$regular"
 			exit "$error_code"
@@ -103,11 +103,11 @@ show_usage() {
 			printf "COMMAND NAME\n"
 			printf "  attach - attach an existing storage volume to an (in)active VM\n\n"
 			printf "SYNOPSIS\n"
-			printf "  attach --name=<volume_filename> --pool=<active_pool_name> <VM_name>\n\n"
+			printf "  attach --volume=<file_name> --from-pool=<active_pool_name> <VM_name>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Attach an existing storage volume from given pool, to an (in)active VM\n\n"
+			printf "  Attach an existing storage volume from given active pool, to an (in)active VM\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes attach --name=datadisk.qcow2 --pool=storage fileserver%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes attach --volume=datadisk.qcow2 --from-pool=storage fileserver%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		check-service)
@@ -125,13 +125,13 @@ show_usage() {
 			printf "COMMAND NAME\n"
 			printf "  clone - clone a template VM into one or more new VMs\n\n"
 			printf "SYNOPSIS\n"
-			printf "  clone --template=<VM_0> --pool=<active_pool_name> <VM_1> ... <VM_k>\n\n"
+			printf "  clone --template=<VM_0> --target-pool=<active_pool_name> <VM_1> ... <VM_k>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Clone an existing inactive template VM into one or more new VMs, indicate"
-			printf " a target active pool for keeping the cloned volumes\n\n"
+			printf "  Clone an existing inactive template VM into one or more new VMs,\n"
+			printf "  indicate a target active pool for keeping the cloned volumes\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes clone --template=sles12sp3 --pool=lab" "$bold"
-			printf " www-srv-1 www-srv-2 balancer%s\n\n" "$regular"
+			printf "  ~> %sqboxes clone --template=sles12sp3vm --target-pool=cloudlab" "$bold"
+			printf " httpsrv{1,2} balancer%s\n\n" "$regular"
 			exit "$error_code"
 		;;
 		create)
@@ -143,9 +143,10 @@ show_usage() {
 			printf "  Create a new libvirt entity, where \"entity\" may"
 			printf " be any one of network, pool, volume\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes create network --type=nated --name=vnet --domain=local.qbx --router=10.20.30.254" "$bold"
-			printf " --netmask=255.255.255.0 --dhcp=on --from=10.20.30.100 --to=10.20.30.253%s\n\n" "$regular"
-			printf "  ~> %sqboxes create pool --name=ceph --path=/usr/local/testing/storage-clusters%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes create network --type=nated --name=vnet --domain=local.qbx \\" "$bold"
+			printf "\n       --router=10.20.30.254 --netmask=255.255.255.0 \\"
+			printf "\n       --dhcp=on --from=10.20.30.100 --to=10.20.30.253%s\n\n" "$regular"
+			printf "  ~> %sqboxes create pool --name=ceph --path=/usr/local/testing/storage-cluster%s\n\n" "$bold" "$regular"
 			printf "  ~> %sqboxes create volume --name=datadisk.qcow2 --size=1024 --pool=tank%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
@@ -159,8 +160,9 @@ show_usage() {
 			printf "  Create a new libvirt network, optionally offering routing and DNS"
 			printf " services, and DHCP services also\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes create network --type=nated --name=vnet --domain=local.qbx --router=10.20.30.254" "$bold"
-			printf " --netmask=255.255.255.0 --dhcp=on --from=10.20.30.100 --to=10.20.30.253%s\n\n" "$regular"
+			printf "  ~> %sqboxes create network --type=nated --name=vnet --domain=local.qbx \\" "$bold"
+			printf "\n       --router=10.20.30.254 --netmask=255.255.255.0 \\"
+			printf "\n       --dhcp=on --from=10.20.30.100 --to=10.20.30.253%s\n\n" "$regular"
 			exit "$error_code"
 		;;
 		create-pool)
@@ -169,18 +171,18 @@ show_usage() {
 			printf "SYNOPSIS\n"
 			printf "  create pool --name=<pool_name> --path=<path_to_local_dir>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Create a new storage pool with given name, under existing local path\n\n"
+			printf "  Create a new storage pool with given name, connected to existing local path\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes create pool --name=ceph --path=/usr/local/testing/storage-clusters%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes create pool --name=ceph --path=/usr/local/testing/storage-cluster%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		create-volume)
 			printf "COMMAND NAME & OBJECT\n"
 			printf "  create volume - create a new storage volume\n\n"
 			printf "SYNOPSIS\n"
-			printf "  create volume --name=<volume_name> --size=<size_in_GiB> --pool=<parent_pool>\n\n"
+			printf "  create volume --name=<volume_file_name> --size=<size_in_GiB> --pool=<active_pool>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Create a new storage volume with given name and size, under existing storage pool\n\n"
+			printf "  Create a new storage volume with given name and size, under existing active storage pool\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes create volume --name=datadisk.qcow2 --size=1024 --pool=tank%s\n\n" "$bold" "$regular"
 			exit "$error_code"
@@ -193,7 +195,7 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Try to gracefully shutdown one or more active VMs\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes deactivate leap423%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes deactivate leap423 xenial%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		define)
@@ -208,8 +210,10 @@ show_usage() {
 			printf "    * In --mac=... %sauto%s is a literal, while MAC_address is a placeholder\n" "$bold" "$regular"
 			printf "    * Type %sosinfo-query os%s for a list of all the supported OS variants\n\n" "$bold" "$regular"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes define --ram=2048 --cores=2 --osdisk=leap423_disk.qcow2" "$bold"
-			printf " --pool=tank --network=vnet --mac=auto --guest-os=opensuse42.3 leap423%s\n\n" "$regular"
+			printf "  ~> %sqboxes define --ram=2048 --cores=2 \\" "$bold"
+			printf "\n       --osdisk=leap423.qcow2 --pool=tank \\"
+			printf "\n       --network=vnet --mac=auto \\"
+			printf "\n       --guest-os=opensuse42.3 leap423vm%s\n\n" "$regular"
 			exit "$error_code"
 		;;
 		getmac)
@@ -220,7 +224,7 @@ show_usage() {
 			printf "DESCRIPTION\n"
 			printf "  Reveal the first Ethernet adapter's MAC address of one or more (in)active VMs\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
-			printf "  ~> %sqboxes getmac sles12sp{1,2,3}%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes getmac sles12sp{1,2,3}vm%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		list)
@@ -229,8 +233,8 @@ show_usage() {
 			printf "SYNOPSIS\n"
 			printf "  list <vm(s)|network(s)|pool(s)|volume(s)>\n\n"
 			printf "DESCRIPTION\n"
-			printf "  Present all available (in)active entities of given type, where"
-			printf " \"type\" may be any one of vm, network, pool, volume.\n\n"
+			printf "  Present all available (in)active entities of given type,\n"
+			printf "  where \"type\" may be any one of vm, network, pool, volume.\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes list vms%s\n\n" "$bold" "$regular"
 			printf "  ~> %sqboxes list networks%s\n\n" "$bold" "$regular"
@@ -292,9 +296,9 @@ show_usage() {
 			printf "  clone\t\t: clone a template VM into one or more new VMs\n"
 			printf "  create\t: create a new libvirt network, storage pool, or storage volume\n"
 			printf "  deactivate\t: gracefully shutdown active VMs\n"
-			printf "  define\t: define a new VM according to specifications, do not install a guest OS\n"
+			printf "  define\t: define a new VM according to specs, do not install a guest OS\n"
 			printf "  getmac\t: reveal MAC addresses\n"
-			printf "  list\t\t: present all available (in)active VMs, libvirt networks, pools, or volumes\n"
+			printf "  list\t\t: present all available VMs, libvirt networks, pools, or volumes\n"
 			printf "  ping\t\t: send ICMP packets to active VMs\n"
 			printf "  powcycle\t: cold-restart active VMs\n"
 			printf "  reboot\t: gracefully restart active VMs\n"
@@ -928,7 +932,7 @@ annihilate_volumes_cmd() {
 	param=$(left_part_of "$1" "=")
 	the_pool=$(right_part_of "$1" "=")
 
-	if [ "$param" != "--pool" ]; then
+	if [ "$param" != "--from-pool" ]; then
 		printf "\n%sunknown argument '%s'%s\n\n" "$red" "$param" "$regular"
 		show_usage annihilate-volumes 1
 	fi
@@ -1116,7 +1120,7 @@ attach_cmd() {
 		value=$(right_part_of "$1" "=")
 
 		case $param in
-			--name)
+			--volume)
 				answer=$(is_name_valid "$value")
 				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid volume name%s\n" "$red" "$value" "$regular"
@@ -1124,7 +1128,7 @@ attach_cmd() {
 				fi
 				volume_name=$value
 			;;
-			--pool)
+			--from-pool)
 				answer=$(is_name_valid "$value")
 				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
@@ -1316,7 +1320,7 @@ clone_cmd() {
 				fi
 				template_VM=$value
 			;;
-			--pool)
+			--target-pool)
 				answer=$(is_name_valid "$value")
 				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
