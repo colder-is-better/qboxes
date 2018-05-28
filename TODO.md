@@ -1,7 +1,7 @@
 This is an alphabetical list of the currently implemented and also planned `qboxes` commands. For some of them there are bullet points regarding functionality/features we plan on adding.
 
 `activate`
-* __all done__
+* facilitate the activation of networks, pools
 
 `annihilate`
 * __all done__
@@ -10,15 +10,13 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * __all done__
 
 `attach`
-* facilitate the attachment of virtual NICs
+* facilitate the attachment of NICs
 
 `check-service`
 * __all done__
 
 `clone`
-* optional: indicate network for clones
-* optional: specify MAC address for first NIC
-* optional: indicate storage pool for clones (it is currently mandatory)
+* introduce literal "same" for indicating clone storage pool
 * handle the cloning of VMs with zero-sized storage volumes
 * clone VMs with more than one storage volumes
 
@@ -26,13 +24,13 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * __all done__
 
 `deactivate`
-* __all done__
+* facilitate the deactivation of networks, pools
 
 `define`
 * __all done__
 
 `detach`
-* facilitate the dettachment of networks, volumes
+* facilitate the dettachment of NICs, volumes
 
 `getmac`
 * __all done__
@@ -41,11 +39,10 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * return detailed information on VMs, networks, pools, volumes
 
 `list`
-* check if network mentioned in XML of VM really exists (it may as well not) and report accordingly
-* show MAC address of primary network adapter and IP address (if applicable)
+* show MAC address, IP address, FQDN of first NIC (if applicable/possible)
 
 `modify`
-* facilitate the changing of RAM & number of cores
+* facilitate the modification of MAC addresses, RAM sizes, number of cores
 
 `rename`
 * rename a VM
