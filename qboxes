@@ -2286,7 +2286,7 @@ list_networks_cmd() {
 		net_clients=0
 		if [ -n "$all_VMs" ]; then
 			for guest in $all_VMs; do
-				how_many=$(virsh dumpxml "$guest" | grep -c "$name")
+				how_many=$(virsh dumpxml "$guest" | grep -c "<source network='""$name""'/>")
 				if [ "$how_many" -gt 0 ]; then
 					(( net_clients += 1 ))
 				fi
