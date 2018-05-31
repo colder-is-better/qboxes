@@ -16,7 +16,6 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * __all done__
 
 `clone`
-* introduce literal "same" for indicating clone storage pool
 * handle the cloning of VMs with zero-sized storage volumes
 * clone VMs with more than one storage volumes
 
