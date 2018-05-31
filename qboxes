@@ -40,7 +40,7 @@ show_usage() {
 			printf "  ~> %sqboxes annihilate vms node{1..8}%s\n\n" "$bold" "$regular"
 			printf "  ~> %sqboxes annihilate networks qbxnet localnet%s\n\n" "$bold" "$regular"
 			printf "  ~> %sqboxes annihilate pools templates tank%s\n\n" "$bold" "$regular"
-			printf "  ~> %sqboxes annihilate volumes --pool=datastore disk{0..4}.qcow2%s\n\n" "$bold" "$regular"
+			printf "  ~> %sqboxes annihilate volumes --from-pool=datastore disk{0..4}.qcow2%s\n\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		annihilate-vms)
@@ -125,10 +125,12 @@ show_usage() {
 			printf "COMMAND NAME\n"
 			printf "  clone - clone a template VM into one or more new VMs\n\n"
 			printf "SYNOPSIS\n"
-			printf "  clone --template=<VM_0> --target-pool=<active_pool_name> <VM_1> ... <VM_k>\n\n"
+			printf "  clone --template=<VM_0> --target-pool=<the_same|active_pool_name> <VM_1> ... <VM_k>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Clone an existing inactive template VM into one or more new VMs,\n"
-			printf "  indicate a target active pool for keeping the cloned volumes\n\n"
+			printf "  indicate a target active pool for keeping the cloned volumes\n"
+			printf "  * In --target_pool=..., %sthe_same%s is a literal\n" "$bold" "$regular"
+			printf "    and active_pool_name is a placeholder\n\n"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes clone --template=sles12sp3vm --target-pool=cloudlab" "$bold"
 			printf " httpsrv{1,2} balancer%s\n\n" "$regular"
@@ -206,9 +208,9 @@ show_usage() {
 			printf " --network=<host_bridge|libvirt_net_name> --mac=<auto|MAC_address> --guest-os=<os_variant> <VM_name>\n\n"
 			printf "DESCRIPTION\n"
 			printf "  Define a new VM according to specifications, do not install a guest OS\n"
-			printf "    * In --network=... %shost_bridge%s is a literal, while libvirt_net_name is a placeholder\n" "$bold" "$regular"
-			printf "    * In --mac=... %sauto%s is a literal, while MAC_address is a placeholder\n" "$bold" "$regular"
-			printf "    * Type %sosinfo-query os%s for a list of all the supported OS variants\n\n" "$bold" "$regular"
+			printf "  * In --network=..., %shost_bridge%s is a literal and libvirt_net_name is a placeholder\n" "$bold" "$regular"
+			printf "  * In --mac=..., %sauto%s is a literal and MAC_address is a placeholder\n" "$bold" "$regular"
+			printf "  * Type %sosinfo-query os%s for a list of all the supported OS variants\n\n" "$bold" "$regular"
 			printf "%sEXAMPLE%s\n" "$bold" "$regular"
 			printf "  ~> %sqboxes define --ram=2048 --cores=2 \\" "$bold"
 			printf "\n       --osdisk=leap423.qcow2 --pool=tank \\"
@@ -324,8 +326,8 @@ is_name_valid() {
 	answer="no"
 	the_name="$1"
 	length=${#the_name}
-	if [ "$the_name" != "host_bridge" ] && [ "${the_name:0:1}" != "-" ] \
-	&& [ "$length" -gt 0 ] && [ "$length" -le 63 ]; then
+	if [ "$the_name" != "host_bridge" ] && [ "$the_name" != "the_same" ] \
+	&& [ "${the_name:0:1}" != "-" ] && [ "$length" -gt 0 ] && [ "$length" -le 63 ]; then
 		valid_name_test=$(echo "$the_name" | tr -d "[:alnum:]-_.")
 		if [ -z "$valid_name_test" ]; then
 			answer="yes"
@@ -1321,16 +1323,18 @@ clone_cmd() {
 				template_VM=$value
 			;;
 			--target-pool)
-				answer=$(is_name_valid "$value")
-				if [ "$answer" == "no" ]; then
-					printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
-					exit 1
-				fi
-				all_active_pools=$(get_pools "active")
-				answer=$(is_a_member "$value" "$all_active_pools")
-				if [ "$answer" == "no" ]; then
-					printf "%s'%s' is not an active pool%s\n" "$red" "$value" "$regular"
-					exit 1
+				if [ "$value" != "the_same" ]; then
+					answer=$(is_name_valid "$value")
+					if [ "$answer" == "no" ]; then
+						printf "%s'%s' is not a valid pool name%s\n" "$red" "$value" "$regular"
+						exit 1
+					fi
+					all_active_pools=$(get_pools "active")
+					answer=$(is_a_member "$value" "$all_active_pools")
+					if [ "$answer" == "no" ]; then
+						printf "%s'%s' is not an active pool%s\n" "$red" "$value" "$regular"
+						exit 1
+					fi
 				fi
 				clone_pool_name=$value
 				;;
@@ -1349,22 +1353,27 @@ clone_cmd() {
 
 	template_pool_name=""
 	template_pool_path=""
-	template_volume_path=$(in_between "$(virsh dumpxml "$template_VM" | grep "<source file='")" "<source file='" "'")
-	template_volume_name=$(basename "$template_volume_path")
+	template_volume_full_path=$(in_between "$(virsh dumpxml "$template_VM" | grep "<source file='")" "<source file='" "'")
+	template_volume_name=$(basename "$template_volume_full_path")
 
-	for pool in $all_active_pools; do
-		volumes_in_pool=$(virsh vol-list "$pool")
-		template_volume_in_list=$(echo "$volumes_in_pool" | grep "$template_volume_path")
-		if [ -n "$template_volume_in_list" ]; then
-			template_pool_path=$(dirname "$template_volume_path")
+	all_pools=$(get_pools "all")
+	for pool in $all_pools; do
+		volumes_in_pool=$(get_volumes "$pool")
+		answer=$(is_a_member "$template_volume_name" "$volumes_in_pool")
+		if [ "$answer" == "yes" ]; then
+			template_pool_path=$(dirname "$template_volume_full_path")
 			template_pool_name=$pool
-			all_active_pools=""
+			break
 		fi
 	done
 
 	all_VMs=$(virsh list --name --all 2> /dev/null)
 
-	clone_pool_path=$(get_pool_path "$clone_pool_name")
+	if [ "$clone_pool_name" == "the_same" ]; then
+		clone_pool_path=$template_pool_path
+	else
+		clone_pool_path=$(get_pool_path "$clone_pool_name")
+	fi
 
 	for candidate; do
 		answer=$(is_name_valid "$candidate")
@@ -1386,7 +1395,7 @@ clone_cmd() {
 					exit 2
 				fi
 
-				if [ "$template_pool_path" != "$clone_pool_path" ]; then
+				if [ "$clone_pool_path" != "$template_pool_path" ]; then
 					printf "%smoving volume %s between pools (%s ==> %s)%s\n" \
 						"$green" "$clone_volume_name" "$template_pool_name" "$clone_pool_name" "$regular"
 
@@ -1418,7 +1427,7 @@ clone_cmd() {
 
 				printf "%ssetting '%s' as the hostname for VM %s%s\n" "$green" "$valid_hostname" "$candidate" "$regular"
 
-                sudo virt-customize -d "$candidate" --hostname "$valid_hostname" > /dev/null 2>&1
+				sudo virt-customize -d "$candidate" --hostname "$valid_hostname" > /dev/null 2>&1
 				virt_customize_ec=$?
 				if [ $virt_customize_ec -ne 0 ]; then
 					printf "%soperation failed, virt-customize returned error code %d, terminating now%s\n" \
@@ -2025,16 +2034,14 @@ define_cmd() {
 				fi
 			;;
 			--mac)
-				if [ "$value" == "auto" ]; then
-					mac_addr="AUTO"
-				else
+				if [ "$value" != "auto" ]; then
 					answer=$(is_mac_valid "$value")
 					if [ "$answer" == "no" ]; then
 						printf "%s'%s' is not a valid MAC address%s\n" "$red" "$value" "$regular"
 						exit 1
 					fi
-					mac_addr="$value"
 				fi
+				mac_addr="$value"
 			;;
 			--guest-os)
 				answer=$(is_name_valid "$value")
@@ -2094,7 +2101,7 @@ define_cmd() {
 
 	printf "%scoming up with a detailed XML description of %s%s\n" "$green" "$the_vm" "$regular"
 
-	if [ "$mac_addr" == "AUTO" ]; then
+	if [ "$mac_addr" == "auto" ]; then
 		mac_spec=""
 	else
 		canonical_mac=$(get_canonical_mac "$mac_addr" "52:54:00")
