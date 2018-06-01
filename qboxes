@@ -2187,8 +2187,8 @@ list_vms_cmd() {
 
 	temp_file_name="/tmp/""$(get_random_alphanum)".lst
 
-	echo "Name State CPU(s) RAM[MiB] BLK(s) NIC(s) PrimNet PrimAdaptIP" >> "$temp_file_name"
-	echo "---- ----- ------ -------- ------ ------ ------- -----------" >> "$temp_file_name"
+	echo "Name State CPU(s) RAM[MiB] BLK(s) NIC(s) PrimNet PrimAdaptMAC PrimAdaptIP" >> "$temp_file_name"
+	echo "---- ----- ------ -------- ------ ------ ------- ------------ -----------" >> "$temp_file_name"
 
 	for name in $all_VMs; do
 		state=$(echo "$(right_part_of "$(virsh dominfo "$name" | grep State)" ":")" | awk '{ print $1 }')
@@ -2204,19 +2204,24 @@ list_vms_cmd() {
 		all_vm_vols=$(get_vm_vols "$name")
 		block_devices=$(($(echo "$all_vm_vols" | wc -w) / 2))
 
+		first_nic_mac="n/a"
+		first_nic_net="n/a"
+		first_nic_ip="n/a"
+
 		nated_net="<source network='"
 		bridged_net="<interface type='bridge'"
 		network_adapters=$(virsh dumpxml "$name" | grep -e "$nated_net" -e "$bridged_net" -c)
 
-		first_nic_net=$(get_first_nic_net "$name")
-		if [ "$state" == "inactive" ]; then
-			first_nic_ip="n/a"
-		else
-			first_nic_ip=$(get_first_nic_ip "$name")
+		if [ "$network_adapters" -gt 0 ]; then
+			first_nic_net=$(get_first_nic_net "$name")
+			first_nic_mac=$(get_first_nic_mac "$name")
+			if [ "$state" != "inactive" ]; then
+				first_nic_ip=$(get_first_nic_ip "$name")
+			fi
 		fi
 
 		echo "$name" "$state" "$CPUs" "$ram_size_mb" "$block_devices" \
-			"$network_adapters" "$first_nic_net" "$first_nic_ip" >> "$temp_file_name"
+			"$network_adapters" "$first_nic_net" "$first_nic_mac" "$first_nic_ip" >> "$temp_file_name"
 	done
 
 	echo
