@@ -38,7 +38,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * return detailed information on VMs, networks, pools, volumes
 
 `list`
-* show MAC address, IP address, FQDN of first NIC (if applicable/possible)
+* show FQDN of first NIC (if applicable/possible)
 
 `modify`
 * facilitate the modification of MAC addresses, RAM sizes, number of cores
