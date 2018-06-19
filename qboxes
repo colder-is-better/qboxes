@@ -2576,7 +2576,7 @@ reboot_cmd() {
 
 # ---------------------------------------------------------------------------
 # unplug_cmd():
-#   Forciblly powers off one or more active VMs
+#   Forcibly powers off one or more active VMs
 # ---------------------------------------------------------------------------
 
 unplug_cmd() {
