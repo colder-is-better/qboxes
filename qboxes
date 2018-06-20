@@ -2111,7 +2111,7 @@ define_cmd() {
 	virt-install --name "$the_vm" --os-variant "$os_variant" \
 		--memory "$memory_size" --cpu host --vcpus="$cpu_cores" \
 		--network "$network_spec",model=virtio"$mac_spec" --disk "$volume_path",bus=virtio \
-		--boot hd,network --print-xml 1 > "$xml_path" 2> /dev/null
+		--boot network,hd --print-xml 1 > "$xml_path" 2> /dev/null
 
 	virt_install_ec=$?
 	if [ $virt_install_ec -ne 0 ]; then
