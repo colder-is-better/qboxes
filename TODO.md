@@ -17,7 +17,6 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 
 `clone`
 * handle the cloning of VMs with zero-sized storage volumes
-* clone VMs with more than one storage volumes
 
 `create`
 * __all done__
@@ -54,9 +53,6 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 
 `powcycle`
 * __all done__
-
-`snapshot`
-* facilitate the creation, removal and listing of VM snapshots
 
 `unplug`
 * __all done__
