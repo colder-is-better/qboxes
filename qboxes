@@ -19,13 +19,49 @@ show_usage() {
 	case $help_for in
 		activate)
 			printf "COMMAND NAME\\n"
-			printf "  activate - bring inactive VMs up\\n\\n"
+			printf "  activate - activate inactive libvirt entities\\n\\n"
 			printf "SYNOPSIS\\n"
-			printf "  activate <inactive_VM_1> ... <inactive_VM_k>\\n\\n"
+			printf "  activate <vm(s)|network(s)|pool(s)>\\n\\n"
 			printf "DESCRIPTION\\n"
-			printf "  Power one or more inactive VMs up\\n\\n"
+			printf "  Activate inactive libvirt entities, where \"entity\" may"
+			printf " be any one of vm, network, pool\\n\\n"
 			printf "%sEXAMPLE%s\\n" "$bold" "$regular"
-			printf "  ~> %sqboxes activate leap423 sles11sp4%s\\n\\n" "$bold" "$regular"
+			printf "  ~> %sqboxes activate vms leap423 sles11sp4%s\\n\\n" "$bold" "$regular"
+			printf "  ~> %sqboxes activate networks localnet coolernet%s\\n\\n" "$bold" "$regular"
+			printf "  ~> %sqboxes activate pools ceph ostack tank%s\\n\\n" "$bold" "$regular"
+			exit "$error_code"
+		;;
+		activate-vms)
+			printf "COMMAND NAME & OBJECTS\\n"
+			printf "  activate - activate given inactive VMs\\n\\n"
+			printf "SYNOPSIS\\n"
+			printf "  activate vms <inactive_VM_1> ... <inactive_VM_k>\\n\\n"
+			printf "DESCRIPTION\\n"
+			printf "  Activate one or more inactive VMs\\n\\n"
+			printf "%sEXAMPLE%s\\n" "$bold" "$regular"
+			printf "  ~> %sqboxes activate vms leap423 sles11sp4%s\\n\\n" "$bold" "$regular"
+			exit "$error_code"
+		;;
+		activate-networks)
+			printf "COMMAND NAME & OBJECTS\\n"
+			printf "  activate - activate given inactive networks\\n\\n"
+			printf "SYNOPSIS\\n"
+			printf "  activate networks <inactive_net_1> ... <inactive_net_k>\\n\\n"
+			printf "DESCRIPTION\\n"
+			printf "  Activate one or more inactive libvirt networks\\n\\n"
+			printf "%sEXAMPLE%s\\n" "$bold" "$regular"
+			printf "  ~> %sqboxes activate networks localnet coolernet%s\\n\\n" "$bold" "$regular"
+			exit "$error_code"
+		;;
+		activate-pools)
+			printf "COMMAND NAME & OBJECTS\\n"
+			printf "  activate - activate given inactive pools\\n\\n"
+			printf "SYNOPSIS\\n"
+			printf "  activate pools <inactive_pool_1> ... <inactive_pool_k>\\n\\n"
+			printf "DESCRIPTION\\n"
+			printf "  Activate one or more inactive storage pools\\n\\n"
+			printf "%sEXAMPLE%s\\n" "$bold" "$regular"
+			printf "  ~> %sqboxes activate pools ceph ostack tank%s\\n\\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		annihilate)
@@ -34,7 +70,7 @@ show_usage() {
 			printf "SYNOPSIS\\n"
 			printf "  annihilate <vm(s)|network(s)|pool(s)|volume(s)>\\n\\n"
 			printf "DESCRIPTION\\n"
-			printf "  Delete existing libvirt entities, where \"entity\" may"
+			printf "  Delete libvirt entities, where \"entity\" may"
 			printf " be any one of vm, network, pool, volume\\n\\n"
 			printf "%sEXAMPLE%s\\n" "$bold" "$regular"
 			printf "  ~> %sqboxes annihilate vms node{1..8}%s\\n\\n" "$bold" "$regular"
@@ -44,7 +80,7 @@ show_usage() {
 			exit "$error_code"
 		;;
 		annihilate-vms)
-			printf "COMMAND NAME & OBJECT\\n"
+			printf "COMMAND NAME & OBJECTS\\n"
 			printf "  annihilate vm - remove any trace of given VMs\\n\\n"
 			printf "SYNOPSIS\\n"
 			printf "  annihilate vm <inactive_VM_1> ... <inactive_VM_k>\\n\\n"
@@ -55,7 +91,7 @@ show_usage() {
 			exit "$error_code"
 		;;
 		annihilate-networks)
-			printf "COMMAND NAME & OBJECT\\n"
+			printf "COMMAND NAME & OBJECTS\\n"
 			printf "  annihilate network - remove given active libvirt networks\\n\\n"
 			printf "SYNOPSIS\\n"
 			printf "  annihilate network <active_net_1> ... <active_net_k>\\n\\n"
@@ -66,7 +102,7 @@ show_usage() {
 			exit "$error_code"
 		;;
 		annihilate-pools)
-			printf "COMMAND NAME & OBJECT\\n"
+			printf "COMMAND NAME & OBJECTS\\n"
 			printf "  annihilate pool - remove given active storage pools\\n\\n"
 			printf "SYNOPSIS\\n"
 			printf "  annihilate pool <active_pool_1> ... <active_pool_k>\\n\\n"
@@ -77,7 +113,7 @@ show_usage() {
 			exit "$error_code"
 		;;
 		annihilate-volumes)
-			printf "COMMAND NAME & OBJECT\\n"
+			printf "COMMAND NAME & OBJECTS\\n"
 			printf "  annihilate volume - remove storage volumes\\n\\n"
 			printf "SYNOPSIS\\n"
 			printf "  annihilate volume --from-pool=<active_pool_name> <vol_1> ... <vol_k>\\n\\n"
@@ -89,23 +125,23 @@ show_usage() {
 		;;
 		assimilate)
 			printf "COMMAND NAME\\n"
-			printf "  assimilate - integrate storage volumes into an existing active storage pool\\n\\n"
+			printf "  assimilate - integrate storage volumes into an active storage pool\\n\\n"
 			printf "SYNOPSIS\\n"
 			printf "  assimilate --pool=<active_pool_name> <vol_1> ... <vol_k>\\n\\n"
 			printf "DESCRIPTION\\n"
 			printf "  Copy, if necessary, one or more storage volumes (files of type ISO, QCOW2, etc.)\\n"
-			printf "  to an existing active storage pool, refresh the pool if necessary\\n\\n"
+			printf "  to an active storage pool, refresh the pool if necessary\\n\\n"
 			printf "%sEXAMPLE%s\\n" "$bold" "$regular"
 			printf "  ~> %sqboxes assimilate --pool=templates /tmp/packer_out/leap423.qcow2 ./bionic-beaver.qcow2%s\\n\\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		attach)
 			printf "COMMAND NAME\\n"
-			printf "  attach - attach an existing storage volume to an (in)active VM\\n\\n"
+			printf "  attach - attach a storage volume to an (in)active VM\\n\\n"
 			printf "SYNOPSIS\\n"
 			printf "  attach --volume=<file_name> --from-pool=<active_pool_name> <VM_name>\\n\\n"
 			printf "DESCRIPTION\\n"
-			printf "  Attach an existing storage volume from given active pool, to an (in)active VM\\n\\n"
+			printf "  Attach a storage volume from given active pool, to an (in)active VM\\n\\n"
 			printf "%sEXAMPLE%s\\n" "$bold" "$regular"
 			printf "  ~> %sqboxes attach --volume=datadisk.qcow2 --from-pool=storage fileserver%s\\n\\n" "$bold" "$regular"
 			exit "$error_code"
@@ -127,7 +163,7 @@ show_usage() {
 			printf "SYNOPSIS\\n"
 			printf "  clone --template=<VM_0> --target-pool=<the_same|active_pool_name> <VM_1> ... <VM_k>\\n\\n"
 			printf "DESCRIPTION\\n"
-			printf "  Clone an existing inactive template VM into one or more new VMs,\\n"
+			printf "  Clone an inactive template VM into one or more new VMs,\\n"
 			printf "  indicate a target active pool for keeping the cloned volumes\\n"
 			printf "  * In --target_pool=..., %sthe_same%s is a literal\\n" "$bold" "$regular"
 			printf "    and active_pool_name is a placeholder\\n\\n"
@@ -173,7 +209,7 @@ show_usage() {
 			printf "SYNOPSIS\\n"
 			printf "  create pool --name=<pool_name> --path=<path_to_local_dir>\\n\\n"
 			printf "DESCRIPTION\\n"
-			printf "  Create a new storage pool with given name, connected to existing local path\\n\\n"
+			printf "  Create a new storage pool with given name, connected to local path\\n\\n"
 			printf "%sEXAMPLE%s\\n" "$bold" "$regular"
 			printf "  ~> %sqboxes create pool --name=ceph --path=/usr/local/testing/storage-cluster%s\\n\\n" "$bold" "$regular"
 			exit "$error_code"
@@ -184,7 +220,7 @@ show_usage() {
 			printf "SYNOPSIS\\n"
 			printf "  create volume --name=<volume_file_name> --size=<size_in_GiB> --pool=<active_pool>\\n\\n"
 			printf "DESCRIPTION\\n"
-			printf "  Create a new storage volume with given name and size, under existing active storage pool\\n\\n"
+			printf "  Create a new storage volume with given name and size, under active storage pool\\n\\n"
 			printf "%sEXAMPLE%s\\n" "$bold" "$regular"
 			printf "  ~> %sqboxes create volume --name=datadisk.qcow2 --size=1024 --pool=tank%s\\n\\n" "$bold" "$regular"
 			exit "$error_code"
@@ -290,10 +326,10 @@ show_usage() {
 			printf "\\nThis is %sqboxes%s, a simple command line tool" "$green" "$regular"
 			printf " for managing local QEMU/KVM VMs.\\n"
 			printf "Currently the following commands are implemented:\\n\\n"
-			printf "  activate\\t: bring inactive VMs up\\n"
+			printf "  activate\\t: bring inactive VMs, networks, or pools up\\n"
 			printf "  annihilate\\t: remove any trace of inactive VMs, active networks, active pools, or volumes\\n"
-			printf "  assimilate\\t: integrate storage volumes into an existing active pool\\n"
-			printf "  attach\\t: attach an existing storage volume to an (in)active VM\\n"
+			printf "  assimilate\\t: integrate storage volumes into an active pool\\n"
+			printf "  attach\\t: attach a storage volume to an (in)active VM\\n"
 			printf "  check-service\\t: try to connect to specified TCP port of one or more active VMs\\n"
 			printf "  clone\\t\\t: clone a template VM into one or more new VMs\\n"
 			printf "  create\\t: create a new libvirt network, storage pool, or storage volume\\n"
@@ -729,15 +765,20 @@ create_xml_net_nat_dhcp() {
 }
 
 # ---------------------------------------------------------------------------
-# activate_cmd():
+# activate_vms_cmd():
 #   Powers up one or more inactive VMs
 # ---------------------------------------------------------------------------
 
-activate_cmd() {
+activate_vms_cmd() {
+	if [ "$1" == "help" ]; then
+		echo
+		show_usage activate-vms 0
+	fi
+
 	lowest_num_args=1
 	if [ $# -lt $lowest_num_args ]; then
 		printf "\\n%sincorrect number of arguments (minimum is %d)%s\\n\\n" "$red" $lowest_num_args "$regular"
-		show_usage activate 1
+		show_usage activate-vms 1
 	fi
 
 	all_inactive_VMs=$(virsh list --name --inactive 2> /dev/null)
@@ -766,6 +807,127 @@ activate_cmd() {
 			fi
 		fi
 	done
+}
+
+# ---------------------------------------------------------------------------
+# activate_networks_cmd():
+#   Activates one or more inactive libvirt networks
+# ---------------------------------------------------------------------------
+
+activate_networks_cmd()
+{
+	if [ "$1" == "help" ]; then
+		echo
+		show_usage activate-networks 0
+	fi
+
+	lowest_num_args=1
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\\n%sincorrect number of arguments (minimum is %d)%s\\n\\n" "$red" $lowest_num_args "$regular"
+		show_usage activate-networks 1
+	fi
+
+	all_inactive_networks=$(get_networks "inactive")
+	if [ -z "$all_inactive_networks" ]; then
+		printf "\\n%scannot seem to find a single inactive network on this host%s\\n\\n" "$yellow" "$regular"
+		exit 0
+	fi
+
+	for candidate; do
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
+			printf "%s'%s' is not a valid network name%s\\n" "$yellow" "$candidate" "$regular"
+		else
+			answer=$(is_a_member "$candidate" "$all_inactive_networks")
+			if [ "$answer" == "no" ]; then
+				printf "%s'%s' is not an inactive network%s\\n" "$yellow" "$candidate" "$regular"
+			else
+				printf "%sactivating %s%s\\n" "$green" "$candidate" "$regular"
+				virsh net-start "$candidate" > /dev/null 2>&1
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d%s\\n" "$yellow" $virsh_ec "$regular"
+				fi
+			fi
+		fi
+	done
+}
+
+# ---------------------------------------------------------------------------
+# activate_pools_cmd():
+#   Activates one or more inactive storage pools
+# ---------------------------------------------------------------------------
+
+activate_pools_cmd()
+{
+	if [ "$1" == "help" ]; then
+		echo
+		show_usage activate-pools 0
+	fi
+
+	lowest_num_args=1
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\\n%sincorrect number of arguments (minimum is %d)%s\\n\\n" "$red" $lowest_num_args "$regular"
+		show_usage activate-pools 1
+	fi
+
+	all_inactive_pools=$(get_pools "inactive")
+	if [ -z "$all_inactive_pools" ]; then
+		printf "\\n%scannot seem to find a single inactive pool on this host%s\\n\\n" "$yellow" "$regular"
+		exit 0
+	fi
+
+	for candidate; do
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
+			printf "%s'%s' is not a valid pool name%s\\n" "$yellow" "$candidate" "$regular"
+		else
+			answer=$(is_a_member "$candidate" "$all_inactive_pools")
+			if [ "$answer" == "no" ]; then
+				printf "%s'%s' is not an inactive pool%s\\n" "$yellow" "$candidate" "$regular"
+			else
+				printf "%sactivating %s%s\\n" "$green" "$candidate" "$regular"
+				virsh pool-start "$candidate" > /dev/null 2>&1
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d%s\\n" "$yellow" $virsh_ec "$regular"
+				fi
+			fi
+		fi
+	done
+}
+
+# ---------------------------------------------------------------------------
+# activate_cmd():
+#   Removes any trace of inactive VMs,
+#   libvirt networks, storage pools, or storage volumes
+# ---------------------------------------------------------------------------
+
+activate_cmd() {
+	entity_type="$1"
+
+	case $entity_type in
+	vm|vms)
+		shift
+		activate_vms_cmd "$@"
+	;;
+	network|net|networks|nets)
+		shift
+		activate_networks_cmd "$@"
+	;;
+	pool|pools)
+		shift
+		activate_pools_cmd "$@"
+	;;
+	"")
+		printf "\\n%sentity type not specified%s\\n\\n" "$red" "$regular"
+		show_usage activate 1
+	;;
+	*)
+		printf "\\n%sinvalid entity type '%s'%s\\n\\n" "$red" "$entity_type" "$regular"
+		show_usage activate 1
+	;;
+	esac
 }
 
 # ---------------------------------------------------------------------------
@@ -1023,7 +1185,7 @@ annihilate_cmd() {
 # ---------------------------------------------------------------------------
 # assimilate_cmd():
 #   Copies, if necessary, given files (of type ISO, QCOW2, etc.)
-#   into an existing active storage pool and/or refreshes said pool
+#   into an active storage pool and/or refreshes said pool
 # ---------------------------------------------------------------------------
 
 assimilate_cmd() {
@@ -1103,7 +1265,7 @@ assimilate_cmd() {
 
 # ---------------------------------------------------------------------------
 # attach_cmd():
-#   Attaches an existing storage volume to an (in)active VM
+#   Attaches a storage volume to an (in)active VM
 # ---------------------------------------------------------------------------
 
 attach_cmd() {
