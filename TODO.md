@@ -1,7 +1,7 @@
 This is an alphabetical list of the currently implemented and also planned `qboxes` commands. For some of them there are bullet points regarding functionality/features we plan on adding.
 
 `activate`
-* facilitate the activation of networks, pools
+* __all done__
 
 `annihilate`
 * __all done__

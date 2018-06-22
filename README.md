@@ -3,9 +3,10 @@ This is a very simple BASH script for managing QEMU/KVM VMs. Currently, `qboxes`
 
 * define a new VM, with no guest OS
 * clone a template VM into one or more new VMs
-* bring inactive VMs up or reboot/shutdown/power-cycle/unplug active VMs
+* activate/deactivate inactive/active VMs, networks, or pools
+* reboot/power-cycle/unplug active VMs
 * attach storage volumes to VMs
-* integrate files into existing active storage pools
+* integrate files into active storage pools
 * remove any trace of inactive VMs, active networks, active pools, or volumes
 * create new libvirt networks, pools, or volumes
 * reveal MAC addresses
@@ -19,10 +20,10 @@ To get an overview of the tool just type `qboxes`.
 This is qboxes, a simple command line tool for managing local QEMU/KVM VMs.
 Currently the following commands are implemented:
 
-  activate	: bring inactive VMs up
+  activate	: bring inactive VMs, networks, or pools up
   annihilate	: remove any trace of inactive VMs, active networks, active pools, or volumes
-  assimilate	: integrate a file (ISO, QCOW2, etc.) into an existing active storage pool
-  attach	: attach an existing storage volume to an (in)active VM
+  assimilate	: integrate a file (ISO, QCOW2, etc.) into an active storage pool
+  attach	: attach a storage volume to an (in)active VM
   check-service	: try to connect to specified TCP port of one or more active VMs
   clone		: clone a template VM into one or more new VMs
   create	: create a new libvirt network, a new pool, or a new volume
