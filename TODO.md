@@ -40,10 +40,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * show FQDN of first NIC (if applicable/possible)
 
 `modify`
-* facilitate the modification of MAC addresses, RAM sizes, number of cores
-
-`rename`
-* rename a VM
+* facilitate the modification of VM names, MAC addresses, RAM sizes, number of cores
 
 `ping`
 * __all done__
