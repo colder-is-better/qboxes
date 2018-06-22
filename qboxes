@@ -480,7 +480,7 @@ get_random_alphanum() {
 # ---------------------------------------------------------------------------
 
 get_bridge_gw_dev() {
-	bridge_gw_dev="$(sudo brctl show | egrep "^$(sudo route -n | grep "UG" \
+	bridge_gw_dev="$(sudo brctl show | grep -E "^$(sudo route -n | grep "UG" \
 	| grep -v "UGH" | awk '{ print $8 }')" | awk '{ print $1 }')"
 	if [ -z "$bridge_gw_dev" ]; then
 		bridge_gw_dev="n/a"
@@ -644,7 +644,7 @@ get_pool_path() {
 
 get_vm_vols() {
 	the_vm="$1"
-	the_storage_vols=$(virsh domblklist "$the_vm" | egrep '^(vd|sd|hd)')
+	the_storage_vols=$(virsh domblklist "$the_vm" | grep -E '^(vd|sd|hd)')
 	echo "$the_storage_vols"
 }
 
