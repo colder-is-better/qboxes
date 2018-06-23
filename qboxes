@@ -81,7 +81,7 @@ show_usage() {
 		;;
 		annihilate-vms)
 			printf "COMMAND NAME & OBJECTS\\n"
-			printf "  annihilate vm - remove any trace of given VMs\\n\\n"
+			printf "  annihilate vm - remove any trace of given inactive VMs\\n\\n"
 			printf "SYNOPSIS\\n"
 			printf "  annihilate vm <inactive_VM_1> ... <inactive_VM_k>\\n\\n"
 			printf "DESCRIPTION\\n"
@@ -92,22 +92,22 @@ show_usage() {
 		;;
 		annihilate-networks)
 			printf "COMMAND NAME & OBJECTS\\n"
-			printf "  annihilate network - remove given active libvirt networks\\n\\n"
+			printf "  annihilate network - remove given inactive libvirt networks\\n\\n"
 			printf "SYNOPSIS\\n"
 			printf "  annihilate network <active_net_1> ... <active_net_k>\\n\\n"
 			printf "DESCRIPTION\\n"
-			printf "  Delete one or more active libvirt networks\\n\\n"
+			printf "  Delete one or more inactive libvirt networks\\n\\n"
 			printf "%sEXAMPLE%s\\n" "$bold" "$regular"
 			printf "  ~> %sqboxes annihilate network qbxnet localnet%s\\n\\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		annihilate-pools)
 			printf "COMMAND NAME & OBJECTS\\n"
-			printf "  annihilate pool - remove given active storage pools\\n\\n"
+			printf "  annihilate pool - remove given inactive storage pools\\n\\n"
 			printf "SYNOPSIS\\n"
 			printf "  annihilate pool <active_pool_1> ... <active_pool_k>\\n\\n"
 			printf "DESCRIPTION\\n"
-			printf "  Delete one or more active storage pools\\n\\n"
+			printf "  Delete one or more inactive storage pools\\n\\n"
 			printf "%sEXAMPLE%s\\n" "$bold" "$regular"
 			printf "  ~> %sqboxes annihilate pool templates tank%s\\n\\n" "$bold" "$regular"
 			exit "$error_code"
@@ -325,18 +325,18 @@ show_usage() {
 		*)
 			printf "\\nThis is %sqboxes%s, a simple command line tool" "$green" "$regular"
 			printf " for managing local QEMU/KVM VMs.\\n"
-			printf "Currently the following commands are implemented:\\n\\n"
-			printf "  activate\\t: bring inactive VMs, networks, or pools up\\n"
-			printf "  annihilate\\t: remove any trace of inactive VMs, active networks, active pools, or volumes\\n"
+			printf "The following commands are currently implemented:\\n\\n"
+			printf "  activate\\t: bring inactive VMs up, or activate libvirt networks, storage pools\\n"
+			printf "  annihilate\\t: remove any trace of inactive VMs, libvirt networks, storage pools, or volumes\\n"
 			printf "  assimilate\\t: integrate storage volumes into an active pool\\n"
 			printf "  attach\\t: attach a storage volume to an (in)active VM\\n"
 			printf "  check-service\\t: try to connect to specified TCP port of one or more active VMs\\n"
 			printf "  clone\\t\\t: clone a template VM into one or more new VMs\\n"
-			printf "  create\\t: create a new libvirt network, storage pool, or storage volume\\n"
+			printf "  create\\t: create a new libvirt network, storage pool, or volume\\n"
 			printf "  deactivate\\t: gracefully shutdown active VMs\\n"
 			printf "  define\\t: define a new VM according to specs, do not install a guest OS\\n"
-			printf "  getmac\\t: reveal MAC addresses\\n"
-			printf "  list\\t\\t: present all available VMs, libvirt networks, pools, or volumes\\n"
+			printf "  getmac\\t: reveal VM MAC addresses\\n"
+			printf "  list\\t\\t: present all available VMs, libvirt networks, storage pools, or volumes\\n"
 			printf "  ping\\t\\t: send ICMP packets to active VMs\\n"
 			printf "  powcycle\\t: cold-restart active VMs\\n"
 			printf "  reboot\\t: gracefully restart active VMs\\n"
@@ -990,7 +990,7 @@ annihilate_vms_cmd() {
 
 # ---------------------------------------------------------------------------
 # annihilate_networks_cmd():
-#   Removes any trace of one or more libvirt networks
+#   Removes any trace of one or more inactive libvirt networks
 # ---------------------------------------------------------------------------
 
 annihilate_networks_cmd() {
@@ -1005,9 +1005,9 @@ annihilate_networks_cmd() {
 		show_usage annihilate-networks 1
 	fi
 
-	all_active_networks=$(get_networks "active")
-	if [ -z "$all_active_networks" ]; then
-		printf "\\n%scannot seem to find a single active libvirt network on this host%s\\n\\n" "$yellow" "$regular"
+	all_inactive_networks=$(get_networks "inactive")
+	if [ -z "$all_inactive_networks" ]; then
+		printf "\\n%scannot seem to find a single inactive libvirt network on this host%s\\n\\n" "$yellow" "$regular"
 		exit 0
 	fi
 
@@ -1016,12 +1016,11 @@ annihilate_networks_cmd() {
 		if [ "$answer" == "no" ]; then
 			printf "%s'%s' is not a valid network name%s\\n" "$yellow" "$candidate" "$regular"
 		else
-			answer=$(is_a_member "$candidate" "$all_active_networks")
+			answer=$(is_a_member "$candidate" "$all_inactive_networks")
 			if [ "$answer" == "no" ]; then
-				printf "%s'%s' is not an active libvirt network%s\\n" "$yellow" "$candidate" "$regular"
+				printf "%s'%s' is not an inactive libvirt network%s\\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%sannihilating %s%s\\n" "$green" "$candidate" "$regular"
-				virsh net-destroy "$candidate" > /dev/null 2>&1
 				virsh net-undefine "$candidate" > /dev/null 2>&1
 				virsh_ec=$?
 				if [ $virsh_ec -ne 0 ]; then
@@ -1034,7 +1033,7 @@ annihilate_networks_cmd() {
 
 # ---------------------------------------------------------------------------
 # annihilate_pools_cmd():
-#   Removes any trace of one or more storage pools
+#   Removes any trace of one or more inactive storage pools
 # ---------------------------------------------------------------------------
 
 annihilate_pools_cmd() {
@@ -1049,9 +1048,9 @@ annihilate_pools_cmd() {
 		show_usage annihilate-pools 1
 	fi
 
-	all_active_pools=$(get_pools "active")
-	if [ -z "$all_active_pools" ]; then
-		printf "\\n%scannot seem to find a single active pool on this host%s\\n\\n" "$yellow" "$regular"
+	all_inactive_pools=$(get_pools "inactive")
+	if [ -z "$all_inactive_pools" ]; then
+		printf "\\n%scannot seem to find a single inactive pool on this host%s\\n\\n" "$yellow" "$regular"
 		exit 0
 	fi
 
@@ -1060,12 +1059,11 @@ annihilate_pools_cmd() {
 		if [ "$answer" == "no" ]; then
 			printf "%s'%s' is not a valid pool name%s\\n" "$yellow" "$candidate" "$regular"
 		else
-			answer=$(is_a_member "$candidate" "$all_active_pools")
+			answer=$(is_a_member "$candidate" "$all_inactive_pools")
 			if [ "$answer" == "no" ]; then
-				printf "%s'%s' is not an active storage pool%s\\n" "$yellow" "$candidate" "$regular"
+				printf "%s'%s' is not an inactive storage pool%s\\n" "$yellow" "$candidate" "$regular"
 			else
 				printf "%sannihilating %s%s\\n" "$green" "$candidate" "$regular"
-				virsh pool-destroy "$candidate" > /dev/null 2>&1
 				virsh pool-undefine "$candidate" > /dev/null 2>&1
 				virsh_ec=$?
 				if [ $virsh_ec -ne 0 ]; then
