@@ -227,13 +227,49 @@ show_usage() {
 		;;
 		deactivate)
 			printf "COMMAND NAME\\n"
-			printf "  deactivate - gracefully shutdown active VMs\\n\\n"
+			printf "  deactivate - deactivate active libvirt entities\\n\\n"
 			printf "SYNOPSIS\\n"
-			printf "  deactivate <active_VM_1> ... <active_VM_k>\\n\\n"
+			printf "  deactivate <vm(s)|network(s)|pool(s)>\\n\\n"
 			printf "DESCRIPTION\\n"
-			printf "  Try to gracefully shutdown one or more active VMs\\n\\n"
+			printf "  Deactivate active libvirt entities, where \"entity\" may"
+			printf " be any one of vm, network, pool\\n\\n"
 			printf "%sEXAMPLE%s\\n" "$bold" "$regular"
-			printf "  ~> %sqboxes deactivate leap423 xenial%s\\n\\n" "$bold" "$regular"
+			printf "  ~> %sqboxes deactivate vms node{1..5}%s\\n\\n" "$bold" "$regular"
+			printf "  ~> %sqboxes deactivate network cephnet%s\\n\\n" "$bold" "$regular"
+			printf "  ~> %sqboxes deactivate pools ceph ostack%s\\n\\n" "$bold" "$regular"
+			exit "$error_code"
+		;;
+		deactivate-vms)
+			printf "COMMAND NAME & OBJECTS\\n"
+			printf "  deactivate - gracefully shutdown given active VMs\\n\\n"
+			printf "SYNOPSIS\\n"
+			printf "  deactivate vms <active_vm_1> ... <active_vm_k>\\n\\n"
+			printf "DESCRIPTION\\n"
+			printf "  Gracefully shutdown one or more active VMs\\n\\n"
+			printf "%sEXAMPLE%s\\n" "$bold" "$regular"
+			printf "  ~> %sqboxes deactivate vms node{1..5}%s\\n\\n" "$bold" "$regular"
+			exit "$error_code"
+		;;
+		deactivate-networks)
+			printf "COMMAND NAME & OBJECTS\\n"
+			printf "  deactivate - deactivate given active libvirt networks\\n\\n"
+			printf "SYNOPSIS\\n"
+			printf "  deactivate networks <active_net_1> ... <active_net_k>\\n\\n"
+			printf "DESCRIPTION\\n"
+			printf "  Deactivate one or more active libvirt networks\\n\\n"
+			printf "%sEXAMPLE%s\\n" "$bold" "$regular"
+			printf "  ~> %sqboxes deactivate network cephnet%s\\n\\n" "$bold" "$regular"
+			exit "$error_code"
+		;;
+		deactivate-pools)
+			printf "COMMAND NAME & OBJECTS\\n"
+			printf "  deactivate - deactivate given active storage pools\\n\\n"
+			printf "SYNOPSIS\\n"
+			printf "  deactivate pools <active_pool_1> ... <active_pool_k>\\n\\n"
+			printf "DESCRIPTION\\n"
+			printf "  Deactivate one or more active storage pools\\n\\n"
+			printf "%sEXAMPLE%s\\n" "$bold" "$regular"
+			printf "  ~> %sqboxes deactivate pools ceph ostack%s\\n\\n" "$bold" "$regular"
 			exit "$error_code"
 		;;
 		define)
@@ -326,14 +362,14 @@ show_usage() {
 			printf "\\nThis is %sqboxes%s, a simple command line tool" "$green" "$regular"
 			printf " for managing local QEMU/KVM VMs.\\n"
 			printf "The following commands are currently implemented:\\n\\n"
-			printf "  activate\\t: bring inactive VMs up, or activate libvirt networks, storage pools\\n"
+			printf "  activate\\t: bring inactive VMs up, or activate inactive libvirt networks, storage pools\\n"
 			printf "  annihilate\\t: remove any trace of inactive VMs, libvirt networks, storage pools, or volumes\\n"
 			printf "  assimilate\\t: integrate storage volumes into an active pool\\n"
 			printf "  attach\\t: attach a storage volume to an (in)active VM\\n"
 			printf "  check-service\\t: try to connect to specified TCP port of one or more active VMs\\n"
 			printf "  clone\\t\\t: clone a template VM into one or more new VMs\\n"
 			printf "  create\\t: create a new libvirt network, storage pool, or volume\\n"
-			printf "  deactivate\\t: gracefully shutdown active VMs\\n"
+			printf "  deactivate\\t: gracefully shutdown active VMs, or deactivate active libvirt networks, storage pools\\n"
 			printf "  define\\t: define a new VM according to specs, do not install a guest OS\\n"
 			printf "  getmac\\t: reveal VM MAC addresses\\n"
 			printf "  list\\t\\t: present all available VMs, libvirt networks, storage pools, or volumes\\n"
@@ -899,8 +935,8 @@ activate_pools_cmd()
 
 # ---------------------------------------------------------------------------
 # activate_cmd():
-#   Removes any trace of inactive VMs,
-#   libvirt networks, storage pools, or storage volumes
+#   Powers up inactive VMs,
+#   activates inactive libvirt networks or storage pools
 # ---------------------------------------------------------------------------
 
 activate_cmd() {
@@ -2048,16 +2084,21 @@ create_cmd() {
 }
 
 # ---------------------------------------------------------------------------
-# deactivate_cmd():
-#   Powers down one or more active VMs
+# deactivate_vms_cmd():
+#   Gracefully shuts down one or more active VMs
 # ---------------------------------------------------------------------------
 
-deactivate_cmd() {
+deactivate_vms_cmd() {
+	if [ "$1" == "help" ]; then
+		echo
+		show_usage deactivate-vms 0
+	fi
+
 	lowest_num_args=1
 	if [ $# -lt $lowest_num_args ]; then
 		printf "\\n%sincorrect number of arguments (minimum is %d)%s\\n\\n" \
 			"$red" $lowest_num_args "$regular"
-		show_usage deactivate 1
+		show_usage deactivate-vms 1
 	fi
 
 	all_active_VMs=$(virsh list --name 2> /dev/null)
@@ -2085,6 +2126,127 @@ deactivate_cmd() {
 			fi
 		fi
 	done
+}
+
+# ---------------------------------------------------------------------------
+# deactivate_networks_cmd():
+#   Deactivates one or more active libvirt networks
+# ---------------------------------------------------------------------------
+
+deactivate_networks_cmd()
+{
+	if [ "$1" == "help" ]; then
+		echo
+		show_usage deactivate-networks 0
+	fi
+
+	lowest_num_args=1
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\\n%sincorrect number of arguments (minimum is %d)%s\\n\\n" "$red" $lowest_num_args "$regular"
+		show_usage deactivate-networks 1
+	fi
+
+	all_active_networks=$(get_networks "active")
+	if [ -z "$all_active_networks" ]; then
+		printf "\\n%scannot seem to find a single active network on this host%s\\n\\n" "$yellow" "$regular"
+		exit 0
+	fi
+
+	for candidate; do
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
+			printf "%s'%s' is not a valid network name%s\\n" "$yellow" "$candidate" "$regular"
+		else
+			answer=$(is_a_member "$candidate" "$all_active_networks")
+			if [ "$answer" == "no" ]; then
+				printf "%s'%s' is not an active network%s\\n" "$yellow" "$candidate" "$regular"
+			else
+				printf "%sdeactivating %s%s\\n" "$green" "$candidate" "$regular"
+				virsh net-destroy "$candidate" > /dev/null 2>&1
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d%s\\n" "$yellow" $virsh_ec "$regular"
+				fi
+			fi
+		fi
+	done
+}
+
+# ---------------------------------------------------------------------------
+# deactivate_pools_cmd():
+#   Deactivates one or more active storage pools
+# ---------------------------------------------------------------------------
+
+deactivate_pools_cmd()
+{
+	if [ "$1" == "help" ]; then
+		echo
+		show_usage deactivate-pools 0
+	fi
+
+	lowest_num_args=1
+	if [ $# -lt $lowest_num_args ]; then
+		printf "\\n%sincorrect number of arguments (minimum is %d)%s\\n\\n" "$red" $lowest_num_args "$regular"
+		show_usage deactivate-pools 1
+	fi
+
+	all_active_pools=$(get_pools "active")
+	if [ -z "$all_active_pools" ]; then
+		printf "\\n%scannot seem to find a single active pool on this host%s\\n\\n" "$yellow" "$regular"
+		exit 0
+	fi
+
+	for candidate; do
+		answer=$(is_name_valid "$candidate")
+		if [ "$answer" == "no" ]; then
+			printf "%s'%s' is not a valid pool name%s\\n" "$yellow" "$candidate" "$regular"
+		else
+			answer=$(is_a_member "$candidate" "$all_active_pools")
+			if [ "$answer" == "no" ]; then
+				printf "%s'%s' is not an active pool%s\\n" "$yellow" "$candidate" "$regular"
+			else
+				printf "%sdeactivating %s%s\\n" "$green" "$candidate" "$regular"
+				virsh pool-destroy "$candidate" > /dev/null 2>&1
+				virsh_ec=$?
+				if [ $virsh_ec -ne 0 ]; then
+					printf "%soperation failed, virsh returned error code %d%s\\n" "$yellow" $virsh_ec "$regular"
+				fi
+			fi
+		fi
+	done
+}
+
+# ---------------------------------------------------------------------------
+# deactivate_cmd():
+#   Gracefully shuts down active VMs,
+#   deactivates active libvirt networks or storage pools
+# ---------------------------------------------------------------------------
+
+deactivate_cmd() {
+	entity_type="$1"
+
+	case $entity_type in
+	vm|vms)
+		shift
+		deactivate_vms_cmd "$@"
+	;;
+	network|net|networks|nets)
+		shift
+		deactivate_networks_cmd "$@"
+	;;
+	pool|pools)
+		shift
+		deactivate_pools_cmd "$@"
+	;;
+	"")
+		printf "\\n%sentity type not specified%s\\n\\n" "$red" "$regular"
+		show_usage deactivate 1
+	;;
+	*)
+		printf "\\n%sinvalid entity type '%s'%s\\n\\n" "$red" "$entity_type" "$regular"
+		show_usage deactivate 1
+	;;
+	esac
 }
 
 # ---------------------------------------------------------------------------
