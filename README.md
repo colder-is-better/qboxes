@@ -3,34 +3,34 @@ This is a very simple BASH script for managing QEMU/KVM VMs. Currently, `qboxes`
 
 * define a new VM, with no guest OS
 * clone a template VM into one or more new VMs
-* activate/deactivate inactive/active VMs, networks, or pools
+* activate/deactivate inactive/active VMs, libvirt networks, or storage pools
 * reboot/power-cycle/unplug active VMs
 * attach storage volumes to VMs
 * integrate files into active storage pools
-* remove any trace of inactive VMs, active networks, active pools, or volumes
-* create new libvirt networks, pools, or volumes
-* reveal MAC addresses
-* list all available VMs, libvirt networks, pools, or volumes
+* remove any trace of inactive VMs, libvirt networks, storage pools, or volumes
+* create new libvirt networks, storage pools, or volumes
+* reveal VM MAC addresses
+* list all available VMs, libvirt networks, storage pools, or volumes
 * send ICMP packets to active VMs
-* check if active VMs are reachable via a specific TCP port
+* check if active VMs are reachable via specific TCP port
 
 To get an overview of the tool just type `qboxes`.
 
 ```
 This is qboxes, a simple command line tool for managing local QEMU/KVM VMs.
-Currently the following commands are implemented:
+The following commands are currently implemented:
 
-  activate	: bring inactive VMs, networks, or pools up
-  annihilate	: remove any trace of inactive VMs, active networks, active pools, or volumes
+  activate	: bring inactive VMs up, or activate inactive libvirt networks, storage pools
+  annihilate	: remove any trace of inactive VMs, libvirt networks, storage pools, or volumes
   assimilate	: integrate a file (ISO, QCOW2, etc.) into an active storage pool
   attach	: attach a storage volume to an (in)active VM
   check-service	: try to connect to specified TCP port of one or more active VMs
   clone		: clone a template VM into one or more new VMs
-  create	: create a new libvirt network, a new pool, or a new volume
-  deactivate	: gracefully shutdown active VMs
+  create	: create a new libvirt network, a new storage pool, or a new volume
+  deactivate	: gracefully shutdown active VMs, or deactivate active libvirt networks, storage pools
   define	: define a new VM, sans guest OS, according to specifications
-  getmac	: reveal MAC addresses
-  list		: return all available VMs, libvirt networks, pools, or volumes
+  getmac	: reveal VM MAC addresses
+  list		: return all available VMs, libvirt networks, storage pools, or volumes
   ping		: send ICMP packets to active VMs
   powcycle	: cold-restart active VMs
   reboot	: gracefully restart active VMs
