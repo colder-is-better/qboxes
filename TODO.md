@@ -17,12 +17,13 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 
 `clone`
 * handle the cloning of VMs with zero-sized storage volumes
+* do not clone VMs with no or more than one storage volumes
 
 `create`
 * __all done__
 
 `deactivate`
-* facilitate the deactivation of networks, pools
+* __all done__
 
 `define`
 * __all done__
