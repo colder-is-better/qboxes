@@ -276,7 +276,7 @@ show_usage() {
 			printf "COMMAND NAME\\n"
 			printf "  define - define a new VM\\n\\n"
 			printf "SYNOPSIS\\n"
-			printf "  define --ram=<size_in_MiB> --cores=<count> --osdisk=<volume_name> --pool=<active_pool_name>"
+			printf "  define --ram=<size_in_MiB> --cores=<count> --osdisk=<volume_name> --from-pool=<active_pool_name>"
 			printf " --network=<host_bridge|libvirt_net_name> --mac=<auto|MAC_address> --guest-os=<os_variant> <VM_name>\\n\\n"
 			printf "DESCRIPTION\\n"
 			printf "  Define a new VM according to specifications, do not install a guest OS\\n"
@@ -285,7 +285,7 @@ show_usage() {
 			printf "  * Type %sosinfo-query os%s for a list of all the supported OS variants\\n\\n" "$bold" "$regular"
 			printf "%sEXAMPLE%s\\n" "$bold" "$regular"
 			printf "  ~> %sqboxes define --ram=2048 --cores=2 \\" "$bold"
-			printf "\\n       --osdisk=leap423.qcow2 --pool=tank \\"
+			printf "\\n       --osdisk=leap423.qcow2 --from-pool=tank \\"
 			printf "\\n       --network=vnet --mac=auto \\"
 			printf "\\n       --guest-os=opensuse42.3 leap423vm%s\\n\\n" "$regular"
 			exit "$error_code"
@@ -718,6 +718,19 @@ get_vm_vols() {
 	the_vm="$1"
 	the_storage_vols=$(virsh domblklist "$the_vm" | grep -E '^(vd|sd|hd)')
 	echo "$the_storage_vols"
+}
+
+# ---------------------------------------------------------------------------
+# get_vm_blk_num():
+#   Returns number of all storage volumes
+#   (VirtIO, IDE, SATA, or SCSI devices) connected to given VM
+# ---------------------------------------------------------------------------
+
+get_vm_blk_num() {
+	the_vm="$1"
+	all_vm_vols=$(get_vm_vols "$the_vm")
+	how_many=$(($(echo "$all_vm_vols" | wc -w) / 2))
+	echo "$how_many"
 }
 
 # ---------------------------------------------------------------------------
@@ -1547,6 +1560,15 @@ clone_cmd() {
 		show_usage clone 1
 	fi
 
+	block_num=$(get_vm_blk_num "$template_VM")
+	if [ $block_num -eq 0 ]; then
+		printf "%s%s has no storage volumes attached to it, aborting now%s\\n" "$red" "$template_VM" "$regular"
+		exit 1
+	elif [ $block_num -gt 1 ]; then
+		printf "%s%s has more than one storage volumes attached to it, refusing to clone it%s\\n" "$red" "$template_VM" "$regular"
+		exit 1
+	fi
+
 	template_pool_name=""
 	template_pool_path=""
 	template_volume_full_path=$(in_between "$(virsh dumpxml "$template_VM" | grep "<source file='")" "<source file='" "'")
@@ -1626,12 +1648,10 @@ clone_cmd() {
 				sudo virt-customize -d "$candidate" --hostname "$valid_hostname" > /dev/null 2>&1
 				virt_customize_ec=$?
 				if [ $virt_customize_ec -ne 0 ]; then
-					printf "%soperation failed, virt-customize returned error code %d, terminating now%s\\n" \
-						"$red" $virt_customize_ec "$regular"
-					exit 2
+					printf "%svirt-customize returned error code %d%s\\n" "$yellow" $virt_customize_ec "$regular"
 				fi
 
-				printf "%sdeleting SSH host keys from VM %s%s\\n\\n" "$green" "$candidate" "$regular"
+				printf "%sdeleting SSH host keys from VM %s%s\\n" "$green" "$candidate" "$regular"
 
 				sudo virt-customize -d "$candidate" \
 					--delete /etc/ssh/ssh_host_dsa_key \
@@ -1645,13 +1665,11 @@ clone_cmd() {
 					--delete /etc/ssh/ssh_host_rsa_key \
 					--delete /etc/ssh/ssh_host_rsa_key.pub \
 					> /dev/null 2>&1
-
 				virt_customize_ec=$?
 				if [ $virt_customize_ec -ne 0 ]; then
-					printf "%soperation failed, virt-customize returned error " "$red"
-					printf "code %d, terminating now%s\\n" $virt_customize_ec "$regular"
-					exit 2
+					printf "%svirt-customize returned error code %d%s\\n" "$yellow" $virt_customize_ec "$regular"
 				fi
+				echo
 			fi
 		fi
 	done
@@ -1683,7 +1701,7 @@ create_network_cmd() {
 					printf "%s'%s' is not a valid network type%s\\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				net_type="$value"
+				net_type=$value
 			;;
 			--name)
 				answer=$(is_name_valid "$value")
@@ -1985,7 +2003,7 @@ create_volume_cmd() {
 					printf "%s'%s' is not a valid volume name%s\\n" "$red" "$value" "$regular"
 					exit 1
 				fi
-				volume_name="$value"
+				volume_name=$value
 			;;
 			--pool)
 				answer=$(is_name_valid "$value")
@@ -2283,7 +2301,7 @@ define_cmd() {
 				fi
 				memory_size_min=32
 				memory_size_max=16384
-				answer=$(is_size_valid "$value" "$memory_size_min" "$memory_size_max")	
+				answer=$(is_size_valid "$value" "$memory_size_min" "$memory_size_max")
 				if [ "$answer" == "no" ]; then
 					printf "%smemory size must be between %d and %d MiB inclusive, and an integer multiple of %d%s\\n" \
 					"$red" $memory_size_min $memory_size_max $memory_size_min "$regular"
@@ -2312,7 +2330,7 @@ define_cmd() {
 				fi
 				volume_name=$value
 			;;
-			--pool)
+			--from-pool)
 				answer=$(is_name_valid "$value")
 				if [ "$answer" == "no" ]; then
 					printf "%s'%s' is not a valid pool name%s\\n" "$red" "$value" "$regular"
@@ -2363,7 +2381,7 @@ define_cmd() {
 						exit 1
 					fi
 				fi
-				mac_addr="$value"
+				mac_addr=$value
 			;;
 			--guest-os)
 				answer=$(is_name_valid "$value")
@@ -2523,8 +2541,7 @@ list_vms_cmd() {
 		CPUs=$(echo "$(right_part_of "$(virsh dominfo "$name" | grep CPU\(s\))" ":")" | awk '{ print $1 }')
 		ram_size=$(in_between "$(virsh dominfo "$name" | grep "Max memory")" ":" " ")
 		ram_size_mb=$(( ram_size / 1024 ))
-		all_vm_vols=$(get_vm_vols "$name")
-		block_devices=$(($(echo "$all_vm_vols" | wc -w) / 2))
+		block_devices=$(get_vm_blk_num "$name")
 
 		first_nic_mac="n/a"
 		first_nic_net="n/a"
