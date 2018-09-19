@@ -10,7 +10,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * __all done__
 
 `attach`
-* facilitate the attachment of NICs
+* __all done__
 
 `check-service`
 * __all done__
@@ -27,9 +27,6 @@ __all done__
 `define`
 * __all done__
 
-`detach`
-* facilitate the dettachment of NICs, volumes
-
 `getmac`
 * __all done__
 
@@ -37,7 +34,7 @@ __all done__
 * return detailed information on VMs, networks, pools, volumes
 
 `list`
-* show FQDN of first NIC (if applicable/possible)
+* __all done__
 
 `modify`
 * facilitate the modification of VM names, MAC addresses, RAM sizes, number of cores
