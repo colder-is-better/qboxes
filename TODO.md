@@ -16,7 +16,7 @@ This is an alphabetical list of the currently implemented and also planned `qbox
 * __all done__
 
 `clone`
-__all done__
+* __all done__
 
 `create`
 * __all done__
