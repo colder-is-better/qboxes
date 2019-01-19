@@ -105,7 +105,7 @@ show_usage() {
       printf "COMMAND NAME & OBJECTS\\n"
       printf "  annihilate pool - remove given inactive storage pools\\n\\n"
       printf "SYNOPSIS\\n"
-      printf "  annihilate pool <active_pool_1> ... <active_pool_k>\\n\\n"
+      printf "  annihilate pool <inactive_pool_1> ... <inactive_pool_k>\\n\\n"
       printf "DESCRIPTION\\n"
       printf "  Delete one or more inactive storage pools\\n\\n"
       printf "%sEXAMPLE%s\\n" "$bold" "$regular"
