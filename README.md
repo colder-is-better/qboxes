@@ -1,5 +1,5 @@
 # Happy qboxes
-This is a very simple BASH script for managing QEMU/KVM VMs. Currently, `qboxes` can:
+This is a simple BASH script for managing QEMU/KVM VMs. Currently, `qboxes` can:
 
 * define a new VM, with no guest OS
 * clone a template VM into one or more new VMs
@@ -43,5 +43,3 @@ Type qboxes command help for the syntax and a usage example of a specific comman
 ```
 
 The script requires a working installation of libvirt and the presence of tools like `virsh`, `virt-clone`, `virt-install`, `virt-customize`, `virt-copy-out`, and `strings` (from package `binutils`). The user running `qboxes` should be in the `libvirt` group and have password-less sudo privileges. Last but not least, the `LIBVIRT_DEFAULT_URI` environment variable should be properly set for the local system (`export LIBVIRT_DEFAULT_URI=qemu:///system` should be enough).
-
-There are still some commands (functions) that we would like to implement in `qboxes`. See `TODO.md` for our near future plans.
