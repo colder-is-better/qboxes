@@ -2527,8 +2527,8 @@ list_vms_cmd() {
 
   temp_file_name="/tmp/""$(get_random_alphanum)".lst
 
-  echo "Name State CPU(s) RAM[MiB] NIC(s) PrimNet PrimAdaptIP" >> "$temp_file_name"
-  echo "---- ----- ------ -------- ------ ------- -----------" >> "$temp_file_name"
+  echo "Name State CPU(s) RAM[MiB] NIC(s) PrimNet PrimAdaptMAC PrimAdaptIP" >> "$temp_file_name"
+  echo "---- ----- ------ -------- ------ ------- ------------ -----------" >> "$temp_file_name"
 
   for name in $all_VMs; do
     state=$(echo "$(right_part_of "$(virsh dominfo "$name" | grep State)" ":")" | awk '{ print $1 }')
@@ -2551,13 +2551,14 @@ list_vms_cmd() {
 
     if [ "$network_adapters" -gt 0 ]; then
       first_nic_net=$(get_first_nic_net "$name")
+      first_nic_mac=$(get_first_nic_mac "$name")
       if [ "$state" != "inactive" ]; then
         first_nic_ip=$(get_first_nic_ip "$name")
       fi
     fi
 
     echo "$name" "$state" "$CPUs" "$ram_size_mb" "$network_adapters" \
-      "$first_nic_net" "$first_nic_ip" >> "$temp_file_name"
+      "$first_nic_net" "$first_nic_mac" "$first_nic_ip" >> "$temp_file_name"
   done
 
   echo
